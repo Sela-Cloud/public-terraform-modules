@@ -74,7 +74,19 @@
             "description": "Zone where the instances should be created. (Provide as a list)",
             "type": "list",
             "required": true,
-            "default": ["asia-south2-a", "asia-south2-b", "asia-south2-c"]
+            "default": [],
+            "data_source": {
+              "resource": "compute.zones",
+              "params": {
+                "project_id": { "from_field": "project" },
+                "region": { "from_field": "region" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "cache_ttl": 300
+            }
           },
           {
             "id": "machine_type",
@@ -301,9 +313,20 @@
               {
                 "id": "email",
                 "label": "Email",
-                "type": "text",
+                "type": "select",
                 "required": true,
-                "placeholder": "my-sa@project.iam.gserviceaccount.com"
+                "data_source": {
+                  "resource": "iam.serviceAccounts",
+                  "params": {
+                    "project_id": { "from_field": "project" }
+                  },
+                  "display": {
+                    "value_key": "email",
+                    "label_key": "email",
+                    "description_key": "displayName"
+                  },
+                  "cache_ttl": 300
+                }
               },
               {
                 "id": "scopes",
