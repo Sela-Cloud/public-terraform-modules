@@ -1,0 +1,568 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "cloud-storage",
+  "version": "1.0.0",
+  "display": {
+    "label": "Cloud Storage",
+    "icon": "cloud-storage",
+    "description": "Google Cloud Storage buckets with lifecycle, IAM, CORS, and website hosting",
+    "category": "global"
+  },
+
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the resource will be provisioned.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+
+  "resource": {
+    "variable": "gcs_bucket",
+    "key_field": "app_name",
+    "key_label": "Bucket name",
+    "key_description": "A globally unique name for the Cloud Storage bucket. This becomes the map key in Terraform.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core bucket settings.",
+        "fields": [
+          {
+            "id": "app_name",
+            "label": "Bucket name",
+            "description": "The name of the GCS bucket. Must be globally unique.",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-app-bucket-prod",
+            "validation": {
+              "min": 3,
+              "max": 63,
+              "pattern": "^[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]$",
+              "pattern_error": "Bucket names must be 3-63 characters, start/end with a letter or number, and contain only lowercase letters, numbers, hyphens, underscores, and dots."
+            }
+          },
+          {
+            "id": "location",
+            "label": "Location",
+            "description": "The GCS location (region, dual-region, or multi-region) for the bucket.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "US", "label": "US (multi-region)" },
+              { "value": "EU", "label": "EU (multi-region)" },
+              { "value": "ASIA", "label": "Asia (multi-region)" },
+              { "value": "us-central1", "label": "us-central1 (Iowa)" },
+              { "value": "us-east1", "label": "us-east1 (South Carolina)" },
+              { "value": "us-east4", "label": "us-east4 (Northern Virginia)" },
+              { "value": "us-west1", "label": "us-west1 (Oregon)" },
+              { "value": "us-west2", "label": "us-west2 (Los Angeles)" },
+              { "value": "europe-west1", "label": "europe-west1 (Belgium)" },
+              { "value": "europe-west2", "label": "europe-west2 (London)" },
+              { "value": "asia-south1", "label": "asia-south1 (Mumbai)" },
+              { "value": "asia-south2", "label": "asia-south2 (Delhi)" },
+              { "value": "asia-east1", "label": "asia-east1 (Taiwan)" },
+              { "value": "asia-southeast1", "label": "asia-southeast1 (Singapore)" },
+              { "value": "australia-southeast1", "label": "australia-southeast1 (Sydney)" }
+            ]
+          },
+          {
+            "id": "storage_class",
+            "label": "Storage class",
+            "description": "The default storage class for objects in the bucket.",
+            "type": "select",
+            "required": true,
+            "default": "STANDARD",
+            "options": [
+              { "value": "STANDARD", "label": "Standard", "description": "Best for frequently accessed data." },
+              { "value": "NEARLINE", "label": "Nearline", "description": "Best for data accessed less than once a month." },
+              { "value": "COLDLINE", "label": "Coldline", "description": "Best for data accessed less than once a quarter." },
+              { "value": "ARCHIVE", "label": "Archive", "description": "Best for data accessed less than once a year." }
+            ]
+          },
+          {
+            "id": "versioning",
+            "label": "Object versioning",
+            "description": "Enable versioning to keep a history of all object changes.",
+            "type": "boolean",
+            "required": true,
+            "default": false
+          },
+          {
+            "id": "bucket_policy_only",
+            "label": "Uniform bucket-level access",
+            "description": "When enabled, access is managed uniformly using IAM policies only (disables per-object ACLs).",
+            "type": "boolean",
+            "required": true,
+            "default": true
+          },
+          {
+            "id": "force_destroy",
+            "label": "Force destroy",
+            "description": "Allow Terraform to delete the bucket even if it contains objects. Use with caution.",
+            "type": "boolean",
+            "required": true,
+            "default": false
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "description": "Key-value labels to attach to the bucket for organization and billing.",
+            "type": "map",
+            "required": true,
+            "default": {},
+            "placeholder": "e.g. environment = prod"
+          }
+        ]
+      },
+
+      {
+        "id": "networking",
+        "label": "Networking & CDN",
+        "description": "Network Endpoint Group (NEG) settings for load balancer integration.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "enable_neg",
+            "label": "Enable Network Endpoint Group",
+            "description": "Create a serverless NEG for this bucket, enabling it to serve as a backend for a Cloud Load Balancer.",
+            "type": "boolean",
+            "required": true,
+            "default": false
+          },
+          {
+            "id": "neg_default_port",
+            "label": "NEG default port",
+            "description": "The default port for the Network Endpoint Group.",
+            "type": "text",
+            "required": false,
+            "placeholder": "443",
+            "depends_on": {
+              "field": "enable_neg",
+              "value": true
+            }
+          },
+          {
+            "id": "port",
+            "label": "Port",
+            "description": "The port used by the NEG endpoint.",
+            "type": "text",
+            "required": false,
+            "placeholder": "443",
+            "depends_on": {
+              "field": "enable_neg",
+              "value": true
+            }
+          },
+          {
+            "id": "data_locations",
+            "label": "Data locations",
+            "description": "A list of individual regions that together make up a dual-region bucket. Only applicable for dual-region location types.",
+            "type": "list",
+            "required": true,
+            "default": []
+          }
+        ]
+      },
+
+      {
+        "id": "data_protection",
+        "label": "Data Protection",
+        "description": "Retention, soft-delete, and data durability settings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "retention_policy",
+            "label": "Retention policy",
+            "description": "Lock objects from deletion for a specified duration. Set to null to disable.",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "is_locked",
+                "label": "Lock policy",
+                "description": "Once locked, the retention policy cannot be reduced or removed. This is irreversible.",
+                "type": "boolean",
+                "required": true,
+                "default": false
+              },
+              {
+                "id": "retention_period",
+                "label": "Retention period (seconds)",
+                "description": "The minimum duration (in seconds) that objects must be retained.",
+                "type": "number",
+                "required": true,
+                "placeholder": "86400",
+                "validation": {
+                  "min": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "soft_delete_policy",
+            "label": "Soft delete policy",
+            "description": "Allows recovery of deleted objects within the specified window.",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "retention_duration_seconds",
+                "label": "Retention duration (seconds)",
+                "description": "How long deleted objects are retained for recovery. Default is 7 days (604800s).",
+                "type": "number",
+                "required": false,
+                "default": 604800,
+                "validation": {
+                  "min": 604800,
+                  "max": 7776000
+                }
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "access_control",
+        "label": "Access Control (IAM)",
+        "description": "IAM member bindings for this bucket.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "iam_members",
+            "label": "IAM members",
+            "description": "A list of IAM role bindings to apply to this bucket.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "role",
+                "label": "IAM role",
+                "description": "The IAM role to grant (e.g., roles/storage.objectViewer).",
+                "type": "text",
+                "required": true,
+                "placeholder": "roles/storage.objectViewer"
+              },
+              {
+                "id": "member",
+                "label": "Member",
+                "description": "The identity to grant the role to (e.g., user:email, serviceAccount:sa-email, group:group-email).",
+                "type": "text",
+                "required": true,
+                "placeholder": "serviceAccount:my-sa@project.iam.gserviceaccount.com"
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "web_and_cors",
+        "label": "Website & CORS",
+        "description": "Static website hosting and Cross-Origin Resource Sharing configuration.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "website",
+            "label": "Website configuration",
+            "description": "Configure the bucket to serve as a static website.",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "main_page_suffix",
+                "label": "Main page suffix",
+                "description": "The object name suffix to serve when a directory is requested (e.g., 'index.html').",
+                "type": "text",
+                "required": false,
+                "placeholder": "index.html"
+              },
+              {
+                "id": "not_found_page",
+                "label": "Not found page",
+                "description": "The object to return when a requested object is not found (e.g., '404.html').",
+                "type": "text",
+                "required": false,
+                "placeholder": "404.html"
+              }
+            ]
+          },
+          {
+            "id": "cors",
+            "label": "CORS rules",
+            "description": "Cross-Origin Resource Sharing rules for browser-based access.",
+            "type": "repeatable",
+            "required": false,
+            "fields": [
+              {
+                "id": "origin",
+                "label": "Allowed origins",
+                "description": "List of origins allowed to make requests (e.g., https://example.com).",
+                "type": "list",
+                "required": true
+              },
+              {
+                "id": "method",
+                "label": "Allowed methods",
+                "description": "HTTP methods allowed for CORS requests.",
+                "type": "list",
+                "required": true
+              },
+              {
+                "id": "response_header",
+                "label": "Response headers",
+                "description": "Headers the browser is allowed to access from the response.",
+                "type": "list",
+                "required": false
+              },
+              {
+                "id": "max_age_seconds",
+                "label": "Max age (seconds)",
+                "description": "How long browsers should cache the CORS preflight response.",
+                "type": "number",
+                "required": false,
+                "default": 3600,
+                "validation": {
+                  "min": 0,
+                  "max": 86400
+                }
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "lifecycle",
+        "label": "Lifecycle Rules",
+        "description": "Automatically manage object storage class transitions and deletions.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "lifecycle_rules",
+            "label": "Lifecycle rules",
+            "description": "Define rules to automatically transition or delete objects based on conditions.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "action",
+                "label": "Action",
+                "description": "The action to take when the condition is met.",
+                "type": "object",
+                "required": true,
+                "fields": [
+                  {
+                    "id": "type",
+                    "label": "Action type",
+                    "description": "The lifecycle action to perform.",
+                    "type": "select",
+                    "required": true,
+                    "options": [
+                      { "value": "Delete", "label": "Delete", "description": "Permanently delete matching objects." },
+                      { "value": "SetStorageClass", "label": "Set Storage Class", "description": "Transition objects to another storage class." },
+                      { "value": "AbortIncompleteMultipartUpload", "label": "Abort Incomplete Multipart Upload", "description": "Abort incomplete multipart uploads." }
+                    ]
+                  },
+                  {
+                    "id": "storage_class",
+                    "label": "Target storage class",
+                    "description": "The storage class to transition objects to. Required when action type is 'SetStorageClass'.",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                      { "value": "STANDARD", "label": "Standard" },
+                      { "value": "NEARLINE", "label": "Nearline" },
+                      { "value": "COLDLINE", "label": "Coldline" },
+                      { "value": "ARCHIVE", "label": "Archive" }
+                    ],
+                    "depends_on": {
+                      "field": "type",
+                      "value": "SetStorageClass"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "condition",
+                "label": "Condition",
+                "description": "The conditions under which the action is triggered.",
+                "type": "object",
+                "required": true,
+                "fields": [
+                  {
+                    "id": "age",
+                    "label": "Age (days)",
+                    "description": "Apply the action to objects older than this many days.",
+                    "type": "number",
+                    "required": false,
+                    "validation": { "min": 0 }
+                  },
+                  {
+                    "id": "send_age_if_zero",
+                    "label": "Send age if zero",
+                    "description": "Whether to send the age condition when it is 0.",
+                    "type": "boolean",
+                    "required": false
+                  },
+                  {
+                    "id": "created_before",
+                    "label": "Created before",
+                    "description": "Apply to objects created before this date (YYYY-MM-DD).",
+                    "type": "text",
+                    "required": false,
+                    "placeholder": "2025-01-01",
+                    "validation": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "pattern_error": "Must be in YYYY-MM-DD format."
+                    }
+                  },
+                  {
+                    "id": "with_state",
+                    "label": "Object state",
+                    "description": "Apply to objects in this state.",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                      { "value": "LIVE", "label": "Live" },
+                      { "value": "ARCHIVED", "label": "Archived" },
+                      { "value": "ANY", "label": "Any" }
+                    ]
+                  },
+                  {
+                    "id": "matches_storage_class",
+                    "label": "Matches storage class",
+                    "description": "Apply only to objects with one of these storage classes.",
+                    "type": "list",
+                    "required": false
+                  },
+                  {
+                    "id": "matches_prefix",
+                    "label": "Matches prefix",
+                    "description": "Apply only to objects whose names start with one of these prefixes.",
+                    "type": "list",
+                    "required": false
+                  },
+                  {
+                    "id": "matches_suffix",
+                    "label": "Matches suffix",
+                    "description": "Apply only to objects whose names end with one of these suffixes.",
+                    "type": "list",
+                    "required": false
+                  },
+                  {
+                    "id": "num_newer_versions",
+                    "label": "Number of newer versions",
+                    "description": "Apply to versioned objects with more than this many newer versions.",
+                    "type": "number",
+                    "required": false,
+                    "validation": { "min": 0 }
+                  },
+                  {
+                    "id": "custom_time_before",
+                    "label": "Custom time before",
+                    "description": "Apply to objects whose custom time is before this date (YYYY-MM-DD).",
+                    "type": "text",
+                    "required": false,
+                    "placeholder": "2025-01-01",
+                    "validation": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "pattern_error": "Must be in YYYY-MM-DD format."
+                    }
+                  },
+                  {
+                    "id": "days_since_custom_time",
+                    "label": "Days since custom time",
+                    "description": "Apply to objects more than this many days past their custom time.",
+                    "type": "number",
+                    "required": false,
+                    "validation": { "min": 0 }
+                  },
+                  {
+                    "id": "days_since_noncurrent_time",
+                    "label": "Days since noncurrent time",
+                    "description": "Apply to noncurrent objects more than this many days past becoming noncurrent.",
+                    "type": "number",
+                    "required": false,
+                    "validation": { "min": 0 }
+                  },
+                  {
+                    "id": "noncurrent_time_before",
+                    "label": "Noncurrent time before",
+                    "description": "Apply to noncurrent objects that became noncurrent before this date (YYYY-MM-DD).",
+                    "type": "text",
+                    "required": false,
+                    "placeholder": "2025-01-01",
+                    "validation": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "pattern_error": "Must be in YYYY-MM-DD format."
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "tag_bindings",
+            "label": "Tag bindings",
+            "description": "A list of tag values to bind to this bucket (in tagValues/NNNN format).",
+            "type": "list",
+            "required": false,
+            "default": []
+          }
+        ]
+      }
+    ]
+  },
+
+  "extras": [
+    {
+      "variable": "gcs_managed_folder_iam_bindings",
+      "label": "Managed Folder IAM Bindings",
+      "description": "Grant IAM roles on specific managed folders within GCS buckets.",
+      "collapsed": true,
+      "fields": [
+        {
+          "id": "bucket_name",
+          "label": "Bucket name",
+          "description": "The name of the GCS bucket containing the managed folder.",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "bucket_folder",
+          "label": "Managed folder path",
+          "description": "The path of the managed folder within the bucket.",
+          "type": "text",
+          "required": true,
+          "placeholder": "data/reports/"
+        },
+        {
+          "id": "member",
+          "label": "Member",
+          "description": "The IAM member to grant access to (e.g., user:email, serviceAccount:sa-email).",
+          "type": "text",
+          "required": true,
+          "placeholder": "serviceAccount:my-sa@project.iam.gserviceaccount.com"
+        },
+        {
+          "id": "role",
+          "label": "IAM role",
+          "description": "The IAM role to grant on the managed folder.",
+          "type": "text",
+          "required": true,
+          "placeholder": "roles/storage.objectViewer"
+        }
+      ]
+    }
+  ]
+}

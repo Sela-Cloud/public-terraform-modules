@@ -1,0 +1,396 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "compute-engine",
+  "version": "1.0.0",
+  "display": {
+    "label": "Compute Engine",
+    "icon": "compute-engine",
+    "description": "Configurable virtual machines running on Google's infrastructure",
+    "category": "regional"
+  },
+
+  "globals": [
+    {
+      "id": "project",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the VM will be provisioned.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+
+  "resource": {
+    "variable": "gce_instance",
+    "key_field": "machine_name",
+    "key_label": "Machine name",
+    "key_description": "Hostname of instances.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core instance settings.",
+        "fields": [
+          {
+            "id": "machine_name",
+            "label": "Machine name",
+            "description": "Hostname of instances.",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-app-vm-prod"
+          },
+          {
+            "id": "vm_description",
+            "label": "VM Description",
+            "description": "Description of instances.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "instance_count",
+            "label": "Instance count",
+            "description": "Number of instances to create.",
+            "type": "number",
+            "required": true,
+            "default": 1
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "description": "Region where the instance template and instance should be created.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "us-central1", "label": "us-central1 (Iowa)" },
+              { "value": "us-east1", "label": "us-east1 (South Carolina)" },
+              { "value": "europe-west1", "label": "europe-west1 (Belgium)" },
+              { "value": "asia-south1", "label": "asia-south1 (Mumbai)" },
+              { "value": "asia-south2", "label": "asia-south2 (Delhi)" }
+            ]
+          },
+          {
+            "id": "zone",
+            "label": "Zones",
+            "description": "Zone where the instances should be created. (Provide as a list)",
+            "type": "list",
+            "required": true,
+            "default": ["asia-south2-a", "asia-south2-b", "asia-south2-c"]
+          },
+          {
+            "id": "machine_type",
+            "label": "Machine type",
+            "description": "Machine type to create, e.g. n1-standard-1.",
+            "type": "select",
+            "required": true,
+            "default": "e2-medium",
+            "options": [
+              { "value": "e2-micro", "label": "e2-micro" },
+              { "value": "e2-small", "label": "e2-small" },
+              { "value": "e2-medium", "label": "e2-medium" },
+              { "value": "e2-standard-2", "label": "e2-standard-2" },
+              { "value": "n2-standard-2", "label": "n2-standard-2" }
+            ]
+          },
+          {
+            "id": "vm_deletion_protect",
+            "label": "Deletion protection",
+            "description": "Prevent deletion of a GCE instance on accidental terraform destroy or from console.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "instance_labels",
+            "label": "Instance labels",
+            "description": "Instance Labels, provided as a map.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      },
+
+      {
+        "id": "networking",
+        "label": "Networking",
+        "description": "VPC network, subnet, and IP configuration.",
+        "fields": [
+          {
+            "id": "network",
+            "label": "Network",
+            "description": "The name or self_link of the network to attach this interface to.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": {
+                "project_id": { "from_field": "project" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnetwork",
+            "label": "Subnetwork",
+            "description": "The name of the subnetwork to attach this interface to.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.subnetworks",
+              "params": {
+                "project_id": { "from_field": "project" },
+                "region": { "from_field": "region" },
+                "network": { "from_field": "network" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "enable_external_ip",
+            "label": "Enable external IP",
+            "description": "Instance External IP required or not.",
+            "type": "boolean",
+            "required": true,
+            "default": false
+          },
+          {
+            "id": "generate_internal_ip",
+            "label": "Generate internal IP",
+            "description": "Instance Internal IP required or not.",
+            "type": "boolean",
+            "required": true,
+            "default": true
+          },
+          {
+            "id": "internal_ip_address",
+            "label": "Internal IP address",
+            "description": "Instance Internal IP address (list of strings).",
+            "type": "list",
+            "required": false,
+            "default": [""]
+          },
+          {
+            "id": "network_tags",
+            "label": "Network tags",
+            "description": "Network tags, provided as a list.",
+            "type": "list",
+            "required": false,
+            "default": []
+          }
+        ]
+      },
+
+      {
+        "id": "disks",
+        "label": "Disks",
+        "description": "Boot disk and additional disks.",
+        "fields": [
+          {
+            "id": "instance_image_selflink",
+            "label": "Instance image (selflink)",
+            "description": "Compute Image to use, e.g. projects/ubuntu-os-cloud/global/images/...",
+            "type": "text",
+            "required": true,
+            "placeholder": "projects/debian-cloud/global/images/family/debian-11"
+          },
+          {
+            "id": "boot_disk_info",
+            "label": "Boot disk info",
+            "description": "The information of boot disk of GCE instance.",
+            "type": "object",
+            "required": true,
+            "fields": [
+              {
+                "id": "disk_size_gb",
+                "label": "Disk size (GB)",
+                "type": "number",
+                "required": true,
+                "default": 20
+              },
+              {
+                "id": "disk_type",
+                "label": "Disk type",
+                "type": "select",
+                "required": true,
+                "default": "pd-balanced",
+                "options": [
+                  { "value": "pd-standard", "label": "Standard" },
+                  { "value": "pd-balanced", "label": "Balanced" },
+                  { "value": "pd-ssd", "label": "SSD" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "enable_data_disk",
+            "label": "Enable additional data disks",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "data_disk",
+            "label": "Data disks",
+            "description": "Additional persistent disks.",
+            "type": "repeatable",
+            "required": false,
+            "nullable": true,
+            "depends_on": {
+              "field": "enable_data_disk",
+              "value": true
+            },
+            "fields": [
+              {
+                "id": "disk_size_gb",
+                "label": "Disk size (GB)",
+                "type": "number",
+                "required": true
+              },
+              {
+                "id": "disk_type",
+                "label": "Disk type",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "pd-standard", "label": "Standard" },
+                  { "value": "pd-balanced", "label": "Balanced" },
+                  { "value": "pd-ssd", "label": "SSD" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "disk_labels",
+            "label": "Disk labels",
+            "description": "Disk Labels, provided as a map.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          },
+          {
+            "id": "snapshot_policy_name",
+            "label": "Snapshot policy name",
+            "description": "The name of the snapshot_policy_name to attach this disk to.",
+            "type": "text",
+            "required": false
+          }
+        ]
+      },
+
+      {
+        "id": "access",
+        "label": "Identity & Access",
+        "description": "Service account and IAM configuration.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "service_account",
+            "label": "Service account",
+            "description": "Service account to attach to the instance.",
+            "type": "object",
+            "required": true,
+            "fields": [
+              {
+                "id": "email",
+                "label": "Email",
+                "type": "text",
+                "required": true,
+                "placeholder": "my-sa@project.iam.gserviceaccount.com"
+              },
+              {
+                "id": "scopes",
+                "label": "Scopes",
+                "description": "OAuth scopes (list of strings).",
+                "type": "list",
+                "required": true,
+                "default": ["cloud-platform"]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "advanced",
+        "label": "Advanced Settings",
+        "description": "Metadata, Shielded VM, and IP Forwarding.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "metadata",
+            "label": "Metadata",
+            "description": "Metadata, provided as a map.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          },
+          {
+            "id": "metadata_startup_script",
+            "label": "Startup script",
+            "description": "Startup script provided as a string.",
+            "type": "text",
+            "required": false
+          },
+          {
+            "id": "can_ip_forward",
+            "label": "Enable IP forwarding",
+            "description": "Whether to enable IP forwarding for the instance.",
+            "type": "boolean",
+            "required": false
+          },
+          {
+            "id": "enable_shielded_vm",
+            "label": "Enable Shielded VM",
+            "description": "Whether to enable the Shielded VM configuration.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "shielded_instance_config",
+            "label": "Shielded instance config",
+            "description": "Shielded VM configuration for the instance.",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "depends_on": {
+              "field": "enable_shielded_vm",
+              "value": true
+            },
+            "fields": [
+              {
+                "id": "enable_secure_boot",
+                "label": "Enable secure boot",
+                "type": "boolean",
+                "required": true,
+                "default": true
+              },
+              {
+                "id": "enable_vtpm",
+                "label": "Enable vTPM",
+                "type": "boolean",
+                "required": true,
+                "default": true
+              },
+              {
+                "id": "enable_integrity_monitoring",
+                "label": "Enable integrity monitoring",
+                "type": "boolean",
+                "required": true,
+                "default": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,363 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://deployer.internal/schemas/ui-metadata.v1.json",
+  "title": "Terraform UI Metadata",
+  "description": "Schema for ui-metadata.json files that define how Terraform module variables are rendered as dynamic UI forms.",
+  "type": "object",
+  "required": ["module", "version", "display", "resource"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this JSON Schema for IDE validation."
+    },
+    "module": {
+      "type": "string",
+      "description": "Module identifier, matching the directory name (e.g., 'cloud-storage')."
+    },
+    "version": {
+      "type": "string",
+      "description": "Metadata schema version (semver).",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "display": {
+      "$ref": "#/definitions/display"
+    },
+    "globals": {
+      "type": "array",
+      "description": "Top-level Terraform variables that are NOT part of the repeatable resource object (e.g., project_id).",
+      "items": {
+        "$ref": "#/definitions/field"
+      }
+    },
+    "resource": {
+      "$ref": "#/definitions/resource"
+    },
+    "extras": {
+      "type": "array",
+      "description": "Secondary/optional variable blocks beyond the primary resource (e.g., managed folder IAM bindings).",
+      "items": {
+        "$ref": "#/definitions/extra"
+      }
+    }
+  },
+
+  "definitions": {
+    "display": {
+      "type": "object",
+      "description": "How the module appears in the resource catalog UI.",
+      "required": ["label", "icon", "description", "category"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Human-readable module name (e.g., 'Cloud Storage')."
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon identifier used by the frontend (e.g., 'cloud-storage', 'compute-engine')."
+        },
+        "description": {
+          "type": "string",
+          "description": "Short description shown in the catalog card."
+        },
+        "category": {
+          "type": "string",
+          "description": "Module category for grouping (e.g., 'global', 'regional', 'networking')."
+        }
+      }
+    },
+
+    "resource": {
+      "type": "object",
+      "description": "Describes the primary repeatable resource variable — typically a map(object({...})).",
+      "required": ["variable", "key_field", "key_label", "sections"],
+      "additionalProperties": false,
+      "properties": {
+        "variable": {
+          "type": "string",
+          "description": "Terraform variable name (e.g., 'gcs_bucket')."
+        },
+        "key_field": {
+          "type": "string",
+          "description": "Which field inside the object serves as the map key / resource identifier (e.g., 'app_name')."
+        },
+        "key_label": {
+          "type": "string",
+          "description": "Human-readable label for the key field (e.g., 'Bucket name')."
+        },
+        "key_description": {
+          "type": "string",
+          "description": "Help text for the key field."
+        },
+        "sections": {
+          "type": "array",
+          "description": "Groups of related fields, rendered as collapsible sections.",
+          "items": {
+            "$ref": "#/definitions/section"
+          }
+        }
+      }
+    },
+
+    "section": {
+      "type": "object",
+      "required": ["id", "label", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique section identifier."
+        },
+        "label": {
+          "type": "string",
+          "description": "Section heading shown in the UI."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional section description."
+        },
+        "collapsed": {
+          "type": "boolean",
+          "description": "If true, the section starts collapsed. Default: false.",
+          "default": false
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/field"
+          }
+        }
+      }
+    },
+
+    "field": {
+      "type": "object",
+      "required": ["id", "label", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Terraform attribute name (e.g., 'storage_class')."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label."
+        },
+        "description": {
+          "type": "string",
+          "description": "Help text / tooltip shown under the field."
+        },
+        "type": {
+          "type": "string",
+          "description": "UI control type.",
+          "enum": ["text", "select", "boolean", "number", "map", "list", "object", "repeatable"]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether the field is mandatory. Default: inferred from Terraform optional().",
+          "default": false
+        },
+        "default": {
+          "description": "Pre-filled default value. Type should match the field type."
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Placeholder text for text/number inputs."
+        },
+        "options": {
+          "type": "array",
+          "description": "Allowed values for 'select' type fields.",
+          "items": {
+            "$ref": "#/definitions/option"
+          }
+        },
+        "validation": {
+          "$ref": "#/definitions/validation"
+        },
+        "depends_on": {
+          "$ref": "#/definitions/depends_on"
+        },
+        "fields": {
+          "type": "array",
+          "description": "Nested fields for 'object' and 'repeatable' types.",
+          "items": {
+            "$ref": "#/definitions/field"
+          }
+        },
+        "nullable": {
+          "type": "boolean",
+          "description": "If true, the field can be set to null (renders as a 'None' / 'Disable' option). Default: false.",
+          "default": false
+        },
+        "data_source": {
+          "$ref": "#/definitions/data_source"
+        }
+      }
+    },
+
+    "option": {
+      "type": "object",
+      "required": ["value", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "The actual value sent to Terraform."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable display label."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional tooltip or secondary text."
+        }
+      }
+    },
+
+    "validation": {
+      "type": "object",
+      "description": "Client-side validation rules.",
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "type": "number",
+          "description": "Minimum value (for 'number') or minimum length (for 'text', 'list')."
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum value (for 'number') or maximum length (for 'text', 'list')."
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern the value must match."
+        },
+        "pattern_error": {
+          "type": "string",
+          "description": "Custom error message when the pattern doesn't match."
+        }
+      }
+    },
+
+    "depends_on": {
+      "type": "object",
+      "description": "Conditional visibility — show this field only when another field meets a condition.",
+      "required": ["field", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "The id of the field this depends on."
+        },
+        "value": {
+          "description": "The value the dependency field must have for this field to be visible."
+        },
+        "operator": {
+          "type": "string",
+          "description": "Comparison operator. Default: 'eq'.",
+          "enum": ["eq", "neq", "in", "not_in"],
+          "default": "eq"
+        }
+      }
+    },
+
+    "data_source": {
+      "type": "object",
+      "description": "Dynamic data source — fetch options from backend at runtime instead of using static options.",
+      "required": ["resource", "params", "display"],
+      "additionalProperties": false,
+      "properties": {
+        "resource": {
+          "type": "string",
+          "description": "GCP resource type identifier (e.g., 'compute.networks', 'compute.subnetworks')."
+        },
+        "params": {
+          "type": "object",
+          "description": "Query parameters to send. Each key is a param name, value is a source definition.",
+          "additionalProperties": {
+            "$ref": "#/definitions/param_source"
+          }
+        },
+        "display": {
+          "type": "object",
+          "description": "How to map response items to dropdown options.",
+          "required": ["value_key", "label_key"],
+          "additionalProperties": false,
+          "properties": {
+            "value_key": {
+              "type": "string",
+              "description": "Response field to use as option value."
+            },
+            "label_key": {
+              "type": "string",
+              "description": "Response field to use as option label."
+            },
+            "description_key": {
+              "type": "string",
+              "description": "Response field to use as option description."
+            }
+          }
+        },
+        "allow_custom": {
+          "type": "boolean",
+          "description": "Allow freeform text entry in addition to fetched options. Default: false.",
+          "default": false
+        },
+        "cache_ttl": {
+          "type": "number",
+          "description": "Cache the response for this many seconds. Default: 300.",
+          "default": 300
+        }
+      }
+    },
+
+    "param_source": {
+      "type": "object",
+      "description": "Source of a query parameter value — either read from another form field or a static constant.",
+      "additionalProperties": false,
+      "properties": {
+        "from_field": {
+          "type": "string",
+          "description": "Read value from another form field's current value."
+        },
+        "static": {
+          "type": "string",
+          "description": "Always send this fixed value."
+        }
+      }
+    },
+
+    "extra": {
+      "type": "object",
+      "description": "A secondary Terraform variable, typically a map(object({...})).",
+      "required": ["variable", "label", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "variable": {
+          "type": "string",
+          "description": "Terraform variable name."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label."
+        },
+        "description": {
+          "type": "string",
+          "description": "Help text."
+        },
+        "collapsed": {
+          "type": "boolean",
+          "description": "If true, starts collapsed.",
+          "default": true
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/field"
+          }
+        }
+      }
+    }
+  }
+}
