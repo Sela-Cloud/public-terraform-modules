@@ -1,0 +1,45 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "subnet",
+  "version": "1.0.0",
+  "display": {
+    "label": "Subnet",
+    "icon": "subnet",
+    "description": "Regional IPv4 subnets for custom-mode VPCs",
+    "category": "regional"
+  },
+  "globals": [
+    { "id": "project_id", "label": "Project ID", "type": "text", "required": true, "placeholder": "my-gcp-project" }
+  ],
+  "resource": {
+    "variable": "subnet",
+    "key_field": "name",
+    "key_label": "Subnet name",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Subnet configuration",
+        "fields": [
+          { "id": "name", "label": "Subnet name", "type": "text", "required": true, "validation": { "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$", "pattern_error": "Use an RFC 1035 name." } },
+          { "id": "region", "label": "Region", "type": "select", "required": true, "data_source": { "resource": "compute.regions", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "cache_ttl": 300 } },
+          { "id": "network", "label": "VPC network", "type": "select", "required": true, "data_source": { "resource": "compute.networks", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name" }, "allow_custom": true, "cache_ttl": 300 } },
+          { "id": "ip_cidr_range", "label": "Primary IPv4 CIDR", "type": "text", "required": true, "placeholder": "10.10.0.0/24", "validation": { "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}/([0-9]|[12][0-9]|3[0-2])$", "pattern_error": "Enter an IPv4 CIDR, for example 10.10.0.0/24." } },
+          { "id": "description", "label": "Description", "type": "text", "default": "" },
+          { "id": "private_ip_google_access", "label": "Private Google Access", "type": "boolean", "default": false },
+          { "id": "flow_logs", "label": "Enable VPC Flow Logs", "type": "boolean", "default": false }
+        ]
+      },
+      {
+        "id": "secondary",
+        "label": "Secondary IP ranges",
+        "collapsed": true,
+        "fields": [
+          { "id": "secondary_ip_ranges", "label": "Secondary ranges", "type": "repeatable", "default": [], "fields": [
+            { "id": "range_name", "label": "Range name", "type": "text", "required": true },
+            { "id": "ip_cidr_range", "label": "IPv4 CIDR", "type": "text", "required": true, "placeholder": "10.20.0.0/16" }
+          ] }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "vpn",
+  "version": "1.0.0",
+  "display": {
+    "label": "Classic VPN",
+    "icon": "vpn",
+    "description": "Route-based Classic VPN gateway, address, forwarding rules, and tunnel",
+    "category": "regional"
+  },
+  "globals": [
+    { "id": "project_id", "label": "Project ID", "type": "text", "required": true, "placeholder": "my-gcp-project" }
+  ],
+  "resource": {
+    "variable": "vpn",
+    "key_field": "name",
+    "key_label": "Tunnel name",
+    "sections": [
+      {
+        "id": "gateway",
+        "label": "Gateway and tunnel",
+        "fields": [
+          { "id": "name", "label": "Tunnel name", "type": "text", "required": true, "validation": { "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$", "pattern_error": "Use an RFC 1035 name." } },
+          { "id": "region", "label": "Region", "type": "select", "required": true, "data_source": { "resource": "compute.regions", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name" }, "cache_ttl": 300 } },
+          { "id": "network", "label": "VPC network", "type": "select", "required": true, "data_source": { "resource": "compute.networks", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name" }, "allow_custom": true, "cache_ttl": 300 } },
+          { "id": "peer_ip", "label": "Peer gateway public IP", "type": "text", "required": true, "placeholder": "203.0.113.10" },
+          { "id": "shared_secret", "label": "Pre-shared secret", "description": "Stored in Terraform state; use a dedicated secret-management flow before production.", "type": "text", "required": true },
+          { "id": "ike_version", "label": "IKE version", "type": "select", "default": "2", "options": [{ "value": "1", "label": "IKEv1" }, { "value": "2", "label": "IKEv2" }] },
+          { "id": "local_traffic_selector", "label": "Local traffic selectors", "type": "list", "default": ["0.0.0.0/0"] },
+          { "id": "remote_traffic_selector", "label": "Remote traffic selectors", "type": "list", "default": ["0.0.0.0/0"] }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "cloud-router",
+  "version": "1.0.0",
+  "display": {
+    "label": "Cloud Router",
+    "icon": "cloud-router",
+    "description": "Regional Cloud Routers for NAT and hybrid connectivity",
+    "category": "regional"
+  },
+  "globals": [
+    { "id": "project_id", "label": "Project ID", "type": "text", "required": true, "placeholder": "my-gcp-project" }
+  ],
+  "resource": {
+    "variable": "cloud_router",
+    "key_field": "name",
+    "key_label": "Router name",
+    "sections": [
+      {
+        "id": "router",
+        "label": "Router configuration",
+        "fields": [
+          { "id": "name", "label": "Router name", "type": "text", "required": true, "validation": { "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$", "pattern_error": "Use an RFC 1035 name." } },
+          { "id": "region", "label": "Region", "type": "select", "required": true, "data_source": { "resource": "compute.regions", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name" }, "cache_ttl": 300 } },
+          { "id": "network", "label": "VPC network", "type": "select", "required": true, "data_source": { "resource": "compute.networks", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name" }, "allow_custom": true, "cache_ttl": 300 } },
+          { "id": "asn", "label": "BGP ASN", "type": "number", "default": 64514, "validation": { "min": 64512, "max": 4294967294 } },
+          { "id": "advertise_mode", "label": "Route advertisement", "type": "select", "default": "DEFAULT", "options": [{ "value": "DEFAULT", "label": "Default" }, { "value": "CUSTOM", "label": "Custom" }] },
+          { "id": "description", "label": "Description", "type": "text", "default": "" }
+        ]
+      },
+      {
+        "id": "advertisements",
+        "label": "Custom advertisements",
+        "collapsed": true,
+        "fields": [
+          { "id": "advertised_groups", "label": "Advertised groups", "type": "list", "default": [], "depends_on": { "field": "advertise_mode", "value": "CUSTOM" } },
+          { "id": "advertised_ip_ranges", "label": "Advertised IP ranges", "type": "repeatable", "default": [], "depends_on": { "field": "advertise_mode", "value": "CUSTOM" }, "fields": [
+            { "id": "range", "label": "CIDR range", "type": "text", "required": true },
+            { "id": "description", "label": "Description", "type": "text", "default": "" }
+          ] }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,86 @@
+name: Validate and Publish Frontend Modules
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: "Existing release tag to validate and publish, for example v0.3"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-frontend-modules
+  cancel-in-progress: false
+
+env:
+  GCS_BUCKET: ${{ vars.GCS_BUCKET }}
+  GCS_PREFIX: ${{ vars.GCS_PREFIX }}
+
+jobs:
+  validate-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate release reference
+        shell: bash
+        env:
+          RELEASE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref_name }}
+        run: |
+          if [[ ! "${RELEASE_REF}" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "Release reference must be a version tag such as v0.3 or v0.3.0."
+            exit 1
+          fi
+
+      - name: Check out release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Validate metadata JSON
+        shell: bash
+        run: |
+          jq empty frontend/ui-metadata.schema.json
+          find frontend/modules -name ui-metadata.json -print0 | xargs -0 -n1 jq empty
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive frontend/modules
+
+      - name: Initialize and validate module templates
+        shell: bash
+        run: |
+          while IFS= read -r -d '' module_dir; do
+            terraform -chdir="${module_dir}" init -backend=false -input=false
+            terraform -chdir="${module_dir}" validate
+          done < <(find frontend/modules -mindepth 1 -maxdepth 1 -type d -print0)
+
+      - name: Validate publication settings
+        shell: bash
+        run: |
+          test -n "${GCS_BUCKET}"
+          test -n "${GCS_PREFIX}"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PUBLISHER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Publish frontend module catalog
+        shell: bash
+        run: |
+          gcloud storage rsync --recursive frontend "gs://${GCS_BUCKET}/${GCS_PREFIX}"

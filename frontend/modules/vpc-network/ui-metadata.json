@@ -1,0 +1,53 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "vpc-network",
+  "version": "1.0.0",
+  "display": {
+    "label": "VPC Network",
+    "icon": "vpc-network",
+    "description": "Custom-mode VPC networks and routing settings",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP project in which to create the network.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "vpc_network",
+    "key_field": "name",
+    "key_label": "VPC name",
+    "key_description": "RFC 1035 VPC name and Terraform map key.",
+    "sections": [
+      {
+        "id": "network",
+        "label": "Network configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "VPC name",
+            "type": "text",
+            "required": true,
+            "placeholder": "platform-vpc",
+            "validation": {
+              "min": 1,
+              "max": 63,
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Use an RFC 1035 name: lowercase letter first, 1-63 characters."
+            }
+          },
+          { "id": "description", "label": "Description", "type": "text", "default": "" },
+          { "id": "auto_create_subnetworks", "label": "Automatically create subnets", "description": "Enable only for an auto-mode VPC.", "type": "boolean", "default": false },
+          { "id": "routing_mode", "label": "Dynamic routing mode", "type": "select", "default": "GLOBAL", "options": [{ "value": "GLOBAL", "label": "Global" }, { "value": "REGIONAL", "label": "Regional" }] },
+          { "id": "mtu", "label": "MTU", "type": "number", "default": 1460, "validation": { "min": 1300, "max": 8896 } },
+          { "id": "delete_default_routes_on_create", "label": "Delete default internet route", "type": "boolean", "default": false }
+        ]
+      }
+    ]
+  }
+}

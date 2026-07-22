@@ -1,0 +1,36 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "cloud-nat",
+  "version": "1.0.0",
+  "display": {
+    "label": "Cloud NAT",
+    "icon": "cloud-nat",
+    "description": "Managed outbound NAT for private workloads",
+    "category": "regional"
+  },
+  "globals": [
+    { "id": "project_id", "label": "Project ID", "type": "text", "required": true, "placeholder": "my-gcp-project" }
+  ],
+  "resource": {
+    "variable": "cloud_nat",
+    "key_field": "name",
+    "key_label": "NAT name",
+    "sections": [
+      {
+        "id": "nat",
+        "label": "NAT configuration",
+        "fields": [
+          { "id": "name", "label": "NAT name", "type": "text", "required": true, "validation": { "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$", "pattern_error": "Use an RFC 1035 name." } },
+          { "id": "region", "label": "Region", "type": "select", "required": true, "data_source": { "resource": "compute.regions", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name" }, "cache_ttl": 300 } },
+          { "id": "router", "label": "Cloud Router name", "type": "select", "required": true, "data_source": { "resource": "compute.routers", "params": { "project_id": { "from_field": "project_id" }, "region": { "from_field": "region" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
+          { "id": "source_subnetwork_ip_ranges_to_nat", "label": "Subnet IP ranges to NAT", "type": "select", "default": "ALL_SUBNETWORKS_ALL_IP_RANGES", "options": [{ "value": "ALL_SUBNETWORKS_ALL_IP_RANGES", "label": "All subnets, all IP ranges" }, { "value": "ALL_SUBNETWORKS_ALL_PRIMARY_IP_RANGES", "label": "All subnets, primary ranges" }] },
+          { "id": "min_ports_per_vm", "label": "Minimum ports per VM", "type": "number", "nullable": true, "validation": { "min": 32 } },
+          { "id": "max_ports_per_vm", "label": "Maximum ports per VM", "type": "number", "nullable": true, "validation": { "min": 32 } },
+          { "id": "enable_endpoint_independent_mapping", "label": "Endpoint-independent mapping", "type": "boolean", "default": false },
+          { "id": "enable_dynamic_port_allocation", "label": "Dynamic port allocation", "type": "boolean", "default": false },
+          { "id": "log_filter", "label": "Logging", "type": "select", "default": "ERRORS_ONLY", "options": [{ "value": "OFF", "label": "Off" }, { "value": "ERRORS_ONLY", "label": "Errors only" }, { "value": "TRANSLATIONS_ONLY", "label": "Translations only" }, { "value": "ALL", "label": "All" }] }
+        ]
+      }
+    ]
+  }
+}
