@@ -80,7 +80,16 @@ jobs:
       - name: Set up Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Publish frontend module catalog
+      - name: Publish frontend module catalog metadata
         shell: bash
         run: |
-          gcloud storage rsync --recursive frontend "gs://${GCS_BUCKET}/${GCS_PREFIX}"
+          gcloud storage cp \
+            frontend/ui-metadata.schema.json \
+            "gs://${GCS_BUCKET}/${GCS_PREFIX}/ui-metadata.schema.json"
+
+          while IFS= read -r metadata_file; do
+            relative_path="${metadata_file#frontend/}"
+            gcloud storage cp \
+              "${metadata_file}" \
+              "gs://${GCS_BUCKET}/${GCS_PREFIX}/${relative_path}"
+          done < <(find frontend/modules -type f -name ui-metadata.json | sort)
