@@ -27,7 +27,8 @@
           { "id": "shared_secret", "label": "Pre-shared secret", "description": "Stored in Terraform state; use a dedicated secret-management flow before production.", "type": "text", "required": true },
           { "id": "ike_version", "label": "IKE version", "type": "select", "default": "2", "options": [{ "value": "1", "label": "IKEv1" }, { "value": "2", "label": "IKEv2" }] },
           { "id": "local_traffic_selector", "label": "Local traffic selectors", "type": "list", "default": ["0.0.0.0/0"] },
-          { "id": "remote_traffic_selector", "label": "Remote traffic selectors", "type": "list", "default": ["0.0.0.0/0"] }
+          { "id": "remote_traffic_selector", "label": "Remote traffic selectors", "type": "list", "default": ["0.0.0.0/0"] },
+          { "id": "description", "label": "Description", "type": "text", "default": "" }
         ]
       }
     ]

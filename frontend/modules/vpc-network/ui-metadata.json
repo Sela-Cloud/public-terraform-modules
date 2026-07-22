@@ -45,7 +45,10 @@
           { "id": "auto_create_subnetworks", "label": "Automatically create subnets", "description": "Enable only for an auto-mode VPC.", "type": "boolean", "default": false },
           { "id": "routing_mode", "label": "Dynamic routing mode", "type": "select", "default": "GLOBAL", "options": [{ "value": "GLOBAL", "label": "Global" }, { "value": "REGIONAL", "label": "Regional" }] },
           { "id": "mtu", "label": "MTU", "type": "number", "default": 1460, "validation": { "min": 1300, "max": 8896 } },
-          { "id": "delete_default_routes_on_create", "label": "Delete default internet route", "type": "boolean", "default": false }
+          { "id": "delete_default_routes_on_create", "label": "Delete default internet route", "type": "boolean", "default": false },
+          { "id": "enable_ula_internal_ipv6", "label": "Enable internal ULA IPv6", "type": "boolean", "default": false },
+          { "id": "internal_ipv6_range", "label": "Internal IPv6 /48 range", "type": "text", "depends_on": { "field": "enable_ula_internal_ipv6", "value": true } },
+          { "id": "network_firewall_policy_enforcement_order", "label": "Firewall policy evaluation order", "type": "select", "default": "AFTER_CLASSIC_FIREWALL", "options": [{ "value": "AFTER_CLASSIC_FIREWALL", "label": "After classic firewall rules" }, { "value": "BEFORE_CLASSIC_FIREWALL", "label": "Before classic firewall rules" }] }
         ]
       }
     ]

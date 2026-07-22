@@ -28,7 +28,11 @@
           { "id": "source_ranges", "label": "Source CIDR ranges", "description": "Required for ingress when no source tags are supplied.", "type": "list", "default": [] },
           { "id": "destination_ranges", "label": "Destination CIDR ranges", "type": "list", "default": [] },
           { "id": "source_tags", "label": "Source network tags", "type": "list", "default": [] },
+          { "id": "source_service_accounts", "label": "Source service accounts", "type": "list", "default": [] },
           { "id": "target_tags", "label": "Target network tags", "type": "list", "default": [] },
+          { "id": "target_service_accounts", "label": "Target service accounts", "type": "list", "default": [] },
+          { "id": "enable_logging", "label": "Enable logging", "type": "boolean", "default": false },
+          { "id": "logging_metadata", "label": "Logging metadata", "type": "select", "default": "INCLUDE_ALL_METADATA", "options": [{ "value": "INCLUDE_ALL_METADATA", "label": "Include all" }, { "value": "EXCLUDE_ALL_METADATA", "label": "Exclude all" }], "depends_on": { "field": "enable_logging", "value": true } },
           { "id": "disabled", "label": "Disable rule", "type": "boolean", "default": false }
         ]
       },

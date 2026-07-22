@@ -25,7 +25,9 @@
           { "id": "network", "label": "VPC network", "type": "select", "required": true, "data_source": { "resource": "compute.networks", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name" }, "allow_custom": true, "cache_ttl": 300 } },
           { "id": "asn", "label": "BGP ASN", "type": "number", "default": 64514, "validation": { "min": 64512, "max": 4294967294 } },
           { "id": "advertise_mode", "label": "Route advertisement", "type": "select", "default": "DEFAULT", "options": [{ "value": "DEFAULT", "label": "Default" }, { "value": "CUSTOM", "label": "Custom" }] },
-          { "id": "description", "label": "Description", "type": "text", "default": "" }
+          { "id": "description", "label": "Description", "type": "text", "default": "" },
+          { "id": "keepalive_interval", "label": "BGP keepalive interval (seconds)", "type": "number", "nullable": true, "validation": { "min": 20, "max": 60 } },
+          { "id": "identifier_range", "label": "BGP identifier range", "type": "text", "placeholder": "169.254.1.0/30" }
         ]
       },
       {

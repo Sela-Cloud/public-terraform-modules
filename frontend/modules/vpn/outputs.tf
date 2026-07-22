@@ -1,8 +1,8 @@
 output "vpn_gateway_addresses" {
-  value = { for key, address in google_compute_address.this : key => address.address }
+  value = module.vpn.vpn_gateway_addresses
 }
 
 output "vpn_tunnels" {
-  value     = { for key, tunnel in google_compute_vpn_tunnel.this : key => tunnel.self_link }
+  value     = module.vpn.vpn_tunnels
   sensitive = true
 }
