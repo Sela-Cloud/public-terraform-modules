@@ -92,4 +92,8 @@ jobs:
             gcloud storage cp \
               "${metadata_file}" \
               "gs://${GCS_BUCKET}/${GCS_PREFIX}/${relative_path}"
-          done < <(find frontend/modules -type f -name ui-metadata.json | sort)
+          done < <(
+            find frontend/modules \
+              -type d -name .terraform -prune -o \
+              -type f -name ui-metadata.json -print | sort
+          )
