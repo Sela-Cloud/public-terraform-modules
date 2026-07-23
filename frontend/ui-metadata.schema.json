@@ -270,7 +270,7 @@
       "properties": {
         "resource": {
           "type": "string",
-          "description": "GCP resource type identifier (e.g., 'compute.networks', 'compute.subnetworks')."
+          "description": "GCP resource type identifier (e.g., 'compute.networks', 'compute.subnetworks', 'compute.zones', 'iam.serviceAccounts', 'compute.disks', 'servicenetworking.psa')."
         },
         "params": {
           "type": "object",

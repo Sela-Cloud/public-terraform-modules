@@ -278,17 +278,30 @@ Populates select dropdowns dynamically by querying GCP backend endpoints (e.g., 
   "resource": "compute.subnetworks",
   "params": {
     "project": { "from_field": "project_id" },
-    "region": { "from_field": "region" }
+    "region": { "from_field": "region" },
+    "vpc": { "from_field": "network" }
   },
   "display": {
     "value_key": "name",
     "label_key": "name",
-    "description_key": "ip_cidr_range"
+    "description_key": "ipCidrRange"
   },
   "allow_custom": true,
   "cache_ttl": 300
 }
 ```
+
+##### Supported GCP Data Source Resources & Parameters
+
+| Resource Identifier | Description | Parameters | Response Keys |
+| :--- | :--- | :--- | :--- |
+| `compute.networks` (or `compute.vpc`) | VPC Networks in project | `project` / `project_id` | `name`, `description`, `selfLink` |
+| `compute.subnetworks` (or `compute.subnets`) | Subnets in project/region/vpc | `project`, `vpc` / `network`, `region` / `location` | `name`, `ipCidrRange`, `region`, `network` |
+| `compute.zones` | Available zones in region | `project`, `region` / `location` | `name`, `region`, `status` |
+| `iam.serviceAccounts` (or `iam.sa`) | Service Accounts in project | `project` / `project_id` | `email`, `displayName`, `uniqueId` |
+| `compute.disks` | Persistent Disks | `project`, `region` / `location`, `zone` | `name`, `sizeGb`, `type`, `zone`, `region` |
+| `servicenetworking.psa` | Private Services Access (PSA) | `project`, `vpc` / `network`, `region` / `location` | `name`, `peering`, `address`, `prefixLength` |
+
 
 ---
 

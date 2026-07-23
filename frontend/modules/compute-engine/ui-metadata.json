@@ -60,13 +60,17 @@
             "description": "Region where the instance template and instance should be created.",
             "type": "select",
             "required": true,
-            "options": [
-              { "value": "us-central1", "label": "us-central1 (Iowa)" },
-              { "value": "us-east1", "label": "us-east1 (South Carolina)" },
-              { "value": "europe-west1", "label": "europe-west1 (Belgium)" },
-              { "value": "asia-south1", "label": "asia-south1 (Mumbai)" },
-              { "value": "asia-south2", "label": "asia-south2 (Delhi)" }
-            ]
+            "data_source": {
+              "resource": "compute.regions",
+              "params": {
+                "project_id": { "from_field": "project" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "cache_ttl": 300
+            }
           },
           {
             "id": "zone",
@@ -95,13 +99,19 @@
             "type": "select",
             "required": true,
             "default": "e2-medium",
-            "options": [
-              { "value": "e2-micro", "label": "e2-micro" },
-              { "value": "e2-small", "label": "e2-small" },
-              { "value": "e2-medium", "label": "e2-medium" },
-              { "value": "e2-standard-2", "label": "e2-standard-2" },
-              { "value": "n2-standard-2", "label": "n2-standard-2" }
-            ]
+            "data_source": {
+              "resource": "compute.machineTypes",
+              "params": {
+                "project_id": { "from_field": "project" },
+                "zone": { "from_field": "zone" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "vm_deletion_protect",

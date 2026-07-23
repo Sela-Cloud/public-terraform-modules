@@ -51,23 +51,18 @@
             "description": "The GCS location (region, dual-region, or multi-region) for the bucket.",
             "type": "select",
             "required": true,
-            "options": [
-              { "value": "US", "label": "US (multi-region)" },
-              { "value": "EU", "label": "EU (multi-region)" },
-              { "value": "ASIA", "label": "Asia (multi-region)" },
-              { "value": "us-central1", "label": "us-central1 (Iowa)" },
-              { "value": "us-east1", "label": "us-east1 (South Carolina)" },
-              { "value": "us-east4", "label": "us-east4 (Northern Virginia)" },
-              { "value": "us-west1", "label": "us-west1 (Oregon)" },
-              { "value": "us-west2", "label": "us-west2 (Los Angeles)" },
-              { "value": "europe-west1", "label": "europe-west1 (Belgium)" },
-              { "value": "europe-west2", "label": "europe-west2 (London)" },
-              { "value": "asia-south1", "label": "asia-south1 (Mumbai)" },
-              { "value": "asia-south2", "label": "asia-south2 (Delhi)" },
-              { "value": "asia-east1", "label": "asia-east1 (Taiwan)" },
-              { "value": "asia-southeast1", "label": "asia-southeast1 (Singapore)" },
-              { "value": "australia-southeast1", "label": "australia-southeast1 (Sydney)" }
-            ]
+            "data_source": {
+              "resource": "compute.regions",
+              "params": {
+                "project_id": { "from_field": "project_id" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "storage_class",
