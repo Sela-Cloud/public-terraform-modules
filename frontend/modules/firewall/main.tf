@@ -1,6 +1,21 @@
 module "firewall" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/firewall?ref=v0.3.3"
-
-  project_id = var.project_id
-  firewall   = var.firewall
+  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/firewall?ref=v0.3.4"
+  for_each                = var.firewall
+  project_id              = var.project_id
+  name                    = each.value.name
+  network                 = each.value.network
+  direction               = each.value.direction
+  priority                = each.value.priority
+  description             = each.value.description
+  source_ranges           = each.value.source_ranges
+  destination_ranges      = each.value.destination_ranges
+  source_tags             = each.value.source_tags
+  source_service_accounts = each.value.source_service_accounts
+  target_tags             = each.value.target_tags
+  target_service_accounts = each.value.target_service_accounts
+  disabled                = each.value.disabled
+  enable_logging          = each.value.enable_logging
+  logging_metadata        = each.value.logging_metadata
+  allow                   = each.value.allow
+  deny                    = each.value.deny
 }

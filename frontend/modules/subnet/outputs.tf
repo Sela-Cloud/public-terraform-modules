@@ -1,3 +1,1 @@
-output "subnetworks" {
-  value = module.subnet.subnetworks
-}
+output "subnetworks" { value = { for key, instance in module.subnet : key => instance.self_link } }

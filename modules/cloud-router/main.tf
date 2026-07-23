@@ -1,18 +1,17 @@
 resource "google_compute_router" "this" {
-  for_each    = var.cloud_router
   project     = var.project_id
-  name        = each.value.name
-  region      = each.value.region
-  network     = each.value.network
-  description = each.value.description
+  name        = var.name
+  region      = var.region
+  network     = var.network
+  description = var.description
   bgp {
-    asn                = each.value.asn
-    advertise_mode     = each.value.advertise_mode
-    advertised_groups  = each.value.advertise_mode == "CUSTOM" ? each.value.advertised_groups : null
-    keepalive_interval = each.value.keepalive_interval
-    identifier_range   = each.value.identifier_range
+    asn                = var.asn
+    advertise_mode     = var.advertise_mode
+    advertised_groups  = var.advertise_mode == "CUSTOM" ? var.advertised_groups : null
+    keepalive_interval = var.keepalive_interval
+    identifier_range   = var.identifier_range
     dynamic "advertised_ip_ranges" {
-      for_each = each.value.advertise_mode == "CUSTOM" ? each.value.advertised_ip_ranges : []
+      for_each = var.advertise_mode == "CUSTOM" ? var.advertised_ip_ranges : []
       content {
         range       = advertised_ip_ranges.value.range
         description = advertised_ip_ranges.value.description

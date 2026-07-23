@@ -1,62 +1,61 @@
 resource "google_compute_address" "this" {
-  for_each = var.vpn
-  project  = var.project_id
-  name     = "${each.value.name}-ip"
-  region   = each.value.region
+  project = var.project_id
+  name    = "${var.name}-ip"
+  region  = var.region
 }
 
 resource "google_compute_vpn_gateway" "this" {
-  for_each    = var.vpn
   project     = var.project_id
-  name        = "${each.value.name}-gateway"
-  region      = each.value.region
-  network     = each.value.network
-  description = each.value.description
+  name        = "${var.name}-gateway"
+  region      = var.region
+  network     = var.network
+  description = var.description
 }
 
 resource "google_compute_forwarding_rule" "esp" {
-  for_each    = var.vpn
   project     = var.project_id
-  name        = "${each.value.name}-esp"
-  region      = each.value.region
+  name        = "${var.name}-esp"
+  region      = var.region
   ip_protocol = "ESP"
-  ip_address  = google_compute_address.this[each.key].self_link
-  target      = google_compute_vpn_gateway.this[each.key].self_link
+  ip_address  = google_compute_address.this.self_link
+  target      = google_compute_vpn_gateway.this.self_link
 }
 
 resource "google_compute_forwarding_rule" "udp_500" {
-  for_each    = var.vpn
   project     = var.project_id
-  name        = "${each.value.name}-udp500"
-  region      = each.value.region
+  name        = "${var.name}-udp500"
+  region      = var.region
   ip_protocol = "UDP"
   port_range  = "500"
-  ip_address  = google_compute_address.this[each.key].self_link
-  target      = google_compute_vpn_gateway.this[each.key].self_link
+  ip_address  = google_compute_address.this.self_link
+  target      = google_compute_vpn_gateway.this.self_link
 }
 
 resource "google_compute_forwarding_rule" "udp_4500" {
-  for_each    = var.vpn
   project     = var.project_id
-  name        = "${each.value.name}-udp4500"
-  region      = each.value.region
+  name        = "${var.name}-udp4500"
+  region      = var.region
   ip_protocol = "UDP"
   port_range  = "4500"
-  ip_address  = google_compute_address.this[each.key].self_link
-  target      = google_compute_vpn_gateway.this[each.key].self_link
+  ip_address  = google_compute_address.this.self_link
+  target      = google_compute_vpn_gateway.this.self_link
 }
 
 resource "google_compute_vpn_tunnel" "this" {
-  for_each                = var.vpn
   project                 = var.project_id
-  name                    = each.value.name
-  region                  = each.value.region
-  description             = each.value.description
-  peer_ip                 = each.value.peer_ip
-  shared_secret           = each.value.shared_secret
-  ike_version             = each.value.ike_version
-  target_vpn_gateway      = google_compute_vpn_gateway.this[each.key].self_link
-  local_traffic_selector  = each.value.local_traffic_selector
-  remote_traffic_selector = each.value.remote_traffic_selector
-  depends_on              = [google_compute_forwarding_rule.esp, google_compute_forwarding_rule.udp_500, google_compute_forwarding_rule.udp_4500]
+  name                    = var.name
+  region                  = var.region
+  description             = var.description
+  peer_ip                 = var.peer_ip
+  shared_secret           = var.shared_secret
+  ike_version             = var.ike_version
+  target_vpn_gateway      = google_compute_vpn_gateway.this.self_link
+  local_traffic_selector  = var.local_traffic_selector
+  remote_traffic_selector = var.remote_traffic_selector
+
+  depends_on = [
+    google_compute_forwarding_rule.esp,
+    google_compute_forwarding_rule.udp_500,
+    google_compute_forwarding_rule.udp_4500,
+  ]
 }

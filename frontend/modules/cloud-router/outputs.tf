@@ -1,3 +1,1 @@
-output "routers" {
-  value = module.cloud_router.routers
-}
+output "routers" { value = { for key, instance in module.cloud_router : key => instance.self_link } }

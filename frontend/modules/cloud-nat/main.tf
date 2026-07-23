@@ -1,6 +1,19 @@
 module "cloud_nat" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-nat?ref=v0.3.3"
-
-  project_id = var.project_id
-  cloud_nat  = var.cloud_nat
+  source                              = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-nat?ref=v0.3.4"
+  for_each                            = var.cloud_nat
+  project_id                          = var.project_id
+  name                                = each.value.name
+  router                              = each.value.router
+  region                              = each.value.region
+  nat_ip_allocate_option              = each.value.nat_ip_allocate_option
+  nat_ips                             = each.value.nat_ips
+  drain_nat_ips                       = each.value.drain_nat_ips
+  source_subnetwork_ip_ranges_to_nat  = each.value.source_subnetwork_ip_ranges_to_nat
+  subnetworks                         = each.value.subnetworks
+  min_ports_per_vm                    = each.value.min_ports_per_vm
+  max_ports_per_vm                    = each.value.max_ports_per_vm
+  enable_endpoint_independent_mapping = each.value.enable_endpoint_independent_mapping
+  enable_dynamic_port_allocation      = each.value.enable_dynamic_port_allocation
+  auto_network_tier                   = each.value.auto_network_tier
+  log_filter                          = each.value.log_filter
 }

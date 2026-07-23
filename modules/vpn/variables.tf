@@ -1,14 +1,10 @@
 variable "project_id" { type = string }
-variable "vpn" {
-  type = map(object({
-    name                    = string
-    region                  = string
-    network                 = string
-    peer_ip                 = string
-    shared_secret           = string
-    ike_version             = optional(number, 2)
-    local_traffic_selector  = optional(list(string), ["0.0.0.0/0"])
-    remote_traffic_selector = optional(list(string), ["0.0.0.0/0"])
-    description             = optional(string, "")
-  }))
-}
+variable "name" { type = string }
+variable "region" { type = string }
+variable "network" { type = string }
+variable "peer_ip" { type = string }
+variable "shared_secret" { type = string }
+variable "ike_version" { type = number }
+variable "local_traffic_selector" { type = list(string) }
+variable "remote_traffic_selector" { type = list(string) }
+variable "description" { type = string }

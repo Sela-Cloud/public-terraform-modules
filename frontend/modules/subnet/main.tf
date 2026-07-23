@@ -1,6 +1,24 @@
 module "subnet" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/subnet?ref=v0.3.3"
-
-  project_id = var.project_id
-  subnet     = var.subnet
+  source                         = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/subnet?ref=v0.3.4"
+  for_each                       = var.subnet
+  project_id                     = var.project_id
+  name                           = each.value.name
+  region                         = each.value.region
+  network                        = each.value.network
+  ip_cidr_range                  = each.value.ip_cidr_range
+  description                    = each.value.description
+  purpose                        = each.value.purpose
+  role                           = each.value.role
+  private_ip_google_access       = each.value.private_ip_google_access
+  private_ipv6_google_access     = each.value.private_ipv6_google_access
+  stack_type                     = each.value.stack_type
+  ipv6_access_type               = each.value.ipv6_access_type
+  reserved_internal_range        = each.value.reserved_internal_range
+  flow_logs                      = each.value.flow_logs
+  flow_logs_aggregation_interval = each.value.flow_logs_aggregation_interval
+  flow_logs_sampling             = each.value.flow_logs_sampling
+  flow_logs_metadata             = each.value.flow_logs_metadata
+  flow_logs_metadata_fields      = each.value.flow_logs_metadata_fields
+  flow_logs_filter_expr          = each.value.flow_logs_filter_expr
+  secondary_ip_ranges            = each.value.secondary_ip_ranges
 }

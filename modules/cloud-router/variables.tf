@@ -1,15 +1,11 @@
 variable "project_id" { type = string }
-variable "cloud_router" {
-  type = map(object({
-    name                 = string
-    region               = string
-    network              = string
-    description          = optional(string, "")
-    asn                  = optional(number, 64514)
-    advertise_mode       = optional(string, "DEFAULT")
-    advertised_groups    = optional(list(string), [])
-    advertised_ip_ranges = optional(list(object({ range = string, description = optional(string, "") })), [])
-    keepalive_interval   = optional(number)
-    identifier_range     = optional(string)
-  }))
-}
+variable "name" { type = string }
+variable "region" { type = string }
+variable "network" { type = string }
+variable "description" { type = string }
+variable "asn" { type = number }
+variable "advertise_mode" { type = string }
+variable "advertised_groups" { type = list(string) }
+variable "advertised_ip_ranges" { type = list(object({ range = string, description = optional(string, "") })) }
+variable "keepalive_interval" { type = number }
+variable "identifier_range" { type = string }

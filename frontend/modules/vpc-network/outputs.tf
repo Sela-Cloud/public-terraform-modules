@@ -1,3 +1,1 @@
-output "networks" {
-  value = module.vpc_network.networks
-}
+output "networks" { value = { for key, instance in module.vpc_network : key => instance.self_link } }

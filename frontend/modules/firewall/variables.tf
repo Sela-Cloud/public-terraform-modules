@@ -1,7 +1,4 @@
-variable "project_id" {
-  type = string
-}
-
+variable "project_id" { type = string }
 variable "firewall" {
-  type = any
+  type = map(object({ name = string, network = string, direction = optional(string, "INGRESS"), priority = optional(number, 1000), description = optional(string, ""), source_ranges = optional(list(string), []), destination_ranges = optional(list(string), []), source_tags = optional(list(string), []), source_service_accounts = optional(list(string), []), target_tags = optional(list(string), []), target_service_accounts = optional(list(string), []), disabled = optional(bool, false), enable_logging = optional(bool, false), logging_metadata = optional(string, "INCLUDE_ALL_METADATA"), allow = optional(list(object({ protocol = string, ports = optional(list(string), []) })), []), deny = optional(list(object({ protocol = string, ports = optional(list(string), []) })), []) }))
 }
