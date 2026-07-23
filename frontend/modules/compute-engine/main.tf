@@ -3,7 +3,7 @@
  *****************************************/
 
 module "compute_instance" {
-  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/compute-engine?ref=v0.3"
+  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/compute-engine?ref=v0.3.6"
   for_each                = var.compute_instance
   project                 = each.value.project_id
   region                  = each.value.region
