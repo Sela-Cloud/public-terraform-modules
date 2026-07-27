@@ -1,4 +1,7 @@
-variable "project_id" { type = string }
+variable "project_id" {
+  type = string
+}
+
 variable "subnet" {
   type = map(object({
     name                           = string
@@ -19,6 +22,9 @@ variable "subnet" {
     flow_logs_metadata             = optional(string, "INCLUDE_ALL_METADATA")
     flow_logs_metadata_fields      = optional(list(string), [])
     flow_logs_filter_expr          = optional(string, "true")
-    secondary_ip_ranges            = optional(list(object({ range_name = string, ip_cidr_range = optional(string) })), [])
+    secondary_ip_ranges = optional(list(object({
+      range_name    = string
+      ip_cidr_range = optional(string)
+    })), [])
   }))
 }

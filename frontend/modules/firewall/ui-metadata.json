@@ -9,7 +9,13 @@
     "category": "global"
   },
   "globals": [
-    { "id": "project_id", "label": "Project ID", "type": "text", "required": true, "placeholder": "my-gcp-project" }
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
   ],
   "resource": {
     "variable": "firewall",
@@ -20,20 +26,137 @@
         "id": "basic",
         "label": "Rule configuration",
         "fields": [
-          { "id": "name", "label": "Rule name", "type": "text", "required": true, "validation": { "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$", "pattern_error": "Use an RFC 1035 name." } },
-          { "id": "network", "label": "VPC network", "type": "select", "required": true, "data_source": { "resource": "compute.networks", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name" }, "allow_custom": true, "cache_ttl": 300 } },
-          { "id": "direction", "label": "Direction", "type": "select", "default": "INGRESS", "options": [{ "value": "INGRESS", "label": "Ingress" }, { "value": "EGRESS", "label": "Egress" }] },
-          { "id": "priority", "label": "Priority", "type": "number", "default": 1000, "validation": { "min": 0, "max": 65535 } },
-          { "id": "description", "label": "Description", "type": "text", "default": "" },
-          { "id": "source_ranges", "label": "Source CIDR ranges", "description": "Required for ingress when no source tags are supplied.", "type": "list", "default": [] },
-          { "id": "destination_ranges", "label": "Destination CIDR ranges", "type": "list", "default": [] },
-          { "id": "source_tags", "label": "Source network tags", "type": "list", "default": [] },
-          { "id": "source_service_accounts", "label": "Source service accounts", "type": "list", "default": [] },
-          { "id": "target_tags", "label": "Target network tags", "type": "list", "default": [] },
-          { "id": "target_service_accounts", "label": "Target service accounts", "type": "list", "default": [] },
-          { "id": "enable_logging", "label": "Enable logging", "type": "boolean", "default": false },
-          { "id": "logging_metadata", "label": "Logging metadata", "type": "select", "default": "INCLUDE_ALL_METADATA", "options": [{ "value": "INCLUDE_ALL_METADATA", "label": "Include all" }, { "value": "EXCLUDE_ALL_METADATA", "label": "Exclude all" }], "depends_on": { "field": "enable_logging", "value": true } },
-          { "id": "disabled", "label": "Disable rule", "type": "boolean", "default": false }
+          {
+            "id": "name",
+            "label": "Rule name",
+            "type": "text",
+            "required": true,
+            "validation": {
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Use an RFC 1035 name."
+            }
+          },
+          {
+            "id": "network",
+            "label": "VPC network",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "direction",
+            "label": "Direction",
+            "type": "select",
+            "default": "INGRESS",
+            "options": [
+              {
+                "value": "INGRESS",
+                "label": "Ingress"
+              },
+              {
+                "value": "EGRESS",
+                "label": "Egress"
+              }
+            ]
+          },
+          {
+            "id": "priority",
+            "label": "Priority",
+            "type": "number",
+            "default": 1000,
+            "validation": {
+              "min": 0,
+              "max": 65535
+            }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text",
+            "default": ""
+          },
+          {
+            "id": "source_ranges",
+            "label": "Source CIDR ranges",
+            "description": "Required for ingress when no source tags are supplied.",
+            "type": "list",
+            "default": []
+          },
+          {
+            "id": "destination_ranges",
+            "label": "Destination CIDR ranges",
+            "type": "list",
+            "default": []
+          },
+          {
+            "id": "source_tags",
+            "label": "Source network tags",
+            "type": "list",
+            "default": []
+          },
+          {
+            "id": "source_service_accounts",
+            "label": "Source service accounts",
+            "type": "list",
+            "default": []
+          },
+          {
+            "id": "target_tags",
+            "label": "Target network tags",
+            "type": "list",
+            "default": []
+          },
+          {
+            "id": "target_service_accounts",
+            "label": "Target service accounts",
+            "type": "list",
+            "default": []
+          },
+          {
+            "id": "enable_logging",
+            "label": "Enable logging",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "logging_metadata",
+            "label": "Logging metadata",
+            "type": "select",
+            "default": "INCLUDE_ALL_METADATA",
+            "options": [
+              {
+                "value": "INCLUDE_ALL_METADATA",
+                "label": "Include all"
+              },
+              {
+                "value": "EXCLUDE_ALL_METADATA",
+                "label": "Exclude all"
+              }
+            ],
+            "depends_on": {
+              "field": "enable_logging",
+              "value": true
+            }
+          },
+          {
+            "id": "disabled",
+            "label": "Disable rule",
+            "type": "boolean",
+            "default": false
+          }
         ]
       },
       {
@@ -41,14 +164,82 @@
         "label": "Allow or deny",
         "description": "Configure exactly one action type.",
         "fields": [
-          { "id": "allow", "label": "Allow rules", "type": "repeatable", "default": [], "fields": [
-            { "id": "protocol", "label": "Protocol", "type": "select", "required": true, "options": [{ "value": "tcp", "label": "TCP" }, { "value": "udp", "label": "UDP" }, { "value": "icmp", "label": "ICMP" }, { "value": "all", "label": "All" }] },
-            { "id": "ports", "label": "Ports or ranges", "type": "list", "default": [] }
-          ] },
-          { "id": "deny", "label": "Deny rules", "type": "repeatable", "default": [], "fields": [
-            { "id": "protocol", "label": "Protocol", "type": "select", "required": true, "options": [{ "value": "tcp", "label": "TCP" }, { "value": "udp", "label": "UDP" }, { "value": "icmp", "label": "ICMP" }, { "value": "all", "label": "All" }] },
-            { "id": "ports", "label": "Ports or ranges", "type": "list", "default": [] }
-          ] }
+          {
+            "id": "allow",
+            "label": "Allow rules",
+            "type": "repeatable",
+            "default": [],
+            "fields": [
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": true,
+                "options": [
+                  {
+                    "value": "tcp",
+                    "label": "TCP"
+                  },
+                  {
+                    "value": "udp",
+                    "label": "UDP"
+                  },
+                  {
+                    "value": "icmp",
+                    "label": "ICMP"
+                  },
+                  {
+                    "value": "all",
+                    "label": "All"
+                  }
+                ]
+              },
+              {
+                "id": "ports",
+                "label": "Ports or ranges",
+                "type": "list",
+                "default": []
+              }
+            ]
+          },
+          {
+            "id": "deny",
+            "label": "Deny rules",
+            "type": "repeatable",
+            "default": [],
+            "fields": [
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": true,
+                "options": [
+                  {
+                    "value": "tcp",
+                    "label": "TCP"
+                  },
+                  {
+                    "value": "udp",
+                    "label": "UDP"
+                  },
+                  {
+                    "value": "icmp",
+                    "label": "ICMP"
+                  },
+                  {
+                    "value": "all",
+                    "label": "All"
+                  }
+                ]
+              },
+              {
+                "id": "ports",
+                "label": "Ports or ranges",
+                "type": "list",
+                "default": []
+              }
+            ]
+          }
         ]
       }
     ]
