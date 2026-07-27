@@ -21,7 +21,7 @@
   ],
 
   "resource": {
-    "variable": "gce_instance",
+    "variable": "compute_instance",
     "key_field": "machine_name",
     "key_label": "Machine name",
     "key_description": "Hostname of instances.",
@@ -73,7 +73,7 @@
             }
           },
           {
-            "id": "zone",
+            "id": "machine_zone",
             "label": "Zones",
             "description": "Zone where the instances should be created. (Provide as a list)",
             "type": "list",
@@ -103,7 +103,7 @@
               "resource": "compute.machineTypes",
               "params": {
                 "project_id": { "from_field": "project" },
-                "zone": { "from_field": "zone" }
+                "zone": { "from_field": "machine_zone" }
               },
               "display": {
                 "value_key": "name",
@@ -224,7 +224,7 @@
             "placeholder": "projects/debian-cloud/global/images/family/debian-11"
           },
           {
-            "id": "boot_disk_info",
+            "id": "boot_disk0_info",
             "label": "Boot disk info",
             "description": "The information of boot disk of GCE instance.",
             "type": "object",
