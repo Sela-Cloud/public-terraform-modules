@@ -11,7 +11,7 @@ locals {
 }
 
 module "gke_autopilot" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-autopilot?ref=v0.4.1"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-autopilot?ref=v0.4.2"
 
   for_each = {
     for key, cluster in var.gke_cluster : key => cluster
@@ -48,7 +48,7 @@ module "gke_autopilot" {
   monitoring_components               = each.value.monitoring_components
   fleet_project                       = try(trimspace(each.value.fleet_project), "") != "" ? each.value.fleet_project : null
   enable_backup_agent                 = each.value.enable_backup_agent
-  maintenance_daily_window_start_time = each.value.maintenance_daily_window_start_time
+  maintenance_daily_window_start_time = try(trimspace(each.value.maintenance_daily_window_start_time), "") != "" ? each.value.maintenance_daily_window_start_time : null
   maintenance_exclusions = {
     for exclusion in each.value.maintenance_exclusions : exclusion.name => {
       start_time = exclusion.start_time
@@ -59,7 +59,7 @@ module "gke_autopilot" {
 }
 
 module "gke_standard_cluster" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.4.1"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.4.2"
 
   for_each = {
     for key, cluster in var.gke_cluster : key => cluster
@@ -96,7 +96,7 @@ module "gke_standard_cluster" {
   monitoring_components               = each.value.monitoring_components
   fleet_project                       = try(trimspace(each.value.fleet_project), "") != "" ? each.value.fleet_project : null
   enable_backup_agent                 = each.value.enable_backup_agent
-  maintenance_daily_window_start_time = each.value.maintenance_daily_window_start_time
+  maintenance_daily_window_start_time = try(trimspace(each.value.maintenance_daily_window_start_time), "") != "" ? each.value.maintenance_daily_window_start_time : null
   maintenance_exclusions = {
     for exclusion in each.value.maintenance_exclusions : exclusion.name => {
       start_time = exclusion.start_time
@@ -109,7 +109,7 @@ module "gke_standard_cluster" {
 }
 
 module "gke_standard_node_pool" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-node-pool?ref=v0.4.1"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-node-pool?ref=v0.4.2"
   for_each = local.standard_node_pools
 
   project_id         = each.value.project_id

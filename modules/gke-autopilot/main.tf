@@ -38,15 +38,6 @@ resource "google_container_cluster" "this" {
     }
   }
 
-  dynamic "network_policy" {
-    for_each = var.enable_network_policy ? [1] : []
-
-    content {
-      enabled  = true
-      provider = "PROVIDER_UNSPECIFIED"
-    }
-  }
-
   dynamic "binary_authorization" {
     for_each = var.enable_binary_authorization ? [1] : []
 
