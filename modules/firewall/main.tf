@@ -5,12 +5,12 @@ resource "google_compute_firewall" "this" {
   direction               = var.direction
   priority                = var.priority
   description             = var.description
-  source_ranges           = var.source_ranges
-  destination_ranges      = var.destination_ranges
-  source_tags             = var.source_tags
-  source_service_accounts = var.source_service_accounts
-  target_tags             = var.target_tags
-  target_service_accounts = var.target_service_accounts
+  source_ranges           = length(var.source_ranges) > 0 ? var.source_ranges : null
+  destination_ranges      = length(var.destination_ranges) > 0 ? var.destination_ranges : null
+  source_tags             = length(var.source_tags) > 0 ? var.source_tags : null
+  source_service_accounts = length(var.source_service_accounts) > 0 ? var.source_service_accounts : null
+  target_tags             = length(var.target_tags) > 0 ? var.target_tags : null
+  target_service_accounts = length(var.target_service_accounts) > 0 ? var.target_service_accounts : null
   disabled                = var.disabled
   dynamic "allow" {
     for_each = var.allow
