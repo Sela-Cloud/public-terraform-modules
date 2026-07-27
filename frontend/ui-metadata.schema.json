@@ -117,6 +117,9 @@
           "type": "string",
           "description": "Optional section description."
         },
+        "depends_on": {
+          "$ref": "#/definitions/depends_on"
+        },
         "collapsed": {
           "type": "boolean",
           "description": "If true, the section starts collapsed. Default: false.",
