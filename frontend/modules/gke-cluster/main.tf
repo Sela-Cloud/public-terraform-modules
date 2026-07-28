@@ -11,7 +11,7 @@ locals {
 }
 
 module "gke_autopilot" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-autopilot?ref=v0.4.2"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-autopilot?ref=v0.4.3"
 
   for_each = {
     for key, cluster in var.gke_cluster : key => cluster
@@ -59,7 +59,7 @@ module "gke_autopilot" {
 }
 
 module "gke_standard_cluster" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.4.2"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.4.3"
 
   for_each = {
     for key, cluster in var.gke_cluster : key => cluster
@@ -85,7 +85,7 @@ module "gke_standard_cluster" {
   master_global_access                = each.value.master_global_access
   master_authorized_networks          = each.value.master_authorized_networks
   enable_dataplane_v2                 = each.value.enable_dataplane_v2
-  enable_network_policy               = each.value.enable_network_policy
+  enable_network_policy               = each.value.enable_dataplane_v2 ? false : each.value.enable_network_policy
   enable_binary_authorization         = each.value.enable_binary_authorization
   enable_workload_identity            = each.value.enable_workload_identity
   groups_for_rbac                     = try(trimspace(each.value.groups_for_rbac), "") != "" ? each.value.groups_for_rbac : null
@@ -109,7 +109,7 @@ module "gke_standard_cluster" {
 }
 
 module "gke_standard_node_pool" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-node-pool?ref=v0.4.2"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-node-pool?ref=v0.4.3"
   for_each = local.standard_node_pools
 
   project_id         = each.value.project_id

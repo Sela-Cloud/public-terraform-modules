@@ -99,12 +99,14 @@
           {
             "id": "deletion_protection",
             "label": "Deletion protection",
+            "description": "Prevent Terraform from deleting this cluster. Disable for temporary test clusters.",
             "type": "boolean",
-            "default": true
+            "default": false
           },
           {
             "id": "release_channel",
             "label": "Release channel",
+            "description": "GKE control-plane and node upgrade channel.",
             "type": "select",
             "default": "REGULAR",
             "options": [
@@ -202,14 +204,17 @@
           {
             "id": "enable_dataplane_v2",
             "label": "Enable Dataplane V2",
+            "description": "Uses GKE advanced datapath. When enabled, legacy Kubernetes NetworkPolicy is not configured separately.",
             "type": "boolean",
             "default": true
           },
           {
             "id": "enable_network_policy",
             "label": "Enable Kubernetes NetworkPolicy",
+            "description": "Only configurable when Dataplane V2 is disabled.",
             "type": "boolean",
-            "default": true
+            "default": true,
+            "depends_on": { "field": "enable_dataplane_v2", "value": false }
           },
           {
             "id": "enable_http_load_balancing",

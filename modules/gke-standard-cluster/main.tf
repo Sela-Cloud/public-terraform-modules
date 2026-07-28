@@ -35,10 +35,10 @@ resource "google_container_cluster" "this" {
   }
 
   dynamic "network_policy" {
-    for_each = var.enable_network_policy ? [1] : []
+    for_each = var.enable_network_policy && !var.enable_dataplane_v2 ? [1] : []
     content {
       enabled  = true
-      provider = var.enable_dataplane_v2 ? "PROVIDER_UNSPECIFIED" : "CALICO"
+      provider = "CALICO"
     }
   }
 
