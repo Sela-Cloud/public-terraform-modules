@@ -143,6 +143,33 @@ variable "enable_backup_agent" {
   default = false
 }
 
+variable "enable_filestore_csi_driver" {
+  type    = bool
+  default = false
+}
+
+variable "enable_secret_manager_addon" {
+  type    = bool
+  default = false
+}
+
+variable "dns_endpoint_config" {
+  type = object({
+    allow_external_traffic = optional(bool, false)
+  })
+  default = null
+}
+
+variable "enable_ip_access" {
+  type    = bool
+  default = true
+}
+
+variable "gateway_api_channel" {
+  type    = string
+  default = "CHANNEL_DISABLED"
+}
+
 variable "maintenance_daily_window_start_time" {
   type    = string
   default = null

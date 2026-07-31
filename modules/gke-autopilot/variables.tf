@@ -173,6 +173,32 @@ variable "enable_backup_agent" {
   default     = false
 }
 
+variable "enable_secret_manager_addon" {
+  description = "Enable the Secret Manager add-on."
+  type        = bool
+  default     = false
+}
+
+variable "dns_endpoint_config" {
+  description = "Optional DNS control-plane endpoint access configuration."
+  type = object({
+    allow_external_traffic = optional(bool, false)
+  })
+  default = null
+}
+
+variable "enable_ip_access" {
+  description = "Whether the control plane IP endpoint remains enabled."
+  type        = bool
+  default     = true
+}
+
+variable "gateway_api_channel" {
+  description = "GKE Gateway API channel, or CHANNEL_DISABLED."
+  type        = string
+  default     = "CHANNEL_DISABLED"
+}
+
 variable "maintenance_daily_window_start_time" {
   description = "Daily maintenance start time in HH:MM UTC."
   type        = string

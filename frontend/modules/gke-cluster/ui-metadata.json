@@ -226,6 +226,33 @@
         ]
       },
       {
+        "id": "control-plane-access",
+        "label": "Control-plane DNS access",
+        "description": "Configure DNS and IP access to the GKE control plane.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "dns_endpoint_config",
+            "label": "DNS endpoint configuration",
+            "type": "object",
+            "fields": [
+              {
+                "id": "allow_external_traffic",
+                "label": "Allow external traffic through DNS",
+                "type": "boolean",
+                "default": false
+              }
+            ]
+          },
+          {
+            "id": "enable_ip_access",
+            "label": "Enable control-plane IP endpoint",
+            "type": "boolean",
+            "default": true
+          }
+        ]
+      },
+      {
         "id": "security",
         "label": "Security and identity",
         "collapsed": true,
@@ -290,6 +317,32 @@
             "label": "Enable Backup for GKE agent",
             "type": "boolean",
             "default": false
+          },
+          {
+            "id": "enable_filestore_csi_driver",
+            "label": "Enable Filestore CSI Driver",
+            "description": "Allow Filestore instances to be mounted as Kubernetes volumes.",
+            "type": "boolean",
+            "default": false,
+            "depends_on": { "field": "mode", "value": "standard" }
+          },
+          {
+            "id": "enable_secret_manager_addon",
+            "label": "Enable Secret Manager add-on",
+            "description": "Enable the Secret Manager CSI integration for workloads.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "gateway_api_channel",
+            "label": "Gateway API channel",
+            "description": "Enable the GKE Gateway API controller on a supported release channel.",
+            "type": "select",
+            "default": "CHANNEL_DISABLED",
+            "options": [
+              { "value": "CHANNEL_DISABLED", "label": "Disabled" },
+              { "value": "CHANNEL_STANDARD", "label": "Standard" }
+            ]
           },
           {
             "id": "maintenance_daily_window_start_time",
@@ -427,13 +480,45 @@
               { "id": "auto_upgrade", "label": "Enable automatic upgrade", "type": "boolean", "default": true },
               { "id": "max_surge", "label": "Maximum surge nodes", "type": "number", "default": 1, "validation": { "min": 0 } },
               { "id": "max_unavailable", "label": "Maximum unavailable nodes", "type": "number", "default": 0, "validation": { "min": 0 } },
-              { "id": "service_account", "label": "Node service account", "type": "text" },
+              {
+                "id": "service_account",
+                "label": "Node service account",
+                "description": "The IAM service account attached to nodes in this pool.",
+                "type": "select",
+                "data_source": {
+                  "resource": "iam.serviceAccounts",
+                  "params": { "project_id": { "from_field": "project_id" } },
+                  "display": { "value_key": "email", "label_key": "email", "description_key": "displayName" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "oauth_scopes",
+                "label": "Access scopes",
+                "description": "OAuth access scopes granted to Compute Engine VMs in this node pool.",
+                "type": "list",
+                "default": ["https://www.googleapis.com/auth/cloud-platform"]
+              },
               { "id": "labels", "label": "Node labels", "type": "map", "default": {} },
               { "id": "tags", "label": "Network tags", "type": "list", "default": [] },
               { "id": "metadata", "label": "Instance metadata", "type": "map", "default": { "disable-legacy-endpoints": "true" } },
               { "id": "enable_secure_boot", "label": "Enable Secure Boot", "type": "boolean", "default": true },
               { "id": "enable_integrity_monitoring", "label": "Enable integrity monitoring", "type": "boolean", "default": true },
-              { "id": "max_pods_per_node", "label": "Maximum pods per node", "type": "number" }
+              {
+                "id": "enable_image_streaming",
+                "label": "Enable image streaming",
+                "description": "Stream eligible container images from Artifact Registry or Container Registry to reduce node startup time.",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "max_pods_per_node",
+                "label": "Maximum pods per node",
+                "description": "Maximum number of Pods scheduled on each node in this pool.",
+                "type": "number",
+                "validation": { "min": 1 }
+              }
             ]
           }
         ]

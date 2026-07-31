@@ -37,6 +37,10 @@ resource "google_container_node_pool" "this" {
     tags            = var.tags
     metadata        = var.metadata
 
+    gcfs_config {
+      enabled = var.enable_image_streaming
+    }
+
     shielded_instance_config {
       enable_secure_boot          = var.enable_secure_boot
       enable_integrity_monitoring = var.enable_integrity_monitoring

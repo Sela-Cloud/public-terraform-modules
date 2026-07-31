@@ -137,3 +137,9 @@ variable "max_pods_per_node" {
   type    = number
   default = null
 }
+
+variable "enable_image_streaming" {
+  description = "Enable GKE image streaming (GCFS) for this node pool."
+  type        = bool
+  default     = false
+}

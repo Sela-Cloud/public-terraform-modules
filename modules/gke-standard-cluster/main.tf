@@ -32,6 +32,41 @@ resource "google_container_cluster" "this" {
     gke_backup_agent_config {
       enabled = var.enable_backup_agent
     }
+    gcp_filestore_csi_driver_config {
+      enabled = var.enable_filestore_csi_driver
+    }
+  }
+
+  dynamic "secret_manager_config" {
+    for_each = var.enable_secret_manager_addon ? [1] : []
+    content {
+      enabled = true
+    }
+  }
+
+  dynamic "control_plane_endpoints_config" {
+    for_each = var.dns_endpoint_config != null || !var.enable_ip_access ? [1] : []
+    content {
+      dynamic "dns_endpoint_config" {
+        for_each = var.dns_endpoint_config != null ? [var.dns_endpoint_config] : []
+        content {
+          allow_external_traffic = dns_endpoint_config.value.allow_external_traffic
+        }
+      }
+      dynamic "ip_endpoints_config" {
+        for_each = !var.enable_ip_access ? [1] : []
+        content {
+          enabled = false
+        }
+      }
+    }
+  }
+
+  dynamic "gateway_api_config" {
+    for_each = var.gateway_api_channel != "CHANNEL_DISABLED" ? [1] : []
+    content {
+      channel = var.gateway_api_channel
+    }
   }
 
   dynamic "network_policy" {

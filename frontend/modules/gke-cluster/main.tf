@@ -11,7 +11,7 @@ locals {
 }
 
 module "gke_autopilot" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-autopilot?ref=v0.4.5"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-autopilot?ref=v0.4.7"
 
   for_each = {
     for key, cluster in var.gke_cluster : key => cluster
@@ -48,6 +48,10 @@ module "gke_autopilot" {
   monitoring_components               = each.value.monitoring_components
   fleet_project                       = try(trimspace(each.value.fleet_project), "") != "" ? each.value.fleet_project : null
   enable_backup_agent                 = each.value.enable_backup_agent
+  enable_secret_manager_addon         = each.value.enable_secret_manager_addon
+  dns_endpoint_config                 = each.value.dns_endpoint_config
+  enable_ip_access                    = each.value.enable_ip_access
+  gateway_api_channel                 = each.value.gateway_api_channel
   maintenance_daily_window_start_time = try(trimspace(each.value.maintenance_daily_window_start_time), "") != "" ? each.value.maintenance_daily_window_start_time : null
   maintenance_exclusions = {
     for exclusion in each.value.maintenance_exclusions : exclusion.name => {
@@ -59,7 +63,7 @@ module "gke_autopilot" {
 }
 
 module "gke_standard_cluster" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.4.5"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.4.7"
 
   for_each = {
     for key, cluster in var.gke_cluster : key => cluster
@@ -96,6 +100,11 @@ module "gke_standard_cluster" {
   monitoring_components               = each.value.monitoring_components
   fleet_project                       = try(trimspace(each.value.fleet_project), "") != "" ? each.value.fleet_project : null
   enable_backup_agent                 = each.value.enable_backup_agent
+  enable_filestore_csi_driver         = each.value.enable_filestore_csi_driver
+  enable_secret_manager_addon         = each.value.enable_secret_manager_addon
+  dns_endpoint_config                 = each.value.dns_endpoint_config
+  enable_ip_access                    = each.value.enable_ip_access
+  gateway_api_channel                 = each.value.gateway_api_channel
   maintenance_daily_window_start_time = try(trimspace(each.value.maintenance_daily_window_start_time), "") != "" ? each.value.maintenance_daily_window_start_time : null
   maintenance_exclusions = {
     for exclusion in each.value.maintenance_exclusions : exclusion.name => {
@@ -109,7 +118,7 @@ module "gke_standard_cluster" {
 }
 
 module "gke_standard_node_pool" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-node-pool?ref=v0.4.5"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-node-pool?ref=v0.4.7"
   for_each = local.standard_node_pools
 
   project_id         = each.value.project_id
@@ -142,4 +151,5 @@ module "gke_standard_node_pool" {
   enable_integrity_monitoring = each.value.enable_integrity_monitoring
   enable_workload_identity    = var.gke_cluster[each.value.cluster_key].enable_workload_identity
   max_pods_per_node           = each.value.max_pods_per_node
+  enable_image_streaming      = each.value.enable_image_streaming
 }
