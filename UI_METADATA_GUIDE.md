@@ -299,6 +299,7 @@ Populates select dropdowns dynamically by querying GCP backend endpoints (e.g., 
 | `compute.subnetworks` (or `compute.subnets`) | Subnets in project/region/vpc | `project`, `vpc` / `network`, `region` / `location` | `name`, `ipCidrRange`, `region`, `network` |
 | `compute.zones` | Available zones in region | `project`, `region` / `location` | `name`, `region`, `status` |
 | `iam.serviceAccounts` (or `iam.sa`) | Service Accounts in project | `project` / `project_id` | `email`, `displayName`, `uniqueId` |
+| `iam.roles` (or `iam.customRoles`) | IAM Roles (Predefined & Custom) | `project` / `project_id`, `scope` (`predefined`, `custom`, `all`) | `name`, `title`, `description`, `type` |
 | `compute.disks` | Persistent Disks | `project`, `region` / `location`, `zone` | `name`, `sizeGb`, `type`, `zone`, `region` |
 | `servicenetworking.psa` | Private Services Access (PSA) | `project`, `vpc` / `network`, `region` / `location` | `name`, `peering`, `address`, `prefixLength` |
 
