@@ -1,0 +1,436 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "cloud-run",
+  "version": "1.0.0",
+  "display": {
+    "label": "Cloud Run",
+    "icon": "cloud-run",
+    "description": "Deploy highly scalable containerized applications on a fully managed serverless platform.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which to deploy Cloud Run services.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "cloud_run",
+    "key_field": "service_name",
+    "key_label": "Service Name",
+    "key_description": "The globally unique name of the Cloud Run service. Used as map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core settings for the Cloud Run service.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "service_name",
+            "label": "Service Name",
+            "type": "text",
+            "required": true,
+            "validation": {
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter, contain lowercase letters, numbers, and hyphens."
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": {
+                "project": { "from_field": "project_id" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            },
+            "allow_custom": true
+          },
+          {
+            "id": "ingress",
+            "label": "Ingress Traffic",
+            "type": "select",
+            "required": true,
+            "default": "INGRESS_TRAFFIC_ALL",
+            "options": [
+              {
+                "value": "INGRESS_TRAFFIC_ALL",
+                "label": "Allow All Traffic",
+                "description": "Accept all external and internal traffic."
+              },
+              {
+                "value": "INGRESS_TRAFFIC_INTERNAL_ONLY",
+                "label": "Allow Internal Only",
+                "description": "Only allow traffic from the VPC network."
+              },
+              {
+                "value": "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER",
+                "label": "Allow Internal and Cloud Load Balancing",
+                "description": "Only allow traffic from internal VPC and Cloud Load Balancing."
+              }
+            ]
+          },
+          {
+            "id": "create_service_account",
+            "label": "Create Dedicated Service Account",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "service_account",
+            "label": "Existing Service Account",
+            "type": "select",
+            "depends_on": {
+              "field": "create_service_account",
+              "value": false,
+              "operator": "eq"
+            },
+            "data_source": {
+              "resource": "iam.serviceAccounts",
+              "params": {
+                "project": { "from_field": "project_id" }
+              },
+              "display": {
+                "value_key": "email",
+                "label_key": "email",
+                "description_key": "displayName"
+              },
+              "allow_custom": true
+            }
+          },
+          {
+            "id": "cloud_run_deletion_protection",
+            "label": "Enable Deletion Protection",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "containers",
+        "label": "Containers",
+        "description": "Define the containers to run in this service.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "containers",
+            "label": "Container Definitions",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "container_name",
+                "label": "Container Name",
+                "type": "text",
+                "description": "Optional name for the container (useful for multi-container deployments)."
+              },
+              {
+                "id": "container_image",
+                "label": "Container Image URL",
+                "type": "text",
+                "required": true,
+                "placeholder": "us-docker.pkg.dev/cloudrun/container/hello:latest"
+              },
+              {
+                "id": "working_dir",
+                "label": "Working Directory",
+                "type": "text",
+                "nullable": true
+              },
+              {
+                "id": "ports",
+                "label": "Port Configuration",
+                "type": "object",
+                "fields": [
+                  {
+                    "id": "container_port",
+                    "label": "Container Port",
+                    "type": "number",
+                    "default": 8080
+                  },
+                  {
+                    "id": "name",
+                    "label": "Port Name",
+                    "type": "text",
+                    "default": "http1"
+                  }
+                ]
+              },
+              {
+                "id": "env_vars",
+                "label": "Environment Variables",
+                "type": "map"
+              },
+              {
+                "id": "container_command",
+                "label": "Container Command",
+                "type": "list",
+                "description": "Overrides the ENTRYPOINT of the container.",
+                "nullable": true
+              },
+              {
+                "id": "container_args",
+                "label": "Container Args",
+                "type": "list",
+                "description": "Overrides the CMD of the container.",
+                "nullable": true
+              },
+              {
+                "id": "resources",
+                "label": "Resources",
+                "type": "object",
+                "fields": [
+                  {
+                    "id": "limits",
+                    "label": "Resource Limits",
+                    "type": "object",
+                    "fields": [
+                      {
+                        "id": "cpu",
+                        "label": "CPU Limit",
+                        "type": "text",
+                        "default": "1000m",
+                        "placeholder": "1000m or 1"
+                      },
+                      {
+                        "id": "memory",
+                        "label": "Memory Limit",
+                        "type": "text",
+                        "default": "512Mi",
+                        "placeholder": "512Mi or 1Gi"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "cpu_idle",
+                    "label": "CPU Idle Allocation",
+                    "type": "boolean",
+                    "description": "If true, CPU is only allocated during request processing.",
+                    "default": true
+                  },
+                  {
+                    "id": "startup_cpu_boost",
+                    "label": "Startup CPU Boost",
+                    "type": "boolean",
+                    "default": false
+                  }
+                ]
+              },
+              {
+                "id": "depends_on_container",
+                "label": "Depends On (Startup Order)",
+                "type": "list",
+                "description": "List of container names that must start before this container.",
+                "nullable": true
+              },
+              {
+                "id": "volume_mounts",
+                "label": "Volume Mounts",
+                "type": "repeatable",
+                "fields": [
+                  {
+                    "id": "name",
+                    "label": "Volume Name",
+                    "type": "text",
+                    "required": true
+                  },
+                  {
+                    "id": "mount_path",
+                    "label": "Mount Path",
+                    "type": "text",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "scaling",
+        "label": "Scaling & Concurrency",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "scaling",
+            "label": "Scaling Limits",
+            "type": "object",
+            "fields": [
+              {
+                "id": "min_instance_count",
+                "label": "Minimum Instances",
+                "type": "number",
+                "default": 1
+              },
+              {
+                "id": "max_instance_count",
+                "label": "Maximum Instances",
+                "type": "number",
+                "default": 5
+              }
+            ]
+          },
+          {
+            "id": "max_instance_request_concurrency",
+            "label": "Max Request Concurrency per Instance",
+            "type": "text",
+            "default": "80"
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Networking (VPC Access)",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "vpc_access",
+            "label": "VPC Access Configuration",
+            "type": "object",
+            "nullable": true,
+            "fields": [
+              {
+                "id": "connector",
+                "label": "Serverless VPC Access Connector",
+                "type": "text",
+                "placeholder": "projects/PROJECT/locations/REGION/connectors/CONNECTOR"
+              },
+              {
+                "id": "egress",
+                "label": "Egress Traffic Routing",
+                "type": "select",
+                "options": [
+                  {
+                    "value": "PRIVATE_RANGES_ONLY",
+                    "label": "Private Ranges Only"
+                  },
+                  {
+                    "value": "ALL_TRAFFIC",
+                    "label": "All Traffic"
+                  }
+                ]
+              },
+              {
+                "id": "network_interfaces",
+                "label": "Direct VPC Egress Network Interfaces",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "network",
+                    "label": "Network",
+                    "type": "text"
+                  },
+                  {
+                    "id": "subnetwork",
+                    "label": "Subnetwork",
+                    "type": "text"
+                  },
+                  {
+                    "id": "tags",
+                    "label": "Network Tags",
+                    "type": "list"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced Settings",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "service_labels",
+            "label": "Service Labels",
+            "type": "map"
+          },
+          {
+            "id": "template_annotations",
+            "label": "Template Annotations",
+            "type": "map"
+          },
+          {
+            "id": "volumes",
+            "label": "Volumes",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Volume Name",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "secret",
+                "label": "Secret Volume",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "secret",
+                    "label": "Secret Name",
+                    "type": "text",
+                    "required": true
+                  },
+                  {
+                    "id": "default_mode",
+                    "label": "Default File Mode",
+                    "type": "text",
+                    "nullable": true
+                  }
+                ]
+              },
+              {
+                "id": "cloud_sql_instance",
+                "label": "Cloud SQL Instance Volume",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "instances",
+                    "label": "SQL Instances",
+                    "type": "list"
+                  }
+                ]
+              },
+              {
+                "id": "gcs",
+                "label": "Cloud Storage Volume",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "bucket",
+                    "label": "Bucket Name",
+                    "type": "text",
+                    "required": true
+                  },
+                  {
+                    "id": "read_only",
+                    "label": "Read Only",
+                    "type": "boolean",
+                    "default": false,
+                    "nullable": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
