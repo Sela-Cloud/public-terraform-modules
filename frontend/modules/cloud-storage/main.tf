@@ -1,5 +1,5 @@
 module "gcs_bucket" {
-  source             = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-storage?ref=v0.3.6"
+  source             = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-storage?ref=v0.4.4"
   project_id         = var.project_id
   for_each           = var.gcs_bucket
   name               = each.value.app_name

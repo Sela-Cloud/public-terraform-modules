@@ -2,7 +2,6 @@ variable "compute_instance" {
   description = "The details of the Compute Instance."
   type = map(object({
     machine_name            = string,
-    project_id              = string,
     region                  = string,
     enable_external_ip      = bool,
     generate_internal_ip    = bool,
@@ -32,7 +31,6 @@ variable "compute_instance" {
   default = {
     compute_insatnce = {
       machine_name            = ""
-      project_id              = ""
       region                  = "asia-south2"
       enable_external_ip      = false
       generate_internal_ip    = true
@@ -59,4 +57,9 @@ variable "compute_instance" {
       enable_data_disk = false
     }
   }
+}
+
+variable "project" {
+  description = "The GCP Project ID."
+  type        = string
 }

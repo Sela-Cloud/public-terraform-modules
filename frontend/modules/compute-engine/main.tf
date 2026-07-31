@@ -3,9 +3,9 @@
  *****************************************/
 
 module "compute_instance" {
-  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/compute-engine?ref=v0.3.6"
+  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/compute-engine?ref=v0.4.4"
   for_each                = var.compute_instance
-  project                 = each.value.project_id
+  project                 = var.project
   region                  = each.value.region
   instance_count          = each.value.instance_count
   machine_name            = each.value.machine_name
