@@ -1,0 +1,61 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "private-service-access",
+  "version": "1.0.0",
+  "display": {
+    "label": "Private Service Access",
+    "icon": "vpc-network",
+    "description": "Shared VPC peering range and Service Networking connection for managed services",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "private_service_access",
+    "key_field": "name",
+    "key_label": "Reserved range name",
+    "key_description": "Unique name for the VPC peering range.",
+    "sections": [
+      {
+        "id": "network",
+        "label": "VPC connection",
+        "fields": [
+          {
+            "id": "network",
+            "label": "VPC network",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "prefix_length",
+            "label": "Reserved range prefix length",
+            "description": "Use /20 for a shared multi-service range. Cloud SQL consumes addresses from this range.",
+            "type": "number",
+            "default": 20,
+            "validation": { "min": 16, "max": 24 }
+          },
+          {
+            "id": "address",
+            "label": "Starting address (optional)",
+            "description": "Leave empty for Google Cloud to select a non-overlapping range.",
+            "type": "text",
+            "nullable": true
+          }
+        ]
+      }
+    ]
+  }
+}
