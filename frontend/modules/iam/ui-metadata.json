@@ -1,0 +1,173 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "iam",
+  "version": "1.0.0",
+  "display": {
+    "label": "IAM & Security",
+    "icon": "iam",
+    "description": "Manage Service Accounts, Custom Roles, and Project/Resource level IAM role bindings.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which IAM resources will be managed.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "iam_configs",
+    "key_field": "config_name",
+    "key_label": "Configuration ID",
+    "key_description": "Unique key identifier for this IAM configuration entry.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Principal Selection",
+        "description": "Specify the principal (New Service Account, Existing Service Account, or User/Group Email) for this IAM configuration.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "config_name",
+            "label": "Configuration ID",
+            "type": "text",
+            "required": true,
+            "validation": {
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter, contain lowercase letters, numbers, and hyphens."
+            }
+          },
+          {
+            "id": "service_account_name",
+            "label": "New Service Account ID",
+            "type": "text",
+            "placeholder": "my-app-sa",
+            "description": "Account ID for a NEW service account to create. Leave blank if using an existing SA or user email.",
+            "nullable": true
+          },
+          {
+            "id": "existing_service_account_email",
+            "label": "Existing Service Account Email",
+            "type": "select",
+            "description": "Select an existing Service Account. Do not set if creating a new Service Account.",
+            "data_source": {
+              "resource": "iam.serviceAccounts",
+              "params": {
+                "project": { "from_field": "project_id" }
+              },
+              "display": {
+                "value_key": "email",
+                "label_key": "email",
+                "description_key": "displayName"
+              }
+            },
+            "allow_custom": true,
+            "nullable": true
+          },
+          {
+            "id": "user_email_address",
+            "label": "User / Group Principal Email",
+            "type": "text",
+            "placeholder": "user:admin@example.com",
+            "description": "Direct principal email (e.g., user:john@example.com or group:devs@example.com). Only set when NOT using a Service Account.",
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "roles",
+        "label": "Project-Level Roles",
+        "description": "Project-level IAM roles assigned to the principal.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "project_level_roles",
+            "label": "Project Roles",
+            "type": "list",
+            "description": "IAM roles (e.g., roles/viewer, roles/storage.objectAdmin) granted to the principal at the project level.",
+            "data_source": {
+              "resource": "iam.roles",
+              "params": {
+                "project": { "from_field": "project_id" },
+                "scope": "all"
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "title",
+                "description_key": "description"
+              }
+            },
+            "allow_custom": true
+          }
+        ]
+      },
+      {
+        "id": "custom_role",
+        "label": "Custom Role Creation",
+        "description": "Optionally define a new custom IAM role for the project.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "custom_role_id",
+            "label": "Custom Role ID",
+            "type": "text",
+            "placeholder": "myCustomRole",
+            "description": "Unique ID for the custom role (e.g. appDeployer). Leave blank if not creating a custom role.",
+            "nullable": true
+          },
+          {
+            "id": "custom_role_permissions",
+            "label": "Custom Role Permissions",
+            "type": "list",
+            "description": "GCP permissions assigned to this custom role (e.g. storage.buckets.get, compute.instances.list)."
+          }
+        ]
+      },
+      {
+        "id": "sa_iam",
+        "label": "Service Account IAM Policy",
+        "description": "Grant other members roles directly ON the created or referenced Service Account.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "iam_members",
+            "label": "Service Account Members",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "member",
+                "label": "Member Principal",
+                "type": "text",
+                "required": true,
+                "placeholder": "user:jane@example.com or serviceAccount:other@project.iam.gserviceaccount.com"
+              },
+              {
+                "id": "role",
+                "label": "Role on Service Account",
+                "type": "select",
+                "required": true,
+                "default": "roles/iam.serviceAccountUser",
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {
+                    "project": { "from_field": "project_id" },
+                    "scope": "all"
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "title",
+                    "description_key": "description"
+                  }
+                },
+                "allow_custom": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
