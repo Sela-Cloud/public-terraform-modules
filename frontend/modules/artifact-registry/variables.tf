@@ -51,7 +51,7 @@ variable "artifact_registry" {
   validation {
     condition = alltrue([
       for repository in values(var.artifact_registry) :
-      repository.vulnerability_scanning_enablement == null || contains(["INHERITED", "DISABLED"], repository.vulnerability_scanning_enablement)
+      try(trimspace(repository.vulnerability_scanning_enablement), "") == "" || contains(["INHERITED", "DISABLED"], repository.vulnerability_scanning_enablement)
     ])
     error_message = "Vulnerability scanning must be INHERITED or DISABLED when configured."
   }
