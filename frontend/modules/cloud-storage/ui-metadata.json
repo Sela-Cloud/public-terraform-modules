@@ -157,7 +157,7 @@
             "label": "Data locations",
             "description": "A list of individual regions that together make up a dual-region bucket. Only applicable for dual-region location types.",
             "type": "list",
-            "required": true,
+            "required": false,
             "default": []
           }
         ]
