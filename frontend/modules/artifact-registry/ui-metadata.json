@@ -1,0 +1,177 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "artifact-registry",
+  "version": "1.0.0",
+  "display": {
+    "label": "Artifact Registry",
+    "icon": "package",
+    "description": "Standard Artifact Registry repositories with cleanup, scanning, and additive IAM access.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "artifact_registry",
+    "key_field": "repository_id",
+    "key_label": "Repository ID",
+    "key_description": "Repository IDs, locations, and formats cannot be changed after creation.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Repository configuration",
+        "fields": [
+          {
+            "id": "repository_id",
+            "label": "Repository ID",
+            "type": "text",
+            "required": true,
+            "placeholder": "application-images",
+            "validation": {
+              "min": 1,
+              "max": 63,
+              "pattern": "^[a-z][a-z0-9-]{0,62}$",
+              "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter."
+            }
+          },
+          {
+            "id": "location",
+            "label": "Location",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "artifactregistry.locations",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "format",
+            "label": "Repository format",
+            "type": "select",
+            "required": true,
+            "default": "DOCKER",
+            "options": [
+              { "value": "DOCKER", "label": "Docker" },
+              { "value": "MAVEN", "label": "Maven" },
+              { "value": "NPM", "label": "npm" },
+              { "value": "PYTHON", "label": "Python" },
+              { "value": "GENERIC", "label": "Generic" }
+            ]
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text",
+            "validation": { "max": 1024 }
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "format-options",
+        "label": "Format options",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "docker_immutable_tags",
+            "label": "Enable immutable Docker tags",
+            "description": "Tags cannot be moved or deleted after creation.",
+            "type": "boolean",
+            "default": false,
+            "depends_on": { "field": "format", "value": "DOCKER" }
+          },
+          {
+            "id": "maven_version_policy",
+            "label": "Maven version policy",
+            "type": "select",
+            "default": "VERSION_POLICY_UNSPECIFIED",
+            "depends_on": { "field": "format", "value": "MAVEN" },
+            "options": [
+              { "value": "VERSION_POLICY_UNSPECIFIED", "label": "Unspecified" },
+              { "value": "RELEASE", "label": "Release only" },
+              { "value": "SNAPSHOT", "label": "Snapshot only" }
+            ]
+          },
+          {
+            "id": "maven_allow_snapshot_overwrites",
+            "label": "Allow Maven snapshot overwrites",
+            "type": "boolean",
+            "default": false,
+            "depends_on": { "field": "format", "value": "MAVEN" }
+          }
+        ]
+      },
+      {
+        "id": "cleanup-security",
+        "label": "Cleanup and security",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "cleanup_policy_dry_run",
+            "label": "Run cleanup policies in dry-run mode",
+            "description": "Keep this enabled until cleanup policy effects have been reviewed.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "cleanup_policies",
+            "label": "Cleanup policies",
+            "type": "repeatable",
+            "fields": [
+              { "id": "id", "label": "Policy ID", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]{0,62}$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
+              { "id": "action", "label": "Action", "type": "select", "required": true, "default": "DELETE", "options": [{ "value": "DELETE", "label": "Delete matching versions" }, { "value": "KEEP", "label": "Keep matching versions" }] },
+              { "id": "tag_state", "label": "Tag state", "type": "select", "default": "ANY", "options": [{ "value": "ANY", "label": "Any" }, { "value": "TAGGED", "label": "Tagged" }, { "value": "UNTAGGED", "label": "Untagged" }] },
+              { "id": "tag_prefixes", "label": "Tag prefixes", "type": "list", "depends_on": { "field": "tag_state", "value": "TAGGED" } },
+              { "id": "package_name_prefixes", "label": "Package name prefixes", "type": "list" },
+              { "id": "version_name_prefixes", "label": "Version name prefixes", "type": "list" },
+              { "id": "older_than", "label": "Older than", "description": "Duration such as 30d or 2592000s.", "type": "text" },
+              { "id": "newer_than", "label": "Newer than", "description": "Duration such as 7d or 604800s.", "type": "text" },
+              { "id": "keep_count", "label": "Keep most recent versions", "description": "Set this instead of age conditions to retain the newest versions.", "type": "number", "validation": { "min": 1 } }
+            ]
+          },
+          {
+            "id": "vulnerability_scanning_enablement",
+            "label": "Vulnerability scanning",
+            "description": "Inherited follows the project or organization setting; disabled opts this repository out.",
+            "type": "select",
+            "nullable": true,
+            "options": [
+              { "value": "INHERITED", "label": "Inherited" },
+              { "value": "DISABLED", "label": "Disabled" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "iam",
+        "label": "Repository IAM",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "iam_bindings",
+            "label": "Additive IAM members",
+            "description": "Each entry grants one member one role without replacing existing access.",
+            "type": "repeatable",
+            "fields": [
+              { "id": "role", "label": "Role", "type": "select", "required": true, "data_source": { "resource": "iam.roles", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
+              { "id": "member", "label": "Member", "description": "For example: user:person@example.com or serviceAccount:name@project.iam.gserviceaccount.com.", "type": "text", "required": true }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

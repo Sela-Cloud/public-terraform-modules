@@ -1,0 +1,107 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "cloud-dns-zone",
+  "version": "1.0.0",
+  "display": {
+    "label": "Cloud DNS Zone",
+    "icon": "network",
+    "description": "Public and private standard managed zones with optional query logging.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "cloud_dns_zone",
+    "key_field": "name",
+    "key_label": "Managed zone name",
+    "key_description": "Managed zone names and DNS names identify the zone in Terraform.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Zone configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Managed zone name",
+            "type": "text",
+            "required": true,
+            "placeholder": "corp-example-com",
+            "validation": { "min": 1, "max": 63, "pattern": "^[a-z][a-z0-9-]{0,62}$", "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter." }
+          },
+          {
+            "id": "dns_name",
+            "label": "DNS name",
+            "description": "Fully qualified DNS suffix ending with a dot, for example example.com.",
+            "type": "text",
+            "required": true,
+            "placeholder": "example.com.",
+            "validation": { "pattern": "^.+\\.$", "pattern_error": "DNS names must end with a trailing dot." }
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility",
+            "type": "select",
+            "required": true,
+            "default": "public",
+            "options": [
+              { "value": "public", "label": "Public" },
+              { "value": "private", "label": "Private" }
+            ]
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text",
+            "validation": { "max": 1024 }
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "private-visibility",
+        "label": "Private zone networks",
+        "description": "Private zones must be associated with one or more VPC networks.",
+        "depends_on": { "field": "visibility", "value": "private" },
+        "fields": [
+          {
+            "id": "private_networks",
+            "label": "VPC networks",
+            "type": "list",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "enable_logging",
+            "label": "Enable DNS query logging",
+            "description": "Writes DNS query logs to Cloud Logging and can increase log volume.",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      }
+    ]
+  }
+}

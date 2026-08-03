@@ -1,0 +1,97 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "cloud-dns-record",
+  "version": "1.0.0",
+  "display": {
+    "label": "Cloud DNS Record",
+    "icon": "network",
+    "description": "Standard Cloud DNS record sets. Deploy the managed zone first.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "cloud_dns_record",
+    "key_field": "record_key",
+    "key_label": "Record identifier",
+    "key_description": "A UI-only identifier. Terraform keys records by DNS name and record type, so a type change is a delete-and-create operation.",
+    "sections": [
+      {
+        "id": "record",
+        "label": "Record configuration",
+        "fields": [
+          {
+            "id": "record_key",
+            "label": "Record identifier",
+            "type": "text",
+            "required": true,
+            "placeholder": "www-a",
+            "validation": { "pattern": "^[a-zA-Z0-9-]{1,63}$", "pattern_error": "Use letters, numbers, and hyphens." }
+          },
+          {
+            "id": "managed_zone",
+            "label": "Managed zone",
+            "description": "Only zones that already exist in Cloud DNS can be selected. Deploy a new zone before its records.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "dns.managedZones",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "cache_ttl": 120
+            }
+          },
+          {
+            "id": "name",
+            "label": "Record name",
+            "description": "Fully qualified record name ending with a dot. It must be inside the selected zone.",
+            "type": "text",
+            "required": true,
+            "placeholder": "www.example.com.",
+            "validation": { "pattern": "^.+\\.$", "pattern_error": "Record names must end with a trailing dot." }
+          },
+          {
+            "id": "type",
+            "label": "Record type",
+            "type": "select",
+            "required": true,
+            "default": "A",
+            "options": [
+              { "value": "A", "label": "A" },
+              { "value": "AAAA", "label": "AAAA" },
+              { "value": "CAA", "label": "CAA" },
+              { "value": "CNAME", "label": "CNAME" },
+              { "value": "MX", "label": "MX" },
+              { "value": "NS", "label": "NS" },
+              { "value": "PTR", "label": "PTR" },
+              { "value": "SRV", "label": "SRV" },
+              { "value": "TXT", "label": "TXT" }
+            ]
+          },
+          {
+            "id": "ttl",
+            "label": "TTL (seconds)",
+            "type": "number",
+            "default": 300,
+            "validation": { "min": 1 }
+          },
+          {
+            "id": "rrdatas",
+            "label": "Record data",
+            "description": "Add one value per record. Use the syntax required by the selected record type.",
+            "type": "list",
+            "required": true,
+            "validation": { "min": 1 }
+          }
+        ]
+      }
+    ]
+  }
+}
