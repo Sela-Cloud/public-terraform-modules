@@ -22,6 +22,7 @@
     "key_field": "name",
     "key_label": "Instance ID",
     "key_description": "Lowercase Cloud SQL instance name and Terraform map key.",
+    "locked_after_create": true,
     "sections": [
       {
         "id": "basics",
@@ -30,6 +31,7 @@
           {
             "id": "region",
             "label": "Region",
+            "locked_after_create": true,
             "type": "select",
             "required": true,
             "data_source": {

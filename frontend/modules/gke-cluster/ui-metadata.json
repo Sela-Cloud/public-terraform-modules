@@ -13,6 +13,7 @@
     "key_field": "name",
     "key_label": "Cluster name",
     "key_description": "RFC 1035 cluster name and Terraform map key.",
+    "locked_after_create": true,
     "sections": [
       {
         "id": "basic",
@@ -29,6 +30,7 @@
           {
             "id": "mode",
             "label": "Cluster mode",
+            "locked_after_create": true,
             "description": "Autopilot manages node infrastructure. Standard exposes node-pool controls.",
             "type": "select",
             "required": true,
@@ -41,6 +43,7 @@
           {
             "id": "region",
             "label": "Region",
+            "locked_after_create": true,
             "type": "select",
             "required": true,
             "data_source": {
@@ -53,6 +56,7 @@
           {
             "id": "location_type",
             "label": "Standard cluster location",
+            "locked_after_create": true,
             "type": "select",
             "default": "regional",
             "depends_on": { "field": "mode", "value": "standard" },
@@ -64,6 +68,7 @@
           {
             "id": "zone",
             "label": "Control-plane zone",
+            "locked_after_create": true,
             "description": "Required only for a Standard zonal cluster.",
             "type": "select",
             "required": true,

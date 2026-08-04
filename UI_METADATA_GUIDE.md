@@ -238,6 +238,7 @@ Supported `type` values:
 | `default` | `any` | Default initial value. |
 | `placeholder` | `string` | Input placeholder text. |
 | `nullable` | `boolean` | Allows setting value to `null` (renders 'None' option). |
+| `locked_after_create` | `boolean` | Disables the field while editing a resource already managed by Terraform; use it for create-time-only values. |
 | `options` | `array` | Options array for `select` type: `[{"value": "...", "label": "...", "description": "..."}]`. |
 | `validation` | `object` | Client validation rules (`min`, `max`, `pattern`, `pattern_error`). |
 | `depends_on` | `object` | Conditional visibility condition based on another field. |

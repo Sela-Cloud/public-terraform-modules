@@ -5,7 +5,7 @@
   "display": {
     "label": "Artifact Registry",
     "icon": "package",
-    "description": "Standard Artifact Registry repositories with cleanup, scanning, and additive IAM access.",
+    "description": "Standard, remote, and virtual Artifact Registry repositories with cleanup, scanning, and additive IAM access.",
     "category": "regional"
   },
   "globals": [
@@ -22,6 +22,7 @@
     "key_field": "repository_id",
     "key_label": "Repository ID",
     "key_description": "Repository IDs, locations, and formats cannot be changed after creation.",
+    "locked_after_create": true,
     "sections": [
       {
         "id": "basics",
@@ -30,6 +31,7 @@
           {
             "id": "repository_id",
             "label": "Repository ID",
+            "locked_after_create": true,
             "type": "text",
             "required": true,
             "placeholder": "application-images",
@@ -43,6 +45,7 @@
           {
             "id": "location",
             "label": "Location",
+            "locked_after_create": true,
             "type": "select",
             "required": true,
             "data_source": {
@@ -56,6 +59,7 @@
           {
             "id": "format",
             "label": "Repository format",
+            "locked_after_create": true,
             "type": "select",
             "required": true,
             "default": "DOCKER",
@@ -64,7 +68,21 @@
               { "value": "MAVEN", "label": "Maven" },
               { "value": "NPM", "label": "npm" },
               { "value": "PYTHON", "label": "Python" },
-              { "value": "GENERIC", "label": "Generic" }
+              { "value": "GENERIC", "label": "Generic" },
+              { "value": "APT", "label": "APT (remote only)" },
+              { "value": "YUM", "label": "YUM (remote only)" }
+            ]
+          },
+          {
+            "id": "mode",
+            "label": "Repository mode",
+            "type": "select",
+            "required": true,
+            "default": "STANDARD_REPOSITORY",
+            "options": [
+              { "value": "STANDARD_REPOSITORY", "label": "Standard" },
+              { "value": "REMOTE_REPOSITORY", "label": "Remote proxy" },
+              { "value": "VIRTUAL_REPOSITORY", "label": "Virtual" }
             ]
           },
           {
@@ -84,6 +102,7 @@
         "id": "format-options",
         "label": "Format options",
         "collapsed": true,
+        "depends_on": { "field": "mode", "value": "STANDARD_REPOSITORY" },
         "fields": [
           {
             "id": "docker_immutable_tags",
@@ -115,6 +134,80 @@
         ]
       },
       {
+        "id": "encryption",
+        "label": "Customer-managed encryption key",
+        "description": "Optional and immutable after repository creation. Phase 2 supports keys in the repository project and location only; cross-project centralized KMS is deferred. The Artifact Registry service agent needs roles/cloudkms.cryptoKeyEncrypterDecrypter on the selected key; deployment verifies this before Terraform runs.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "kms_key_name",
+            "label": "Cloud KMS key",
+            "type": "select",
+            "nullable": true,
+            "data_source": {
+              "resource": "kms.cryptoKeys",
+              "params": { "project_id": { "from_field": "project_id" }, "location": { "from_field": "location" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "remote",
+        "label": "Remote upstream",
+        "description": "Uses an existing Secret Manager secret version when credentials are required. This catalog never creates or stores that secret.",
+        "collapsed": true,
+        "depends_on": { "field": "mode", "value": "REMOTE_REPOSITORY" },
+        "fields": [
+          {
+            "id": "remote_upstream",
+            "label": "Upstream preset",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "DOCKER_HUB", "label": "Docker Hub" },
+              { "value": "MAVEN_CENTRAL", "label": "Maven Central" },
+              { "value": "NPMJS", "label": "npm registry" },
+              { "value": "PYPI", "label": "PyPI" },
+              { "value": "APT", "label": "APT public repository" },
+              { "value": "YUM", "label": "YUM public repository" },
+              { "value": "CUSTOM", "label": "Custom URI" }
+            ]
+          },
+          { "id": "remote_custom_uri", "label": "Custom upstream URI", "type": "text", "placeholder": "https://registry.example.com", "depends_on": { "field": "remote_upstream", "value": "CUSTOM" } },
+          { "id": "remote_apt_repository_base", "label": "APT repository base", "type": "select", "depends_on": { "field": "format", "value": "APT" }, "options": [{ "value": "DEBIAN", "label": "Debian" }, { "value": "UBUNTU", "label": "Ubuntu" }, { "value": "DEBIAN_SNAPSHOT", "label": "Debian Snapshot" }] },
+          { "id": "remote_apt_repository_path", "label": "APT repository path", "type": "text", "placeholder": "debian/dists/stable", "depends_on": { "field": "format", "value": "APT" } },
+          { "id": "remote_yum_repository_base", "label": "YUM repository base", "type": "select", "depends_on": { "field": "format", "value": "YUM" }, "options": [{ "value": "CENTOS", "label": "CentOS" }, { "value": "CENTOS_DEBUG", "label": "CentOS Debug" }, { "value": "CENTOS_VAULT", "label": "CentOS Vault" }, { "value": "CENTOS_STREAM", "label": "CentOS Stream" }, { "value": "ROCKY", "label": "Rocky Linux" }, { "value": "EPEL", "label": "EPEL" }] },
+          { "id": "remote_yum_repository_path", "label": "YUM repository path", "type": "text", "placeholder": "pub/rocky/9/BaseOS/x86_64/os", "depends_on": { "field": "format", "value": "YUM" } },
+          { "id": "remote_credentials_username", "label": "Upstream username", "type": "text" },
+          { "id": "remote_password_secret", "label": "Secret Manager password secret", "type": "select", "data_source": { "resource": "secretmanager.secrets", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
+          { "id": "remote_password_secret_version", "label": "Secret Manager password version", "description": "Only secret version metadata is listed; the password itself is never read by this application.", "type": "select", "data_source": { "resource": "secretmanager.secretVersions", "params": { "project_id": { "from_field": "project_id" }, "secret": { "from_field": "remote_password_secret" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
+          { "id": "disable_upstream_validation", "label": "Disable upstream validation", "description": "Advanced: bypasses Google validation of the upstream and credentials at repository creation.", "type": "boolean", "default": false }
+        ]
+      },
+      {
+        "id": "virtual",
+        "label": "Virtual upstream repositories",
+        "description": "Only live repositories in this project and location are listed. They are already in the same regional Terraform workspace, so no cross-workspace dependency is created.",
+        "collapsed": true,
+        "depends_on": { "field": "mode", "value": "VIRTUAL_REPOSITORY" },
+        "fields": [
+          {
+            "id": "virtual_upstream_policies",
+            "label": "Upstream policies",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              { "id": "id", "label": "Policy ID", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]{0,62}$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
+              { "id": "repository", "label": "Existing upstream repository", "type": "select", "required": true, "data_source": { "resource": "artifactregistry.repositories", "params": { "project_id": { "from_field": "project_id" }, "location": { "from_field": "location" } }, "display": { "value_key": "name", "label_key": "repositoryId", "description_key": "description" }, "cache_ttl": 300 } },
+              { "id": "priority", "label": "Priority", "description": "Higher values are pulled first.", "type": "number", "required": true, "default": 10, "validation": { "min": 1 } }
+            ]
+          }
+        ]
+      },
+      {
         "id": "cleanup-security",
         "label": "Cleanup and security",
         "collapsed": true,
@@ -129,12 +222,13 @@
           {
             "id": "cleanup_policies",
             "label": "Cleanup policies",
+            "description": "For Docker repositories, use TAGGED or UNTAGGED with tag prefixes. For Maven, NPM, Python, and Generic packages, use package/version prefixes and age or most-recent-version rules.",
             "type": "repeatable",
             "fields": [
               { "id": "id", "label": "Policy ID", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]{0,62}$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
               { "id": "action", "label": "Action", "type": "select", "required": true, "default": "DELETE", "options": [{ "value": "DELETE", "label": "Delete matching versions" }, { "value": "KEEP", "label": "Keep matching versions" }] },
               { "id": "tag_state", "label": "Tag state", "type": "select", "default": "ANY", "options": [{ "value": "ANY", "label": "Any" }, { "value": "TAGGED", "label": "Tagged" }, { "value": "UNTAGGED", "label": "Untagged" }] },
-              { "id": "tag_prefixes", "label": "Tag prefixes", "type": "list", "depends_on": { "field": "tag_state", "value": "TAGGED" } },
+              { "id": "tag_prefixes", "label": "Tag prefixes", "description": "Docker tagged versions only.", "type": "list", "depends_on": { "field": "tag_state", "value": "TAGGED" } },
               { "id": "package_name_prefixes", "label": "Package name prefixes", "type": "list" },
               { "id": "version_name_prefixes", "label": "Version name prefixes", "type": "list" },
               { "id": "older_than", "label": "Older than", "description": "Duration such as 30d or 2592000s.", "type": "text" },

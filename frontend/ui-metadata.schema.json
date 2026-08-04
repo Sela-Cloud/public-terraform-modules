@@ -90,6 +90,11 @@
           "type": "string",
           "description": "Help text for the key field."
         },
+        "locked_after_create": {
+          "type": "boolean",
+          "description": "If true, the resource key cannot be changed while editing an existing managed resource.",
+          "default": false
+        },
         "sections": {
           "type": "array",
           "description": "Groups of related fields, rendered as collapsible sections.",
@@ -195,6 +200,11 @@
         },
         "data_source": {
           "$ref": "#/definitions/data_source"
+        },
+        "locked_after_create": {
+          "type": "boolean",
+          "description": "If true, this field is read-only while editing an existing managed resource.",
+          "default": false
         }
       }
     },
