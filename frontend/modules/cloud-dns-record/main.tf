@@ -6,7 +6,7 @@ locals {
 }
 
 module "cloud_dns_record" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-dns-record?ref=v0.5.3"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-dns-record?ref=v0.5.4"
   for_each = local.records_by_name_and_type
 
   project_id           = var.project_id
