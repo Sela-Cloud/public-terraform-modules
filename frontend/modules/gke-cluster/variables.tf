@@ -1,3 +1,7 @@
+variable "project_id" {
+  type = string
+}
+
 variable "gke_cluster" {
   description = "GKE clusters configured through the Sela Deployer catalog."
 

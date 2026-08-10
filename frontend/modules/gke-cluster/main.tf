@@ -18,7 +18,7 @@ module "gke_autopilot" {
     if cluster.mode == "autopilot"
   }
 
-  project_id                          = each.value.project_id
+  project_id                          = var.project_id
   name                                = each.value.name
   location                            = each.value.region
   description                         = each.value.description
@@ -70,7 +70,7 @@ module "gke_standard_cluster" {
     if cluster.mode == "standard"
   }
 
-  project_id                          = each.value.project_id
+  project_id                          = var.project_id
   name                                = each.value.name
   location                            = each.value.location_type == "zonal" ? each.value.zone : each.value.region
   description                         = each.value.description
@@ -121,7 +121,7 @@ module "gke_standard_node_pool" {
   source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-node-pool?ref=v0.5.4"
   for_each = local.standard_node_pools
 
-  project_id         = each.value.project_id
+  project_id         = var.project_id
   name               = each.value.name
   location           = each.value.location
   cluster_name       = module.gke_standard_cluster[each.value.cluster_key].name
