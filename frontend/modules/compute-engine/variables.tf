@@ -27,9 +27,22 @@ variable "compute_instance" {
       disk_size_gb = number,
       disk_type    = string
     })
+    enable_data_disk = optional(bool, false),
+    data_disk = optional(list(object({
+      disk_size_gb = number,
+      disk_type    = string
+    })), null),
+    disk_labels          = optional(map(string), {}),
+    snapshot_policy_name = optional(string, null),
+    enable_shielded_vm   = optional(bool, true),
+    shielded_instance_config = optional(object({
+      enable_secure_boot          = bool,
+      enable_vtpm                 = bool,
+      enable_integrity_monitoring = bool
+    }), null)
   }))
   default = {
-    compute_insatnce = {
+    compute_instance = {
       machine_name            = ""
       region                  = "asia-south2"
       enable_external_ip      = false
@@ -48,8 +61,11 @@ variable "compute_instance" {
       network_tags            = []
       metadata                = {}
       metadata_startup_script = null
-      service_account         = null
-      snapshot_policy_name    = ""
+      snapshot_policy_name    = null
+      service_account = {
+        email  = ""
+        scopes = ["cloud-platform"]
+      }
       boot_disk0_info = {
         disk_size_gb = 10,
         disk_type    = "pd-balanced"

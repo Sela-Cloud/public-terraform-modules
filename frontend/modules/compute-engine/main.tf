@@ -26,4 +26,24 @@ module "compute_instance" {
   service_account         = each.value.service_account
   metadata                = each.value.metadata
   metadata_startup_script = each.value.metadata_startup_script != null ? replace(each.value.metadata_startup_script, "\r", "") : null
+
+  # Data disks. The remote module declares enable_data_disk but never reads it --
+  # it gates purely on data_disk -- so honour the UI toggle here. An empty list
+  # (rather than null) keeps length() safe in the snapshot-policy attachment count.
+  enable_data_disk = each.value.enable_data_disk
+  data_disk        = each.value.enable_data_disk ? coalesce(each.value.data_disk, []) : []
+  disk_labels      = each.value.disk_labels
+
+  # The remote module treats only null as "no snapshot policy"; the UI sends ""
+  # for an untouched text field, which would create a policy with an empty name.
+  snapshot_policy_name = each.value.snapshot_policy_name != "" ? each.value.snapshot_policy_name : null
+
+  # The remote module lookup()s into shielded_instance_config whenever
+  # enable_shielded_vm is true, so it must never be null there.
+  enable_shielded_vm = each.value.enable_shielded_vm
+  shielded_instance_config = coalesce(each.value.shielded_instance_config, {
+    enable_secure_boot          = true
+    enable_vtpm                 = true
+    enable_integrity_monitoring = true
+  })
 }
