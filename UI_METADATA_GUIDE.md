@@ -120,7 +120,8 @@ The `ui-metadata.json` file resides in the root directory of the module and inst
   "display": { ... },
   "globals": [ ... ],
   "resource": { ... },
-  "extras": [ ... ]
+  "extras": [ ... ],
+  "import": { ... }
 }
 ```
 
@@ -133,6 +134,7 @@ The `ui-metadata.json` file resides in the root directory of the module and inst
 | `$schema` | `string` | No | Path to schema definition (e.g., `"../ui-metadata.schema.json"`). |
 | `module` | `string` | **Yes** | Unique module identifier, matching folder name (e.g., `"cloud-storage"`, `"compute-engine"`). |
 | `version` | `string` | **Yes** | Semver string (e.g., `"1.0.0"`). |
+| `import` | `object` | No | Enables importing pre-existing resources into this module. Omit it and the module is create-only. See [`import` Block](#import-block). |
 | `display` | `object` | **Yes** | UI catalog display attributes (label, icon, category, description). |
 | `globals` | `array` | No | Top-level variables (e.g. `project_id`). |
 | `resource` | `object` | **Yes** | Main resource variable definition and section layout. |
@@ -195,6 +197,78 @@ Describes the main repeatable resource variable.
 - `key_label` (`string`, required): Human readable label for the key field.
 - `key_description` (`string`, optional): Help text for the key field.
 - `sections` (`array`, required): Array of `Section` objects.
+
+---
+
+### `import` Block
+
+**Optional.** Declares how an existing cloud resource is adopted into this module. A module
+without it can only create; a module with it also appears in the catalog's *import* mode. See
+[IMPORT_PLAN.md](IMPORT_PLAN.md) for the mechanism.
+
+This block exists because two facts cannot be inferred from outside the module:
+
+1. **The resource address inside the wrapped module.** `main.tf` calls a remote module
+   (`source = "git::…"`), so the real Terraform address of one instance is
+   `module.<variable>["<key>"].<something inside that remote module>`. Only the module author
+   knows the inner part.
+2. **The attribute → field mapping.** A ui-metadata field feeds a module input which feeds a
+   resource attribute, and the names differ along the way (`app_name` → `name` → `name`).
+
+```json
+"import": {
+  "target": "google_storage_bucket.bucket",
+  "id_template": "{project_id}/{app_name}",
+  "identity_fields": ["project_id", "app_name"],
+  "field_map": {
+    "name": "app_name",
+    "location": "location",
+    "storage_class": "storage_class",
+    "uniform_bucket_level_access": "bucket_policy_only"
+  },
+  "ignore": ["force_destroy"],
+  "requires_review": false
+}
+```
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `target` | `string` | **Yes** | Resource address **inside** the wrapped remote module, e.g. `google_storage_bucket.bucket`. Sela Craft prefixes it with `module.<resource.variable>["<key>"]`. Do **not** include that prefix. |
+| `id_template` | `string` | **Yes** | The provider's import ID format, with `{field_id}` placeholders resolved from `identity_fields`. Take it from the provider's import documentation for `target`'s type. |
+| `identity_fields` | `string[]` | **Yes** | The fields needed to build `id_template` uniquely. Every other value is discovered from the live resource. List `project_id` here if the ID needs it — but note it is **resolved from the environment, not asked of the user** (see below). |
+| `field_map` | `object` | No | Resource **attribute** → ui-metadata **field id**, for every field whose names differ. Identically-named fields need no entry. |
+| `ignore` | `string[]` | No | Attributes with no live counterpart, so they can never cause a false mismatch. `force_destroy` is the classic case: it governs Terraform's behaviour, not the resource. |
+| `requires_review` | `boolean` | No | Forces human review of this module's imports regardless of the generic flow. Set it for anything sensitive. Defaults to `false`. |
+
+**Rules**
+
+- Import covers **only the main `module` block** driven by `resource.variable`. Standalone
+  resources in the same `main.tf` (for instance `google_storage_managed_folder_iam_member`) are
+  **not** imported. One import adopts one module instance.
+- `identity_fields` must be a subset of `globals` and section field ids, and must include
+  `resource.key_field` — the key decides the tfvars map entry.
+- **`project_id` is injected from the environment, never entered by the user.** Sela Craft takes
+  it from the environment record, so a user cannot import from a project they have no environment
+  for. Keep it in `identity_fields` when `id_template` needs it; it simply will not be rendered as
+  a form control.
+- Mark identity fields `locked_after_create` where the provider does not allow changing them
+  after the fact. Editing an imported resource's identity would target a different resource.
+- A **partial match is refused.** After writing the discovered values, Sela Craft runs
+  `terraform plan` and requires *N to import, 0 to add, 0 to change, 0 to destroy*. If the live
+  resource uses anything the module does not model, the import fails with the offending
+  attributes named, and nothing is written. Fixing that means extending the module, not relaxing
+  the check — the alternative is an apply that silently reverts a real resource.
+- Therefore `field_map` and `ignore` must be **complete**. An unmapped attribute that the module
+  does model shows up as a spurious diff and blocks every import for that module.
+
+**How to derive `target` and `id_template`**
+
+1. Find the resource in the remote module's source (`source = "git::…//modules/<name>"`) whose
+   type matches what the module provisions.
+2. `target` is that resource's `<type>.<local name>`, exactly as declared there.
+3. `id_template` comes from that resource type's *Import* section in the provider docs.
+   `google_storage_bucket` imports by `{{project}}/{{name}}`, hence
+   `"{project_id}/{app_name}"` using **this module's** field ids.
 
 ---
 
@@ -487,3 +561,11 @@ Before finalizing a module generation task, verify:
 - [ ] `globals` array contains all top-level single variables (e.g. `project_id`).
 - [ ] All field `id`s inside sections match corresponding key attributes inside `variables.tf`.
 - [ ] `main.tf` uses `for_each = var.<resource.variable>` and accesses properties via `each.value.<field_id>`.
+
+If the module supports import (`import` block present):
+- [ ] `import.target` is the address **inside** the wrapped remote module, with no `module.…` prefix.
+- [ ] `import.id_template` matches the provider's documented import ID for that resource type.
+- [ ] `import.identity_fields` includes `resource.key_field` and is sufficient to fill `id_template`.
+- [ ] Every field whose resource attribute name differs from its ui-metadata `id` appears in `field_map`.
+- [ ] Terraform-only attributes (e.g. `force_destroy`) are listed in `ignore`.
+- [ ] `requires_review` is `true` for anything sensitive (IAM, credentials, shared networking).
