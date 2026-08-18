@@ -4,7 +4,6 @@ module "cloud_run_v2" {
   project_id                       = var.project_id
   service_name                     = each.value.service_name
   location                         = each.value.location
-  create_service_account           = each.value.create_service_account
   service_account                  = each.value.service_account
   service_labels                   = each.value.service_labels
   cloud_run_deletion_protection    = each.value.cloud_run_deletion_protection

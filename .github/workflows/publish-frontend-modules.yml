@@ -54,6 +54,24 @@ jobs:
           jq empty frontend/ui-metadata.schema.json
           find frontend/modules -name ui-metadata.json -print0 | xargs -0 -n1 jq empty
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Same checks as the validate-frontend-modules workflow, repeated here so a release
+      # can never publish a catalog that fails them -- in particular, one that violates
+      # the very schema published next to it.
+      - name: Validate metadata against ui-metadata.schema.json
+        shell: bash
+        run: |
+          pip install jsonschema
+          python3 frontend/validate_schema.py
+
+      - name: Validate catalog metadata against Terraform
+        shell: bash
+        run: python3 frontend/validate_metadata.py
+
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive frontend/modules
 

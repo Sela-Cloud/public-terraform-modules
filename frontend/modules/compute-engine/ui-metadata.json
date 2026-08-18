@@ -47,14 +47,6 @@
             "required": true
           },
           {
-            "id": "instance_count",
-            "label": "Instance count",
-            "description": "Number of instances to create.",
-            "type": "number",
-            "required": true,
-            "default": 1
-          },
-          {
             "id": "region",
             "label": "Region",
             "description": "Region where the instance template and instance should be created.",

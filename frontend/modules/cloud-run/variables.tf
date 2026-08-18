@@ -7,7 +7,6 @@ variable "cloud_run" {
   type = map(object({
     service_name                  = string,
     location                      = string,
-    create_service_account        = bool,
     service_account               = string,
     cloud_run_deletion_protection = optional(bool),
     ingress                       = string,

@@ -28,9 +28,6 @@ resource "google_compute_address" "static_internal_ip_address" {
   project      = var.project
   subnetwork   = var.subnetwork
   region       = var.region
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 # #########################
@@ -42,9 +39,6 @@ resource "google_compute_address" "static_external_ip_address" {
   address_type = "EXTERNAL"
   project      = var.project
   region       = var.region
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 ###################
@@ -163,8 +157,7 @@ resource "google_compute_disk" "gce_data_disk" {
   )
   physical_block_size_bytes = 4096
   lifecycle {
-    ignore_changes  = [name]
-    prevent_destroy = true
+    ignore_changes = [name]
   }
 }
 

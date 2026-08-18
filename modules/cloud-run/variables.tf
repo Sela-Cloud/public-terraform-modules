@@ -97,18 +97,6 @@ variable "containers" {
   description = "Map of container images for the service"
 }
 
-variable "create_service_account" {
-  type        = bool
-  description = "Create a new service account for cloud run service"
-  default     = false
-}
-
-variable "service_account_project_roles" {
-  type        = list(string)
-  description = "Roles to grant to the newly created cloud run SA in specified project. Should be used with create_service_account set to true and no input for service_account"
-  default     = []
-}
-
 variable "ingress" {
   type        = string
   description = "Provides the ingress settings for this Service. On output, returns the currently observed ingress settings, or INGRESS_TRAFFIC_UNSPECIFIED if no revision is active."
@@ -312,8 +300,7 @@ variable "timeout" {
 
 variable "service_account" {
   type        = string
-  description = "Email address of the IAM service account associated with the revision of the service"
-  default     = null
+  description = "Email address of a pre-existing IAM service account for the service to run as. Required: this module does not create service accounts. Create one through the IAM module first. If the prometheus sidecar is enabled, that account needs roles/monitoring.metricWriter, which this module no longer grants."
 }
 
 variable "encryption_key" {

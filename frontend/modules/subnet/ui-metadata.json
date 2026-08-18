@@ -88,6 +88,19 @@
             }
           },
           {
+            "id": "reserved_internal_range",
+            "label": "Reserved internal range",
+            "description": "Optional. Allocate the subnet from a Network Connectivity Center internal range instead of a free-form CIDR. Used for Shared VPC and centrally managed IPAM. Cannot be changed after creation.",
+            "type": "text",
+            "nullable": true,
+            "locked_after_create": true,
+            "placeholder": "networkconnectivity.googleapis.com/projects/my-gcp-project/locations/global/internalRanges/my-range",
+            "validation": {
+              "pattern": "^networkconnectivity\\.googleapis\\.com/projects/[^/]+/locations/global/internalRanges/[^/]+$",
+              "pattern_error": "Must be networkconnectivity.googleapis.com/projects/{project}/locations/global/internalRanges/{rangeId}."
+            }
+          },
+          {
             "id": "description",
             "label": "Description",
             "type": "text",
@@ -124,6 +137,32 @@
                 "label": "Global managed proxy"
               }
             ]
+          },
+          {
+            "id": "role",
+            "label": "Proxy subnet role",
+            "description": "Only used when the purpose is a regional managed proxy subnet. ACTIVE is the subnet the region's Envoy-based load balancers draw proxy addresses from; BACKUP is held ready to be promoted or is draining.",
+            "type": "select",
+            "nullable": true,
+            "options": [
+              {
+                "value": "ACTIVE",
+                "label": "Active",
+                "description": "Currently serving Envoy-based load balancers in this region."
+              },
+              {
+                "value": "BACKUP",
+                "label": "Backup",
+                "description": "Standby subnet, ready to be promoted to active or draining."
+              }
+            ],
+            "depends_on": {
+              "field": "purpose",
+              "value": [
+                "REGIONAL_MANAGED_PROXY"
+              ],
+              "operator": "in"
+            }
           },
           {
             "id": "stack_type",

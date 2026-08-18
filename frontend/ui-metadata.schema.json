@@ -4,7 +4,12 @@
   "title": "Terraform UI Metadata",
   "description": "Schema for ui-metadata.json files that define how Terraform module variables are rendered as dynamic UI forms.",
   "type": "object",
-  "required": ["module", "version", "display", "resource"],
+  "required": [
+    "module",
+    "version",
+    "display",
+    "resource"
+  ],
   "additionalProperties": false,
   "properties": {
     "$schema": {
@@ -39,14 +44,37 @@
       "items": {
         "$ref": "#/definitions/extra"
       }
+    },
+    "import": {
+      "$ref": "#/definitions/import"
+    },
+    "satellites": {
+      "type": "array",
+      "description": "Resources this module creates besides the primary one, which have no independent lifecycle and are therefore not separate catalog modules (MODULE_CONTRACT R4). Declaring them lets the UI warn that they are not adopted on import.",
+      "items": {
+        "$ref": "#/definitions/satellite"
+      }
+    },
+    "deprecated": {
+      "type": "boolean",
+      "description": "If true, this module is hidden from the new-request picker but still fully rendered and editable for resources that already use it. Set when a replacement module id supersedes this one (MODULE_CONTRACT R9).",
+      "default": false
+    },
+    "deprecation_note": {
+      "type": "string",
+      "description": "Why this module is deprecated and what replaces it. Shown wherever the module still appears. Only meaningful when `deprecated` is true."
     }
   },
-
   "definitions": {
     "display": {
       "type": "object",
       "description": "How the module appears in the resource catalog UI.",
-      "required": ["label", "icon", "description", "category"],
+      "required": [
+        "label",
+        "icon",
+        "description",
+        "category"
+      ],
       "additionalProperties": false,
       "properties": {
         "label": {
@@ -67,11 +95,15 @@
         }
       }
     },
-
     "resource": {
       "type": "object",
-      "description": "Describes the primary repeatable resource variable — typically a map(object({...})).",
-      "required": ["variable", "key_field", "key_label", "sections"],
+      "description": "Describes the primary repeatable resource variable \u2014 typically a map(object({...})).",
+      "required": [
+        "variable",
+        "key_field",
+        "key_label",
+        "sections"
+      ],
       "additionalProperties": false,
       "properties": {
         "variable": {
@@ -104,10 +136,13 @@
         }
       }
     },
-
     "section": {
       "type": "object",
-      "required": ["id", "label", "fields"],
+      "required": [
+        "id",
+        "label",
+        "fields"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -138,10 +173,13 @@
         }
       }
     },
-
     "field": {
       "type": "object",
-      "required": ["id", "label", "type"],
+      "required": [
+        "id",
+        "label",
+        "type"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -159,7 +197,16 @@
         "type": {
           "type": "string",
           "description": "UI control type.",
-          "enum": ["text", "select", "boolean", "number", "map", "list", "object", "repeatable"]
+          "enum": [
+            "text",
+            "select",
+            "boolean",
+            "number",
+            "map",
+            "list",
+            "object",
+            "repeatable"
+          ]
         },
         "required": {
           "type": "boolean",
@@ -205,13 +252,94 @@
           "type": "boolean",
           "description": "If true, this field is read-only while editing an existing managed resource.",
           "default": false
+        },
+        "ui_only": {
+          "type": "boolean",
+          "description": "If true, this control does not map to a Terraform attribute or global; it only parameterises another field's data_source (e.g., artifact-registry's remote_password_secret). Exempts the field from the CI check that every control maps to an object attribute or a global (MODULE_CONTRACT R6).",
+          "default": false
         }
       }
     },
-
+    "import": {
+      "type": "object",
+      "description": "Declares how an existing cloud resource is adopted into this module. Omit it and the module is create-only.",
+      "required": [
+        "target",
+        "id_template",
+        "identity_fields"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "module": {
+          "type": "string",
+          "description": "Label of the `module` block in main.tf this import targets. Defaults to resource.variable, which is not always right (cloud-run declares module \"cloud_run_v2\" for variable cloud_run). Set it explicitly whenever they differ."
+        },
+        "target": {
+          "type": "string",
+          "description": "Resource address INSIDE the wrapped remote module, e.g. 'google_storage_bucket.bucket'. Must not include the 'module.<label>[\"<key>\"]' prefix, which Sela Craft adds.",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_-]*$"
+        },
+        "id_template": {
+          "type": "string",
+          "description": "The provider's documented import ID format, with {field_id} placeholders resolved from identity_fields."
+        },
+        "identity_fields": {
+          "type": "array",
+          "description": "Field ids needed to build id_template uniquely. Must include resource.key_field. project_id may appear here even though it is injected from the environment rather than entered by the user.",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "field_map": {
+          "type": "object",
+          "description": "Resource attribute name -> ui-metadata field id, for every field whose names differ. Identically-named fields need no entry.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "ignore": {
+          "type": "array",
+          "description": "Attributes with no live counterpart, so they can never cause a false mismatch (e.g., force_destroy).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requires_review": {
+          "type": "boolean",
+          "description": "Forces human review of this module's imports regardless of the generic flow. Set it for anything sensitive.",
+          "default": false
+        }
+      }
+    },
+    "satellite": {
+      "type": "object",
+      "description": "A secondary resource created by this module that has no independent lifecycle (MODULE_CONTRACT R4).",
+      "required": [
+        "address"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "address": {
+          "type": "string",
+          "description": "Terraform address of the satellite inside the wrapped remote module, e.g. 'google_storage_bucket_iam_member.members'."
+        },
+        "driven_by": {
+          "type": "string",
+          "description": "The ui-metadata field id whose value creates these resources, e.g. 'iam_members'. Omit when the module always creates the satellite."
+        },
+        "note": {
+          "type": "string",
+          "description": "Plain-language consequence shown to the user, e.g. 'IAM bindings are not adopted on import; existing bindings stay unmanaged.'"
+        }
+      }
+    },
     "option": {
       "type": "object",
-      "required": ["value", "label"],
+      "required": [
+        "value",
+        "label"
+      ],
       "additionalProperties": false,
       "properties": {
         "value": {
@@ -228,7 +356,6 @@
         }
       }
     },
-
     "validation": {
       "type": "object",
       "description": "Client-side validation rules.",
@@ -252,11 +379,13 @@
         }
       }
     },
-
     "depends_on": {
       "type": "object",
-      "description": "Conditional visibility — show this field only when another field meets a condition.",
-      "required": ["field", "value"],
+      "description": "Conditional visibility \u2014 show this field only when another field meets a condition.",
+      "required": [
+        "field",
+        "value"
+      ],
       "additionalProperties": false,
       "properties": {
         "field": {
@@ -269,16 +398,24 @@
         "operator": {
           "type": "string",
           "description": "Comparison operator. Default: 'eq'.",
-          "enum": ["eq", "neq", "in", "not_in"],
+          "enum": [
+            "eq",
+            "neq",
+            "in",
+            "not_in"
+          ],
           "default": "eq"
         }
       }
     },
-
     "data_source": {
       "type": "object",
-      "description": "Dynamic data source — fetch options from backend at runtime instead of using static options.",
-      "required": ["resource", "params", "display"],
+      "description": "Dynamic data source \u2014 fetch options from backend at runtime instead of using static options.",
+      "required": [
+        "resource",
+        "params",
+        "display"
+      ],
       "additionalProperties": false,
       "properties": {
         "resource": {
@@ -295,7 +432,10 @@
         "display": {
           "type": "object",
           "description": "How to map response items to dropdown options.",
-          "required": ["value_key", "label_key"],
+          "required": [
+            "value_key",
+            "label_key"
+          ],
           "additionalProperties": false,
           "properties": {
             "value_key": {
@@ -324,10 +464,9 @@
         }
       }
     },
-
     "param_source": {
       "type": "object",
-      "description": "Source of a query parameter value — either read from another form field or a static constant.",
+      "description": "Source of a query parameter value \u2014 either read from another form field or a static constant.",
       "additionalProperties": false,
       "properties": {
         "from_field": {
@@ -340,11 +479,14 @@
         }
       }
     },
-
     "extra": {
       "type": "object",
       "description": "A secondary Terraform variable, typically a map(object({...})).",
-      "required": ["variable", "label", "fields"],
+      "required": [
+        "variable",
+        "label",
+        "fields"
+      ],
       "additionalProperties": false,
       "properties": {
         "variable": {

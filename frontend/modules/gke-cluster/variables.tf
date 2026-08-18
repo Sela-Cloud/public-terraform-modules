@@ -7,7 +7,6 @@ variable "gke_cluster" {
 
   type = map(object({
     name                          = string
-    project_id                    = string
     mode                          = string
     region                        = string
     location_type                 = optional(string, "regional")

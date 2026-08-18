@@ -1,0 +1,120 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "cloud-sql-user",
+  "version": "1.0.0",
+  "display": {
+    "label": "Cloud SQL IAM User",
+    "icon": "cloud-sql",
+    "description": "A single Cloud SQL IAM database user on an existing instance, with its own lifecycle",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID that owns the parent Cloud SQL instance.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "cloud_sql_user",
+    "key_field": "user_key",
+    "key_label": "User entry ID",
+    "key_description": "Unique Terraform map key for this database user. Use the instance-user convention, for example orders-db-reporting-sa.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "basics",
+        "label": "User configuration",
+        "description": "Built-in password users are intentionally deferred until the Secret Manager write-only credential workflow is available. The parent Cloud SQL instance must already exist in this environment.",
+        "fields": [
+          {
+            "id": "user_key",
+            "label": "User entry ID",
+            "description": "Unique key for this user entry. Use the instance-user convention, for example orders-db-reporting-sa.",
+            "locked_after_create": true,
+            "type": "text",
+            "required": true,
+            "validation": {
+              "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Use lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "instance_name",
+            "label": "Cloud SQL instance ID",
+            "description": "The Cloud SQL instance this user is created on. Pick from the instances that exist in this project, or type a name if the instance is being created in the same change. The picker shows each instance's engine — it must match the engine selected below.",
+            "locked_after_create": true,
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "cloudsql.instances",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            },
+            "validation": {
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter and contain only lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "engine",
+            "label": "Instance database engine",
+            "description": "Engine of the parent instance. MySQL requires the local email part only as the username.",
+            "type": "select",
+            "required": true,
+            "default": "postgres",
+            "options": [
+              { "value": "postgres", "label": "PostgreSQL" },
+              { "value": "mysql", "label": "MySQL" }
+            ]
+          },
+          {
+            "id": "name",
+            "label": "Database username",
+            "description": "For PostgreSQL, use the full IAM email. For MySQL, use only the local email part before @ and keep it to 32 characters or fewer.",
+            "locked_after_create": true,
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "type",
+            "label": "IAM user type",
+            "type": "select",
+            "required": true,
+            "default": "CLOUD_IAM_USER",
+            "options": [
+              { "value": "CLOUD_IAM_USER", "label": "Cloud IAM user" },
+              { "value": "CLOUD_IAM_SERVICE_ACCOUNT", "label": "Cloud IAM service account" }
+            ]
+          },
+          {
+            "id": "iam_member",
+            "label": "IAM principal",
+            "description": "Use user:email@example.com or serviceAccount:name@project.iam.gserviceaccount.com.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "deletion_policy",
+            "label": "Deletion policy",
+            "type": "select",
+            "default": "ABANDON",
+            "options": [
+              { "value": "ABANDON", "label": "Abandon on Terraform destroy" },
+              { "value": "DELETE", "label": "Delete on Terraform destroy" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

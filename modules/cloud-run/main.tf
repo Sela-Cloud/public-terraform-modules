@@ -1,44 +1,18 @@
-data "google_compute_default_service_account" "default" {
-  count   = local.create_service_account == false && var.service_account == null ? 1 : 0
-  project = var.project_id
-}
-
 locals {
   # Create a map of all environment variables from all containers for easy lookup.
   env_vars_map = merge([for c in var.containers : c.env_vars]...)
 
-  # --- Original locals from the module ---
-  service_account = (
-    var.service_account != null
-    ? var.service_account
-    : (
-      var.create_service_account
-      ? google_service_account.sa[0].email
-      : null
-    )
-  )
-  create_service_account = var.create_service_account ? var.service_account == null : false
+  # This module does not create service accounts. A service account has its own lifecycle and is
+  # created through the dedicated IAM module, so one Cloud Run entry owns exactly one Cloud Run
+  # service (MODULE_CONTRACT R1/R2). It also makes the service importable: the module no longer
+  # wants to create an SA that an existing service already has.
+  service_account = var.service_account
 
-  service_account_prefix = substr("${var.service_name}-${var.location}", 0, 27)
-
-  service_account_output = local.create_service_account ? {
-    id     = google_service_account.sa[0].account_id,
-    email  = google_service_account.sa[0].email,
-    member = google_service_account.sa[0].member
-    } : var.service_account == null ? {
-    id     = data.google_compute_default_service_account.default[0].name,
-    email  = data.google_compute_default_service_account.default[0].email,
-    member = data.google_compute_default_service_account.default[0].member
-    } : {
+  service_account_output = {
     id     = split("@", var.service_account)[0],
     email  = var.service_account,
     member = "serviceAccount:${var.service_account}"
   }
-
-  service_account_project_roles = local.create_service_account ? distinct(concat(
-    var.service_account_project_roles,
-    var.enable_prometheus_sidecar ? ["roles/monitoring.metricWriter"] : []
-  )) : []
 
   ingress_container = try(
     [for container in var.containers : container if length(try(container.ports, {})) > 0][0],
@@ -63,21 +37,6 @@ locals {
     startup_probe  = null
     liveness_probe = null
   }]
-}
-
-resource "google_service_account" "sa" {
-  count        = local.create_service_account ? 1 : 0
-  project      = var.project_id
-  account_id   = "${local.service_account_prefix}-sa"
-  display_name = "Service account for ${var.service_name} in ${var.location}"
-}
-
-resource "google_project_iam_member" "roles" {
-  for_each = toset(local.service_account_project_roles)
-
-  project = var.project_id
-  role    = each.value
-  member  = "serviceAccount:${local.service_account}"
 }
 
 resource "google_cloud_run_v2_service" "main" {
@@ -369,7 +328,6 @@ resource "google_cloud_run_v2_service" "main" {
       tag      = traffic.value.tag
     }
   }
-  depends_on = [google_project_iam_member.roles]
 }
 
 resource "google_cloud_run_v2_service_iam_member" "authorize" {

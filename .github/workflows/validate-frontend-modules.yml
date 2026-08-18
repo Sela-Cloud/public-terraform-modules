@@ -1,0 +1,65 @@
+name: Validate Frontend Modules
+
+# The publish workflow only runs on v* tags, so metadata/HCL drift used to surface at
+# release time. This job runs the same catalog checks on every PR and every push to main.
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "modules/**"
+      - ".github/workflows/validate-frontend-modules.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - "modules/**"
+      - ".github/workflows/validate-frontend-modules.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-frontend-modules-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-catalog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate metadata JSON
+        shell: bash
+        run: |
+          jq empty frontend/ui-metadata.schema.json
+          find frontend/modules -name ui-metadata.json -print0 | xargs -0 -n1 jq empty
+
+      # jq empty above only proves the files are well-formed JSON. This checks them
+      # against the published schema, which is additionalProperties:false throughout.
+      - name: Validate metadata against ui-metadata.schema.json
+        shell: bash
+        run: |
+          pip install jsonschema
+          python3 frontend/validate_schema.py
+
+      - name: Validate catalog metadata against Terraform
+        shell: bash
+        run: python3 frontend/validate_metadata.py
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive frontend/modules

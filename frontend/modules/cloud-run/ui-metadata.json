@@ -48,14 +48,16 @@
             "data_source": {
               "resource": "compute.regions",
               "params": {
-                "project": { "from_field": "project_id" }
+                "project": {
+                  "from_field": "project_id"
+                }
               },
               "display": {
                 "value_key": "name",
                 "label_key": "name"
-              }
-            },
-            "allow_custom": true
+              },
+              "allow_custom": true
+            }
           },
           {
             "id": "ingress",
@@ -82,24 +84,15 @@
             ]
           },
           {
-            "id": "create_service_account",
-            "label": "Create Dedicated Service Account",
-            "type": "boolean",
-            "default": true
-          },
-          {
             "id": "service_account",
             "label": "Existing Service Account",
             "type": "select",
-            "depends_on": {
-              "field": "create_service_account",
-              "value": false,
-              "operator": "eq"
-            },
             "data_source": {
               "resource": "iam.serviceAccounts",
               "params": {
-                "project": { "from_field": "project_id" }
+                "project": {
+                  "from_field": "project_id"
+                }
               },
               "display": {
                 "value_key": "email",
@@ -107,7 +100,9 @@
                 "description_key": "displayName"
               },
               "allow_custom": true
-            }
+            },
+            "required": true,
+            "description": "Pre-existing service account for the service to run as. Create one through the IAM Service Account resource first \u2014 this module no longer creates service accounts. With the Prometheus sidecar enabled it also needs roles/monitoring.metricWriter."
           },
           {
             "id": "cloud_run_deletion_protection",

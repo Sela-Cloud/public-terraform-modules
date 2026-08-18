@@ -9,6 +9,56 @@
     "category": "global"
   },
 
+  "import": {
+    "module": "gcs_bucket",
+    "target": "google_storage_bucket.bucket",
+    "id_template": "{project_id}/{app_name}",
+    "identity_fields": ["project_id", "app_name"],
+    "field_map": {
+      "name": "app_name",
+      "location": "location",
+      "storage_class": "storage_class",
+      "uniform_bucket_level_access": "bucket_policy_only",
+      "labels": "labels",
+      "versioning.enabled": "versioning",
+      "retention_policy": "retention_policy",
+      "soft_delete_policy": "soft_delete_policy",
+      "website": "website",
+      "cors": "cors",
+      "lifecycle_rule": "lifecycle_rules",
+      "custom_placement_config.data_locations": "data_locations"
+    },
+    "ignore": ["force_destroy"],
+    "requires_review": false
+  },
+  "satellites": [
+    {
+      "address": "google_storage_bucket_iam_member.members",
+      "driven_by": "iam_members",
+      "note": "IAM bindings are not adopted on import; existing bindings stay unmanaged. Leaving this list empty produces no Terraform diff, so any IAM already on the bucket is silently kept and never reconciled."
+    },
+    {
+      "address": "google_tags_location_tag_binding.bucket_tag_bindings",
+      "driven_by": "tag_bindings",
+      "note": "Resource-manager tag bindings are not adopted on import. An empty list produces no Terraform diff, so tags already attached to the bucket stay unmanaged and are not removed."
+    },
+    {
+      "address": "google_compute_global_network_endpoint_group.neg",
+      "driven_by": "enable_neg",
+      "note": "Created only when the NEG toggle is on, and named <bucket>-backend-bucket. It is not adopted on import: importing a bucket that already has a NEG leaves the NEG unmanaged, and turning the toggle on afterwards will try to create a second one."
+    },
+    {
+      "address": "google_compute_global_network_endpoint.default-endpoint",
+      "driven_by": "enable_neg",
+      "note": "The FQDN endpoint inside the NEG above, created by the same toggle. Not adopted on import, and destroyed together with the bucket entry."
+    },
+    {
+      "address": "google_storage_managed_folder_iam_member.member",
+      "driven_by": "gcs_managed_folder_iam_bindings",
+      "note": "Declared in the wrapper itself rather than inside the remote module, and keyed by bucket name, so it is shared across every entry in this module's tfvars map. It is never imported, and an empty map produces no Terraform diff, leaving existing managed-folder IAM unmanaged."
+    }
+  ],
+
   "globals": [
     {
       "id": "project_id",

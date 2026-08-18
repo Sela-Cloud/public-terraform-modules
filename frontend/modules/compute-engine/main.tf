@@ -3,11 +3,13 @@
  *****************************************/
 
 module "compute_instance" {
-  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/compute-engine?ref=v0.5.4"
-  for_each                = var.compute_instance
-  project                 = var.project
-  region                  = each.value.region
-  instance_count          = each.value.instance_count
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/compute-engine?ref=v0.5.4"
+  for_each = var.compute_instance
+  project  = var.project
+  region   = each.value.region
+  # One tfvars entry is one VM (MODULE_CONTRACT R1). The remote module still counts on this
+  # input, so it is pinned rather than removed, which keeps addresses at [0].
+  instance_count          = 1
   machine_name            = each.value.machine_name
   can_ip_forward          = each.value.can_ip_forward
   vm_description          = each.value.vm_description

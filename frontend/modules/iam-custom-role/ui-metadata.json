@@ -1,0 +1,60 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "iam-custom-role",
+  "version": "1.0.0",
+  "display": {
+    "label": "IAM Custom Role",
+    "icon": "iam",
+    "description": "A single project-level custom IAM role and the permissions it grants",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the custom role is created.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "iam_custom_role",
+    "key_field": "role_id",
+    "key_label": "Custom Role ID",
+    "key_description": "ID of the custom role, without the projects/{project}/roles/ prefix; also the Terraform map key.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "custom_role",
+        "label": "Custom Role Definition",
+        "description": "Defines one new custom IAM role for the project. The role is created at GA stage with its ID as the title.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "role_id",
+            "label": "Custom Role ID",
+            "type": "text",
+            "required": true,
+            "locked_after_create": true,
+            "placeholder": "appDeployer",
+            "description": "Unique ID for the custom role, without the projects/{project}/roles/ prefix.",
+            "validation": {
+              "min": 3,
+              "max": 64,
+              "pattern": "^[a-zA-Z0-9_.]+$",
+              "pattern_error": "Use only letters, numbers, underscores and periods."
+            }
+          },
+          {
+            "id": "permissions",
+            "label": "Custom Role Permissions",
+            "type": "list",
+            "required": true,
+            "description": "GCP permissions assigned to this custom role (e.g. storage.buckets.get, compute.instances.list)."
+          }
+        ]
+      }
+    ]
+  }
+}

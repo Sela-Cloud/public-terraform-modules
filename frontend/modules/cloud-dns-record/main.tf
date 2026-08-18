@@ -1,13 +1,11 @@
-locals {
-  records_by_name_and_type = {
-    for record in values(var.cloud_dns_record) :
-    "${lower(trimsuffix(record.name, "."))}|${upper(record.type)}" => record
-  }
-}
-
 module "cloud_dns_record" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-dns-record?ref=v0.5.4"
-  for_each = local.records_by_name_and_type
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-dns-record?ref=v0.5.4"
+  # Keyed directly by the tfvars map key so that the Terraform address of one record is
+  # module.cloud_dns_record["<map key>"] and can be derived rather than declared (IMPORT_PLAN R10).
+  # The previous local re-keyed by "name|type" via values(), which discarded the map key entirely
+  # and made the address unreachable from the metadata. Uniqueness of name+type is now asserted in
+  # variables.tf, where a collision fails loudly instead of one record silently overwriting another.
+  for_each = var.cloud_dns_record
 
   project_id           = var.project_id
   managed_zone         = each.value.managed_zone

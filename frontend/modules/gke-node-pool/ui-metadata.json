@@ -1,0 +1,243 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "gke-node-pool",
+  "version": "1.0.0",
+  "display": {
+    "label": "GKE Node Pool",
+    "icon": "gke-cluster",
+    "description": "A single node pool on an existing GKE Standard cluster, with its own lifecycle",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID that owns the parent GKE Standard cluster.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "gke_node_pool",
+    "key_field": "node_pool_key",
+    "key_label": "Node pool entry ID",
+    "key_description": "Unique Terraform map key for this node pool. Use the cluster-pool convention, for example prod-gke-batch-pool.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Node pool and parent cluster",
+        "description": "The parent GKE Standard cluster must already exist in this environment. Autopilot clusters do not take node pools.",
+        "fields": [
+          {
+            "id": "node_pool_key",
+            "label": "Node pool entry ID",
+            "description": "Unique key for this node pool entry. Use the cluster-pool convention, for example prod-gke-batch-pool.",
+            "locked_after_create": true,
+            "type": "text",
+            "required": true,
+            "validation": {
+              "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Use lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "cluster_name",
+            "label": "GKE cluster name",
+            "description": "The GKE Standard cluster this node pool is attached to. Pick from the clusters in this project, or type a name if the cluster is being created in the same change. Each entry shows its location — copy that into the field below. Autopilot clusters are labelled as such: they manage their own node pools, so adding one is rejected.",
+            "locked_after_create": true,
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "container.clusters",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            },
+            "validation": {
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter and contain only lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "location",
+            "label": "Cluster location",
+            "description": "The parent cluster's location: its region for a regional cluster, or its control-plane zone for a zonal cluster.",
+            "locked_after_create": true,
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "name",
+            "label": "Node pool name",
+            "locked_after_create": true,
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "enable_workload_identity",
+            "label": "Enable Workload Identity metadata",
+            "description": "Must match the parent cluster's Workload Identity setting.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "node_locations",
+            "label": "Node locations",
+            "type": "list",
+            "default": [],
+            "data_source": {
+              "resource": "compute.zones",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "location" }
+              },
+              "display": { "value_key": "name", "label_key": "name" },
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "nodes",
+        "label": "Node configuration",
+        "fields": [
+          {
+            "id": "machine_type",
+            "label": "Machine type",
+            "type": "select",
+            "default": "e2-medium",
+            "data_source": {
+              "resource": "compute.machineTypes",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "zone": { "from_field": "node_locations" }
+              },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "disk_size_gb", "label": "Disk size (GB)", "type": "number", "default": 100, "validation": { "min": 10 } },
+          {
+            "id": "disk_type",
+            "label": "Disk type",
+            "type": "select",
+            "default": "pd-balanced",
+            "options": [
+              { "value": "pd-standard", "label": "Standard persistent disk" },
+              { "value": "pd-balanced", "label": "Balanced persistent disk" },
+              { "value": "pd-ssd", "label": "SSD persistent disk" }
+            ]
+          },
+          {
+            "id": "image_type",
+            "label": "Node image type",
+            "type": "select",
+            "default": "COS_CONTAINERD",
+            "options": [
+              { "value": "COS_CONTAINERD", "label": "Container-Optimized OS with containerd" },
+              { "value": "UBUNTU_CONTAINERD", "label": "Ubuntu with containerd" }
+            ]
+          },
+          { "id": "spot", "label": "Use Spot VMs", "type": "boolean", "default": false },
+          {
+            "id": "service_account",
+            "label": "Node service account",
+            "description": "The IAM service account attached to nodes in this pool.",
+            "type": "select",
+            "data_source": {
+              "resource": "iam.serviceAccounts",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "email", "label_key": "email", "description_key": "displayName" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "oauth_scopes",
+            "label": "Access scopes",
+            "description": "OAuth access scopes granted to Compute Engine VMs in this node pool.",
+            "type": "list",
+            "default": ["https://www.googleapis.com/auth/cloud-platform"]
+          },
+          {
+            "id": "max_pods_per_node",
+            "label": "Maximum pods per node",
+            "description": "Maximum number of Pods scheduled on each node in this pool.",
+            "type": "number",
+            "validation": { "min": 1 }
+          }
+        ]
+      },
+      {
+        "id": "scaling",
+        "label": "Scaling and upgrades",
+        "fields": [
+          { "id": "initial_node_count", "label": "Initial node count", "type": "number", "default": 1, "validation": { "min": 1 } },
+          { "id": "autoscaling_enabled", "label": "Enable autoscaling", "type": "boolean", "default": true },
+          { "id": "min_node_count", "label": "Minimum nodes", "type": "number", "default": 1, "depends_on": { "field": "autoscaling_enabled", "value": true }, "validation": { "min": 0 } },
+          { "id": "max_node_count", "label": "Maximum nodes", "type": "number", "default": 3, "depends_on": { "field": "autoscaling_enabled", "value": true }, "validation": { "min": 1 } },
+          { "id": "auto_repair", "label": "Enable automatic repair", "type": "boolean", "default": true },
+          { "id": "auto_upgrade", "label": "Enable automatic upgrade", "type": "boolean", "default": true },
+          { "id": "max_surge", "label": "Maximum surge nodes", "type": "number", "default": 1, "validation": { "min": 0 } },
+          { "id": "max_unavailable", "label": "Maximum unavailable nodes", "type": "number", "default": 0, "validation": { "min": 0 } }
+        ]
+      },
+      {
+        "id": "metadata-security",
+        "label": "Labels, taints and node security",
+        "collapsed": true,
+        "fields": [
+          { "id": "labels", "label": "Node labels", "type": "map", "default": {} },
+          { "id": "tags", "label": "Network tags", "type": "list", "default": [] },
+          { "id": "metadata", "label": "Instance metadata", "type": "map", "default": { "disable-legacy-endpoints": "true" } },
+          {
+            "id": "taints",
+            "label": "Node taints",
+            "description": "Taints applied to every node in this pool.",
+            "type": "repeatable",
+            "fields": [
+              { "id": "key", "label": "Taint key", "type": "text", "required": true },
+              { "id": "value", "label": "Taint value", "type": "text" },
+              {
+                "id": "effect",
+                "label": "Effect",
+                "type": "select",
+                "required": true,
+                "default": "NO_SCHEDULE",
+                "options": [
+                  { "value": "NO_SCHEDULE", "label": "NoSchedule" },
+                  { "value": "PREFER_NO_SCHEDULE", "label": "PreferNoSchedule" },
+                  { "value": "NO_EXECUTE", "label": "NoExecute" }
+                ]
+              }
+            ]
+          },
+          { "id": "enable_secure_boot", "label": "Enable Secure Boot", "type": "boolean", "default": true },
+          { "id": "enable_integrity_monitoring", "label": "Enable integrity monitoring", "type": "boolean", "default": true },
+          {
+            "id": "enable_image_streaming",
+            "label": "Enable image streaming",
+            "description": "Stream eligible container images from Artifact Registry or Container Registry to reduce node startup time.",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      }
+    ]
+  }
+}

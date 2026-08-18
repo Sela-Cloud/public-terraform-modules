@@ -56,15 +56,17 @@
             "data_source": {
               "resource": "iam.serviceAccounts",
               "params": {
-                "project": { "from_field": "project_id" }
+                "project": {
+                  "from_field": "project_id"
+                }
               },
               "display": {
                 "value_key": "email",
                 "label_key": "email",
                 "description_key": "displayName"
-              }
+              },
+              "allow_custom": true
             },
-            "allow_custom": true,
             "nullable": true
           },
           {
@@ -91,16 +93,20 @@
             "data_source": {
               "resource": "iam.roles",
               "params": {
-                "project": { "from_field": "project_id" },
-                "scope": "all"
+                "project": {
+                  "from_field": "project_id"
+                },
+                "scope": {
+                  "static": "all"
+                }
               },
               "display": {
                 "value_key": "name",
                 "label_key": "title",
                 "description_key": "description"
-              }
-            },
-            "allow_custom": true
+              },
+              "allow_custom": true
+            }
           }
         ]
       },
@@ -153,21 +159,27 @@
                 "data_source": {
                   "resource": "iam.roles",
                   "params": {
-                    "project": { "from_field": "project_id" },
-                    "scope": "all"
+                    "project": {
+                      "from_field": "project_id"
+                    },
+                    "scope": {
+                      "static": "all"
+                    }
                   },
                   "display": {
                     "value_key": "name",
                     "label_key": "title",
                     "description_key": "description"
-                  }
-                },
-                "allow_custom": true
+                  },
+                  "allow_custom": true
+                }
               }
             ]
           }
         ]
       }
     ]
-  }
+  },
+  "deprecated": true,
+  "deprecation_note": "Superseded by iam-service-account, iam-custom-role and iam-project-binding. One entry here drives three module blocks, so a single request owns several independently-meaningful resources \u2014 you cannot delete one without the others, and the inventory shows one row for many. Existing resources keep working; create new ones with the replacements."
 }

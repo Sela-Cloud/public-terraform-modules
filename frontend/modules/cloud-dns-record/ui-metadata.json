@@ -21,7 +21,7 @@
     "variable": "cloud_dns_record",
     "key_field": "record_key",
     "key_label": "Record identifier",
-    "key_description": "A UI-only identifier. Terraform keys records by DNS name and record type, so a type change is a delete-and-create operation.",
+    "key_description": "A stable identifier for this record, used as the Terraform key. Pick something descriptive such as www-a or api-cname. Each entry must be a distinct DNS name + record type; two entries sharing both are rejected.",
     "locked_after_create": true,
     "sections": [
       {
@@ -35,7 +35,10 @@
             "type": "text",
             "required": true,
             "placeholder": "www-a",
-            "validation": { "pattern": "^[a-zA-Z0-9-]{1,63}$", "pattern_error": "Use letters, numbers, and hyphens." }
+            "validation": {
+              "pattern": "^[a-zA-Z0-9-]{1,63}$",
+              "pattern_error": "Use letters, numbers, and hyphens."
+            }
           },
           {
             "id": "managed_zone",
@@ -45,8 +48,16 @@
             "required": true,
             "data_source": {
               "resource": "dns.managedZones",
-              "params": { "project_id": { "from_field": "project_id" } },
-              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
               "cache_ttl": 120
             }
           },
@@ -58,7 +69,10 @@
             "type": "text",
             "required": true,
             "placeholder": "www.example.com.",
-            "validation": { "pattern": "^.+\\.$", "pattern_error": "Record names must end with a trailing dot." }
+            "validation": {
+              "pattern": "^.+\\.$",
+              "pattern_error": "Record names must end with a trailing dot."
+            }
           },
           {
             "id": "type",
@@ -68,15 +82,42 @@
             "required": true,
             "default": "A",
             "options": [
-              { "value": "A", "label": "A" },
-              { "value": "AAAA", "label": "AAAA" },
-              { "value": "CAA", "label": "CAA" },
-              { "value": "CNAME", "label": "CNAME" },
-              { "value": "MX", "label": "MX" },
-              { "value": "NS", "label": "NS" },
-              { "value": "PTR", "label": "PTR" },
-              { "value": "SRV", "label": "SRV" },
-              { "value": "TXT", "label": "TXT" }
+              {
+                "value": "A",
+                "label": "A"
+              },
+              {
+                "value": "AAAA",
+                "label": "AAAA"
+              },
+              {
+                "value": "CAA",
+                "label": "CAA"
+              },
+              {
+                "value": "CNAME",
+                "label": "CNAME"
+              },
+              {
+                "value": "MX",
+                "label": "MX"
+              },
+              {
+                "value": "NS",
+                "label": "NS"
+              },
+              {
+                "value": "PTR",
+                "label": "PTR"
+              },
+              {
+                "value": "SRV",
+                "label": "SRV"
+              },
+              {
+                "value": "TXT",
+                "label": "TXT"
+              }
             ]
           },
           {
@@ -84,7 +125,9 @@
             "label": "TTL (seconds)",
             "type": "number",
             "default": 300,
-            "validation": { "min": 1 }
+            "validation": {
+              "min": 1
+            }
           },
           {
             "id": "rrdatas",
@@ -92,8 +135,13 @@
             "description": "Add one value per record. SRV: priority weight port target.; TXT values containing spaces must be quoted; CAA: 0 issue \"ca.example\".",
             "type": "list",
             "required": true,
-            "depends_on": { "field": "routing_policy_type", "value": "none" },
-            "validation": { "min": 1 }
+            "depends_on": {
+              "field": "routing_policy_type",
+              "value": "none"
+            },
+            "validation": {
+              "min": 1
+            }
           },
           {
             "id": "routing_policy_type",
@@ -102,9 +150,18 @@
             "type": "select",
             "default": "none",
             "options": [
-              { "value": "none", "label": "None" },
-              { "value": "wrr", "label": "Weighted round robin" },
-              { "value": "geo", "label": "Geolocation" }
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "wrr",
+                "label": "Weighted round robin"
+              },
+              {
+                "value": "geo",
+                "label": "Geolocation"
+              }
             ]
           },
           {
@@ -113,7 +170,11 @@
             "description": "When enabled, each routing target must use either record data or health-checked endpoints, not both.",
             "type": "boolean",
             "default": false,
-            "depends_on": { "field": "routing_policy_type", "value": "none", "operator": "neq" }
+            "depends_on": {
+              "field": "routing_policy_type",
+              "value": "none",
+              "operator": "neq"
+            }
           }
         ]
       },
@@ -122,7 +183,11 @@
         "label": "Routing health check",
         "description": "Optional for ordinary data targets. Required when any target uses health-checked external endpoints; this references an existing Compute health check and does not create one.",
         "collapsed": true,
-        "depends_on": { "field": "routing_policy_type", "value": "none", "operator": "neq" },
+        "depends_on": {
+          "field": "routing_policy_type",
+          "value": "none",
+          "operator": "neq"
+        },
         "fields": [
           {
             "id": "routing_health_check",
@@ -131,8 +196,16 @@
             "nullable": true,
             "data_source": {
               "resource": "compute.healthChecks",
-              "params": { "project_id": { "from_field": "project_id" } },
-              "display": { "value_key": "selfLink", "label_key": "name", "description_key": "description" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "selfLink",
+                "label_key": "name",
+                "description_key": "description"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -142,7 +215,10 @@
       {
         "id": "wrr",
         "label": "Weighted targets",
-        "depends_on": { "field": "routing_policy_type", "value": "wrr" },
+        "depends_on": {
+          "field": "routing_policy_type",
+          "value": "wrr"
+        },
         "fields": [
           {
             "id": "wrr_targets",
@@ -150,9 +226,27 @@
             "type": "repeatable",
             "required": true,
             "fields": [
-              { "id": "weight", "label": "Weight", "type": "number", "required": true, "default": 1, "validation": { "min": 0 } },
-              { "id": "rrdatas", "label": "Record data", "description": "Use record data or health-checked external endpoints. With DNSSEC, do not use both.", "type": "list" },
-              { "id": "health_checked_external_endpoints", "label": "Health-checked external endpoints", "type": "list" }
+              {
+                "id": "weight",
+                "label": "Weight",
+                "type": "number",
+                "required": true,
+                "default": 1,
+                "validation": {
+                  "min": 0
+                }
+              },
+              {
+                "id": "rrdatas",
+                "label": "Record data",
+                "description": "Use record data or health-checked external endpoints. With DNSSEC, do not use both.",
+                "type": "list"
+              },
+              {
+                "id": "health_checked_external_endpoints",
+                "label": "Health-checked external endpoints",
+                "type": "list"
+              }
             ]
           }
         ]
@@ -160,7 +254,10 @@
       {
         "id": "geo",
         "label": "Geolocation targets",
-        "depends_on": { "field": "routing_policy_type", "value": "geo" },
+        "depends_on": {
+          "field": "routing_policy_type",
+          "value": "geo"
+        },
         "fields": [
           {
             "id": "geo_targets",
@@ -168,9 +265,23 @@
             "type": "repeatable",
             "required": true,
             "fields": [
-              { "id": "location", "label": "GCP location", "type": "text", "required": true, "placeholder": "us-central1" },
-              { "id": "rrdatas", "label": "Record data", "type": "list" },
-              { "id": "health_checked_external_endpoints", "label": "Health-checked external endpoints", "type": "list" }
+              {
+                "id": "location",
+                "label": "GCP location",
+                "type": "text",
+                "required": true,
+                "placeholder": "us-central1"
+              },
+              {
+                "id": "rrdatas",
+                "label": "Record data",
+                "type": "list"
+              },
+              {
+                "id": "health_checked_external_endpoints",
+                "label": "Health-checked external endpoints",
+                "type": "list"
+              }
             ]
           }
         ]

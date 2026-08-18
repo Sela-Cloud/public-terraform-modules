@@ -18,10 +18,10 @@ variable "gcs_bucket" {
     port               = optional(string),
     labels             = map(string),
     data_locations     = list(string),
-    retention_policy = object({
+    retention_policy = optional(object({
       is_locked        = bool
       retention_period = number
-    })
+    }))
     iam_members = optional(list(object({
       role   = string
       member = string

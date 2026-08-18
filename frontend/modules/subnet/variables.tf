@@ -12,7 +12,6 @@ variable "subnet" {
     purpose                        = optional(string, "PRIVATE")
     role                           = optional(string)
     private_ip_google_access       = optional(bool, false)
-    private_ipv6_google_access     = optional(string)
     stack_type                     = optional(string, "IPV4_ONLY")
     ipv6_access_type               = optional(string)
     reserved_internal_range        = optional(string)
@@ -20,8 +19,6 @@ variable "subnet" {
     flow_logs_aggregation_interval = optional(string, "INTERVAL_5_SEC")
     flow_logs_sampling             = optional(number, 0.5)
     flow_logs_metadata             = optional(string, "INCLUDE_ALL_METADATA")
-    flow_logs_metadata_fields      = optional(list(string), [])
-    flow_logs_filter_expr          = optional(string, "true")
     secondary_ip_ranges = optional(list(object({
       range_name    = string
       ip_cidr_range = optional(string)

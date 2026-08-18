@@ -15,13 +15,11 @@ resource "google_storage_bucket" "bucket" {
     }
   }
 
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes  = []
-  }
-
-  versioning {
-    enabled = var.versioning
+  dynamic "versioning" {
+    for_each = var.versioning == null ? [] : [var.versioning]
+    content {
+      enabled = var.versioning
+    }
   }
 
   dynamic "retention_policy" {

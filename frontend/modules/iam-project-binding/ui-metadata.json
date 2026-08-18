@@ -1,0 +1,132 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "iam-project-binding",
+  "version": "1.0.0",
+  "display": {
+    "label": "IAM Project Binding",
+    "icon": "iam",
+    "description": "Grants one project-level IAM role to one principal. Create-only and sensitive: existing project IAM policy is never adopted",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID on which the IAM role is granted.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "iam_project_binding",
+    "key_field": "binding_key",
+    "key_label": "Binding ID",
+    "key_description": "Unique Terraform map key for this grant. Use the principal-role convention, for example app-sa-storage-admin.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "principal",
+        "label": "Principal",
+        "description": "Exactly one principal receives this grant. Every field here is part of the grant's identity and cannot be edited afterwards; revoke the binding and request a new one instead.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "binding_key",
+            "label": "Binding ID",
+            "type": "text",
+            "required": true,
+            "locked_after_create": true,
+            "description": "Unique key for this grant. Use the principal-role convention, for example app-sa-storage-admin.",
+            "validation": {
+              "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Use lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "principal_type",
+            "label": "Principal type",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "default": "serviceAccount",
+            "options": [
+              { "value": "serviceAccount", "label": "Service account" },
+              { "value": "user", "label": "User" },
+              { "value": "principalSet", "label": "Principal set" }
+            ]
+          },
+          {
+            "id": "service_account_email",
+            "label": "Service account",
+            "type": "select",
+            "locked_after_create": true,
+            "description": "Service account that receives the role. The serviceAccount: prefix is added automatically.",
+            "depends_on": { "field": "principal_type", "value": "serviceAccount" },
+            "data_source": {
+              "resource": "iam.serviceAccounts",
+              "params": {
+                "project_id": { "from_field": "project_id" }
+              },
+              "display": {
+                "value_key": "email",
+                "label_key": "email",
+                "description_key": "displayName"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "user_email_address",
+            "label": "User email",
+            "type": "text",
+            "locked_after_create": true,
+            "placeholder": "jane@example.com",
+            "description": "User that receives the role. The user: prefix is added automatically.",
+            "depends_on": { "field": "principal_type", "value": "user" }
+          },
+          {
+            "id": "principal_set_address",
+            "label": "Principal set address",
+            "type": "text",
+            "locked_after_create": true,
+            "placeholder": "iam.googleapis.com/projects/123/locations/global/workloadIdentityPools/pool/*",
+            "description": "Principal set that receives the role. The principalSet:// prefix is added automatically.",
+            "depends_on": { "field": "principal_type", "value": "principalSet" }
+          }
+        ]
+      },
+      {
+        "id": "role",
+        "label": "Project-Level Role",
+        "description": "One project-level IAM role. Request an additional binding for each additional role.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "role",
+            "label": "Project Role",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "description": "IAM role granted at the project level, for example roles/viewer or roles/storage.objectAdmin.",
+            "data_source": {
+              "resource": "iam.roles",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "scope": { "static": "all" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "title",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

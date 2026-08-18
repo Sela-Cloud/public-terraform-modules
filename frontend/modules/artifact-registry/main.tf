@@ -1,4 +1,8 @@
 locals {
+  # Key-preserving by construction: `for key, repository in ... : key => ...` keeps the tfvars map
+  # key, so module.artifact_registry["<map key>"] stays the address (IMPORT_PLAN R10). The local
+  # exists only to turn nested lists into maps. Do NOT switch this to values(var.artifact_registry)
+  # — that discards the key and makes the address unresolvable, which is the bug cloud-dns-record had.
   repositories = {
     for key, repository in var.artifact_registry : key => merge(repository, {
       cleanup_policies = {

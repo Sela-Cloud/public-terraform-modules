@@ -106,4 +106,5 @@ variable "cloud_dns_record" {
     ])
     error_message = "TXT record data containing spaces must be quoted."
   }
+
 }

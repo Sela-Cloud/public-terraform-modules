@@ -39,9 +39,9 @@ variable "bucket_policy_only" {
 }
 
 variable "versioning" {
-  description = "While set to true, versioning is fully enabled for this bucket."
+  description = "Enables object versioning. Leave null to omit the block entirely, which is what an unversioned bucket looks like in state — setting false would emit `versioning { enabled = false }` and show as a change on every import."
   type        = bool
-  default     = true
+  default     = null
 }
 
 variable "force_destroy" {

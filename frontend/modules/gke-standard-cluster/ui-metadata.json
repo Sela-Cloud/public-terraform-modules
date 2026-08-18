@@ -1,0 +1,412 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "gke-standard-cluster",
+  "version": "1.0.0",
+  "display": {
+    "label": "GKE Standard Cluster",
+    "icon": "gke-cluster",
+    "description": "A Google Kubernetes Engine cluster in Standard mode; node pools are requested separately",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the Standard cluster will be provisioned.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "gke_standard_cluster",
+    "key_field": "name",
+    "key_label": "Cluster name",
+    "key_description": "RFC 1035 cluster name and Terraform map key.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Cluster configuration",
+        "description": "Node pools are managed independently through the GKE Node Pool resource.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Cluster name",
+            "locked_after_create": true,
+            "type": "text",
+            "required": true,
+            "validation": {
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter and contain only lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "locked_after_create": true,
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "location_type",
+            "label": "Cluster location",
+            "locked_after_create": true,
+            "type": "select",
+            "default": "regional",
+            "options": [
+              { "value": "regional", "label": "Regional" },
+              { "value": "zonal", "label": "Zonal" }
+            ]
+          },
+          {
+            "id": "zone",
+            "label": "Control-plane zone",
+            "locked_after_create": true,
+            "description": "Required only for a zonal cluster.",
+            "type": "select",
+            "required": true,
+            "depends_on": { "field": "location_type", "value": "zonal" },
+            "data_source": {
+              "resource": "compute.zones",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "region" }
+              },
+              "display": { "value_key": "name", "label_key": "name" },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text"
+          },
+          {
+            "id": "node_locations",
+            "label": "Additional node locations",
+            "description": "Optional zones in the selected region for workloads.",
+            "type": "list",
+            "default": []
+          },
+          {
+            "id": "labels",
+            "label": "Cluster labels",
+            "type": "map",
+            "default": {}
+          },
+          {
+            "id": "deletion_protection",
+            "label": "Deletion protection",
+            "description": "Prevent Terraform from deleting this cluster. Disable for temporary test clusters.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "release_channel",
+            "label": "Release channel",
+            "description": "GKE control-plane and node upgrade channel.",
+            "type": "select",
+            "default": "REGULAR",
+            "options": [
+              { "value": "RAPID", "label": "Rapid" },
+              { "value": "REGULAR", "label": "Regular" },
+              { "value": "STABLE", "label": "Stable" }
+            ]
+          },
+          {
+            "id": "min_master_version",
+            "label": "Minimum control-plane version",
+            "description": "Leave blank to use the release channel default.",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Networking and control plane",
+        "fields": [
+          {
+            "id": "network",
+            "label": "VPC network",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnetwork",
+            "label": "Subnetwork",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.subnetworks",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "region" },
+                "network": { "from_field": "network" }
+              },
+              "display": { "value_key": "name", "label_key": "name" },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "cluster_secondary_range_name",
+            "label": "Pod secondary IP range",
+            "description": "Existing secondary IP range on the selected subnetwork.",
+            "type": "text"
+          },
+          {
+            "id": "services_secondary_range_name",
+            "label": "Service secondary IP range",
+            "description": "Existing secondary IP range on the selected subnetwork.",
+            "type": "text"
+          },
+          {
+            "id": "private_nodes",
+            "label": "Private nodes",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "enable_private_endpoint",
+            "label": "Private control-plane endpoint",
+            "type": "boolean",
+            "default": false,
+            "depends_on": { "field": "private_nodes", "value": true }
+          },
+          {
+            "id": "master_ipv4_cidr_block",
+            "label": "Control-plane IPv4 CIDR block",
+            "description": "Private control-plane /28 range.",
+            "type": "text",
+            "depends_on": { "field": "private_nodes", "value": true }
+          },
+          {
+            "id": "master_global_access",
+            "label": "Global private endpoint access",
+            "type": "boolean",
+            "default": false,
+            "depends_on": { "field": "private_nodes", "value": true }
+          },
+          {
+            "id": "master_authorized_networks",
+            "label": "Control-plane authorized networks",
+            "description": "Map of display name to CIDR range.",
+            "type": "map",
+            "default": {}
+          },
+          {
+            "id": "enable_dataplane_v2",
+            "label": "Enable Dataplane V2",
+            "description": "Uses GKE advanced datapath. When enabled, legacy Kubernetes NetworkPolicy is not configured separately.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "enable_network_policy",
+            "label": "Enable Kubernetes NetworkPolicy",
+            "description": "Only configurable when Dataplane V2 is disabled.",
+            "type": "boolean",
+            "default": true,
+            "depends_on": { "field": "enable_dataplane_v2", "value": false }
+          },
+          {
+            "id": "enable_http_load_balancing",
+            "label": "Enable HTTP(S) Load Balancing",
+            "type": "boolean",
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "control-plane-access",
+        "label": "Control-plane DNS access",
+        "description": "Configure DNS and IP access to the GKE control plane.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "dns_endpoint_config",
+            "label": "DNS endpoint configuration",
+            "type": "object",
+            "fields": [
+              {
+                "id": "allow_external_traffic",
+                "label": "Allow external traffic through DNS",
+                "type": "boolean",
+                "default": false
+              }
+            ]
+          },
+          {
+            "id": "enable_ip_access",
+            "label": "Enable control-plane IP endpoint",
+            "type": "boolean",
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Security and identity",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "enable_workload_identity",
+            "label": "Enable Workload Identity",
+            "description": "Node pools attached to this cluster must be requested with the same setting.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "enable_binary_authorization",
+            "label": "Enforce Binary Authorization",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "database_encryption_key_name",
+            "label": "KMS key for Kubernetes Secrets",
+            "description": "Cloud KMS key resource name used for application-layer secret encryption.",
+            "type": "text"
+          },
+          {
+            "id": "groups_for_rbac",
+            "label": "Google Group for RBAC",
+            "description": "Security group email used with GKE Google Groups for RBAC.",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "operations",
+        "label": "Operations and add-ons",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "logging_components",
+            "label": "Cloud Logging components",
+            "type": "list",
+            "default": ["SYSTEM_COMPONENTS", "WORKLOADS"]
+          },
+          {
+            "id": "monitoring_components",
+            "label": "Cloud Monitoring components",
+            "type": "list",
+            "default": ["SYSTEM_COMPONENTS"]
+          },
+          {
+            "id": "enable_managed_prometheus",
+            "label": "Enable Managed Service for Prometheus",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "fleet_project",
+            "label": "Fleet host project",
+            "description": "Set to register the cluster with a Fleet.",
+            "type": "text"
+          },
+          {
+            "id": "enable_backup_agent",
+            "label": "Enable Backup for GKE agent",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "enable_filestore_csi_driver",
+            "label": "Enable Filestore CSI Driver",
+            "description": "Allow Filestore instances to be mounted as Kubernetes volumes.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "enable_secret_manager_addon",
+            "label": "Enable Secret Manager add-on",
+            "description": "Enable the Secret Manager CSI integration for workloads.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "gateway_api_channel",
+            "label": "Gateway API channel",
+            "description": "Enable the GKE Gateway API controller on a supported release channel.",
+            "type": "select",
+            "default": "CHANNEL_DISABLED",
+            "options": [
+              { "value": "CHANNEL_DISABLED", "label": "Disabled" },
+              { "value": "CHANNEL_STANDARD", "label": "Standard" }
+            ]
+          },
+          {
+            "id": "maintenance_daily_window_start_time",
+            "label": "Daily maintenance start time",
+            "description": "UTC time in HH:MM format.",
+            "type": "text",
+            "validation": {
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+              "pattern_error": "Use a UTC time in HH:MM format."
+            }
+          },
+          {
+            "id": "maintenance_exclusions",
+            "label": "Maintenance exclusions",
+            "description": "Periods during which GKE must not perform maintenance.",
+            "type": "repeatable",
+            "default": [],
+            "fields": [
+              { "id": "name", "label": "Exclusion name", "type": "text", "required": true },
+              { "id": "start_time", "label": "Start time", "description": "RFC3339 UTC timestamp.", "type": "text", "required": true },
+              { "id": "end_time", "label": "End time", "description": "RFC3339 UTC timestamp.", "type": "text", "required": true },
+              {
+                "id": "scope",
+                "label": "Exclusion scope",
+                "type": "select",
+                "options": [
+                  { "value": "NO_UPGRADES", "label": "No upgrades" },
+                  { "value": "NO_MINOR_UPGRADES", "label": "No minor upgrades" },
+                  { "value": "NO_MINOR_OR_NODE_UPGRADES", "label": "No minor or node upgrades" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "standard-scaling",
+        "label": "Cluster autoscaling",
+        "description": "Cluster-level node auto-provisioning settings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "enable_node_auto_provisioning",
+            "label": "Enable node auto-provisioning",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "autoscaling_profile",
+            "label": "Autoscaling profile",
+            "type": "select",
+            "default": "BALANCED",
+            "depends_on": { "field": "enable_node_auto_provisioning", "value": true },
+            "options": [
+              { "value": "BALANCED", "label": "Balanced" },
+              { "value": "OPTIMIZE_UTILIZATION", "label": "Optimize utilization" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -8,6 +8,16 @@
     "description": "Google Kubernetes Engine clusters in Autopilot or Standard mode",
     "category": "regional"
   },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP project in which to create the cluster.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
   "resource": {
     "variable": "gke_cluster",
     "key_field": "name",
@@ -21,13 +31,6 @@
         "description": "Choose the GKE operating mode and location.",
         "fields": [
           {
-            "id": "project_id",
-            "label": "Project ID",
-            "type": "text",
-            "required": true,
-            "placeholder": "my-gcp-project"
-          },
-          {
             "id": "mode",
             "label": "Cluster mode",
             "locked_after_create": true,
@@ -36,8 +39,14 @@
             "required": true,
             "default": "autopilot",
             "options": [
-              { "value": "autopilot", "label": "Autopilot" },
-              { "value": "standard", "label": "Standard" }
+              {
+                "value": "autopilot",
+                "label": "Autopilot"
+              },
+              {
+                "value": "standard",
+                "label": "Standard"
+              }
             ]
           },
           {
@@ -48,8 +57,15 @@
             "required": true,
             "data_source": {
               "resource": "compute.regions",
-              "params": { "project_id": { "from_field": "project_id" } },
-              "display": { "value_key": "name", "label_key": "name" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
               "cache_ttl": 300
             }
           },
@@ -59,10 +75,19 @@
             "locked_after_create": true,
             "type": "select",
             "default": "regional",
-            "depends_on": { "field": "mode", "value": "standard" },
+            "depends_on": {
+              "field": "mode",
+              "value": "standard"
+            },
             "options": [
-              { "value": "regional", "label": "Regional" },
-              { "value": "zonal", "label": "Zonal" }
+              {
+                "value": "regional",
+                "label": "Regional"
+              },
+              {
+                "value": "zonal",
+                "label": "Zonal"
+              }
             ]
           },
           {
@@ -72,14 +97,24 @@
             "description": "Required only for a Standard zonal cluster.",
             "type": "select",
             "required": true,
-            "depends_on": { "field": "location_type", "value": "zonal" },
+            "depends_on": {
+              "field": "location_type",
+              "value": "zonal"
+            },
             "data_source": {
               "resource": "compute.zones",
               "params": {
-                "project_id": { "from_field": "project_id" },
-                "region": { "from_field": "region" }
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "region": {
+                  "from_field": "region"
+                }
               },
-              "display": { "value_key": "name", "label_key": "name" },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
               "cache_ttl": 300
             }
           },
@@ -115,9 +150,18 @@
             "type": "select",
             "default": "REGULAR",
             "options": [
-              { "value": "RAPID", "label": "Rapid" },
-              { "value": "REGULAR", "label": "Regular" },
-              { "value": "STABLE", "label": "Stable" }
+              {
+                "value": "RAPID",
+                "label": "Rapid"
+              },
+              {
+                "value": "REGULAR",
+                "label": "Regular"
+              },
+              {
+                "value": "STABLE",
+                "label": "Stable"
+              }
             ]
           },
           {
@@ -139,8 +183,15 @@
             "required": true,
             "data_source": {
               "resource": "compute.networks",
-              "params": { "project_id": { "from_field": "project_id" } },
-              "display": { "value_key": "name", "label_key": "name" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
               "cache_ttl": 300
             }
           },
@@ -152,11 +203,20 @@
             "data_source": {
               "resource": "compute.subnetworks",
               "params": {
-                "project_id": { "from_field": "project_id" },
-                "region": { "from_field": "region" },
-                "network": { "from_field": "network" }
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "region": {
+                  "from_field": "region"
+                },
+                "network": {
+                  "from_field": "network"
+                }
               },
-              "display": { "value_key": "name", "label_key": "name" },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
               "cache_ttl": 300
             }
           },
@@ -183,21 +243,30 @@
             "label": "Private control-plane endpoint",
             "type": "boolean",
             "default": false,
-            "depends_on": { "field": "private_nodes", "value": true }
+            "depends_on": {
+              "field": "private_nodes",
+              "value": true
+            }
           },
           {
             "id": "master_ipv4_cidr_block",
             "label": "Control-plane IPv4 CIDR block",
             "description": "Private control-plane /28 range.",
             "type": "text",
-            "depends_on": { "field": "private_nodes", "value": true }
+            "depends_on": {
+              "field": "private_nodes",
+              "value": true
+            }
           },
           {
             "id": "master_global_access",
             "label": "Global private endpoint access",
             "type": "boolean",
             "default": false,
-            "depends_on": { "field": "private_nodes", "value": true }
+            "depends_on": {
+              "field": "private_nodes",
+              "value": true
+            }
           },
           {
             "id": "master_authorized_networks",
@@ -219,14 +288,20 @@
             "description": "Only configurable when Dataplane V2 is disabled.",
             "type": "boolean",
             "default": true,
-            "depends_on": { "field": "enable_dataplane_v2", "value": false }
+            "depends_on": {
+              "field": "enable_dataplane_v2",
+              "value": false
+            }
           },
           {
             "id": "enable_http_load_balancing",
             "label": "Enable HTTP(S) Load Balancing",
             "type": "boolean",
             "default": true,
-            "depends_on": { "field": "mode", "value": "standard" }
+            "depends_on": {
+              "field": "mode",
+              "value": "standard"
+            }
           }
         ]
       },
@@ -297,13 +372,18 @@
             "id": "logging_components",
             "label": "Cloud Logging components",
             "type": "list",
-            "default": ["SYSTEM_COMPONENTS", "WORKLOADS"]
+            "default": [
+              "SYSTEM_COMPONENTS",
+              "WORKLOADS"
+            ]
           },
           {
             "id": "monitoring_components",
             "label": "Cloud Monitoring components",
             "type": "list",
-            "default": ["SYSTEM_COMPONENTS"]
+            "default": [
+              "SYSTEM_COMPONENTS"
+            ]
           },
           {
             "id": "enable_managed_prometheus",
@@ -329,7 +409,10 @@
             "description": "Allow Filestore instances to be mounted as Kubernetes volumes.",
             "type": "boolean",
             "default": false,
-            "depends_on": { "field": "mode", "value": "standard" }
+            "depends_on": {
+              "field": "mode",
+              "value": "standard"
+            }
           },
           {
             "id": "enable_secret_manager_addon",
@@ -345,8 +428,14 @@
             "type": "select",
             "default": "CHANNEL_DISABLED",
             "options": [
-              { "value": "CHANNEL_DISABLED", "label": "Disabled" },
-              { "value": "CHANNEL_STANDARD", "label": "Standard" }
+              {
+                "value": "CHANNEL_DISABLED",
+                "label": "Disabled"
+              },
+              {
+                "value": "CHANNEL_STANDARD",
+                "label": "Standard"
+              }
             ]
           },
           {
@@ -366,17 +455,43 @@
             "type": "repeatable",
             "default": [],
             "fields": [
-              { "id": "name", "label": "Exclusion name", "type": "text", "required": true },
-              { "id": "start_time", "label": "Start time", "description": "RFC3339 UTC timestamp.", "type": "text", "required": true },
-              { "id": "end_time", "label": "End time", "description": "RFC3339 UTC timestamp.", "type": "text", "required": true },
+              {
+                "id": "name",
+                "label": "Exclusion name",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "start_time",
+                "label": "Start time",
+                "description": "RFC3339 UTC timestamp.",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "end_time",
+                "label": "End time",
+                "description": "RFC3339 UTC timestamp.",
+                "type": "text",
+                "required": true
+              },
               {
                 "id": "scope",
                 "label": "Exclusion scope",
                 "type": "select",
                 "options": [
-                  { "value": "NO_UPGRADES", "label": "No upgrades" },
-                  { "value": "NO_MINOR_UPGRADES", "label": "No minor upgrades" },
-                  { "value": "NO_MINOR_OR_NODE_UPGRADES", "label": "No minor or node upgrades" }
+                  {
+                    "value": "NO_UPGRADES",
+                    "label": "No upgrades"
+                  },
+                  {
+                    "value": "NO_MINOR_UPGRADES",
+                    "label": "No minor upgrades"
+                  },
+                  {
+                    "value": "NO_MINOR_OR_NODE_UPGRADES",
+                    "label": "No minor or node upgrades"
+                  }
                 ]
               }
             ]
@@ -388,7 +503,10 @@
         "label": "Standard cluster autoscaling",
         "description": "Cluster-level node auto-provisioning settings.",
         "collapsed": true,
-        "depends_on": { "field": "mode", "value": "standard" },
+        "depends_on": {
+          "field": "mode",
+          "value": "standard"
+        },
         "fields": [
           {
             "id": "enable_node_auto_provisioning",
@@ -401,10 +519,19 @@
             "label": "Autoscaling profile",
             "type": "select",
             "default": "BALANCED",
-            "depends_on": { "field": "enable_node_auto_provisioning", "value": true },
+            "depends_on": {
+              "field": "enable_node_auto_provisioning",
+              "value": true
+            },
             "options": [
-              { "value": "BALANCED", "label": "Balanced" },
-              { "value": "OPTIMIZE_UTILIZATION", "label": "Optimize utilization" }
+              {
+                "value": "BALANCED",
+                "label": "Balanced"
+              },
+              {
+                "value": "OPTIMIZE_UTILIZATION",
+                "label": "Optimize utilization"
+              }
             ]
           }
         ]
@@ -414,7 +541,10 @@
         "label": "Standard node pools",
         "description": "Each node pool is managed independently from the cluster.",
         "collapsed": true,
-        "depends_on": { "field": "mode", "value": "standard" },
+        "depends_on": {
+          "field": "mode",
+          "value": "standard"
+        },
         "fields": [
           {
             "id": "node_pools",
@@ -422,7 +552,12 @@
             "type": "repeatable",
             "required": true,
             "fields": [
-              { "id": "name", "label": "Node pool name", "type": "text", "required": true },
+              {
+                "id": "name",
+                "label": "Node pool name",
+                "type": "text",
+                "required": true
+              },
               {
                 "id": "node_locations",
                 "label": "Node locations",
@@ -431,10 +566,17 @@
                 "data_source": {
                   "resource": "compute.zones",
                   "params": {
-                    "project_id": { "from_field": "project_id" },
-                    "region": { "from_field": "region" }
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "region": {
+                      "from_field": "region"
+                    }
                   },
-                  "display": { "value_key": "name", "label_key": "name" },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name"
+                  },
                   "cache_ttl": 300
                 }
               },
@@ -446,24 +588,48 @@
                 "data_source": {
                   "resource": "compute.machineTypes",
                   "params": {
-                    "project_id": { "from_field": "project_id" },
-                    "zone": { "from_field": "node_locations" }
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "zone": {
+                      "from_field": "node_locations"
+                    }
                   },
-                  "display": { "value_key": "name", "label_key": "name" },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
               },
-              { "id": "disk_size_gb", "label": "Disk size (GB)", "type": "number", "default": 100, "validation": { "min": 10 } },
+              {
+                "id": "disk_size_gb",
+                "label": "Disk size (GB)",
+                "type": "number",
+                "default": 100,
+                "validation": {
+                  "min": 10
+                }
+              },
               {
                 "id": "disk_type",
                 "label": "Disk type",
                 "type": "select",
                 "default": "pd-balanced",
                 "options": [
-                  { "value": "pd-standard", "label": "Standard persistent disk" },
-                  { "value": "pd-balanced", "label": "Balanced persistent disk" },
-                  { "value": "pd-ssd", "label": "SSD persistent disk" }
+                  {
+                    "value": "pd-standard",
+                    "label": "Standard persistent disk"
+                  },
+                  {
+                    "value": "pd-balanced",
+                    "label": "Balanced persistent disk"
+                  },
+                  {
+                    "value": "pd-ssd",
+                    "label": "SSD persistent disk"
+                  }
                 ]
               },
               {
@@ -472,19 +638,93 @@
                 "type": "select",
                 "default": "COS_CONTAINERD",
                 "options": [
-                  { "value": "COS_CONTAINERD", "label": "Container-Optimized OS with containerd" },
-                  { "value": "UBUNTU_CONTAINERD", "label": "Ubuntu with containerd" }
+                  {
+                    "value": "COS_CONTAINERD",
+                    "label": "Container-Optimized OS with containerd"
+                  },
+                  {
+                    "value": "UBUNTU_CONTAINERD",
+                    "label": "Ubuntu with containerd"
+                  }
                 ]
               },
-              { "id": "spot", "label": "Use Spot VMs", "type": "boolean", "default": false },
-              { "id": "initial_node_count", "label": "Initial node count", "type": "number", "default": 1, "validation": { "min": 1 } },
-              { "id": "autoscaling_enabled", "label": "Enable autoscaling", "type": "boolean", "default": true },
-              { "id": "min_node_count", "label": "Minimum nodes", "type": "number", "default": 1, "depends_on": { "field": "autoscaling_enabled", "value": true }, "validation": { "min": 0 } },
-              { "id": "max_node_count", "label": "Maximum nodes", "type": "number", "default": 3, "depends_on": { "field": "autoscaling_enabled", "value": true }, "validation": { "min": 1 } },
-              { "id": "auto_repair", "label": "Enable automatic repair", "type": "boolean", "default": true },
-              { "id": "auto_upgrade", "label": "Enable automatic upgrade", "type": "boolean", "default": true },
-              { "id": "max_surge", "label": "Maximum surge nodes", "type": "number", "default": 1, "validation": { "min": 0 } },
-              { "id": "max_unavailable", "label": "Maximum unavailable nodes", "type": "number", "default": 0, "validation": { "min": 0 } },
+              {
+                "id": "spot",
+                "label": "Use Spot VMs",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "initial_node_count",
+                "label": "Initial node count",
+                "type": "number",
+                "default": 1,
+                "validation": {
+                  "min": 1
+                }
+              },
+              {
+                "id": "autoscaling_enabled",
+                "label": "Enable autoscaling",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "min_node_count",
+                "label": "Minimum nodes",
+                "type": "number",
+                "default": 1,
+                "depends_on": {
+                  "field": "autoscaling_enabled",
+                  "value": true
+                },
+                "validation": {
+                  "min": 0
+                }
+              },
+              {
+                "id": "max_node_count",
+                "label": "Maximum nodes",
+                "type": "number",
+                "default": 3,
+                "depends_on": {
+                  "field": "autoscaling_enabled",
+                  "value": true
+                },
+                "validation": {
+                  "min": 1
+                }
+              },
+              {
+                "id": "auto_repair",
+                "label": "Enable automatic repair",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "auto_upgrade",
+                "label": "Enable automatic upgrade",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "max_surge",
+                "label": "Maximum surge nodes",
+                "type": "number",
+                "default": 1,
+                "validation": {
+                  "min": 0
+                }
+              },
+              {
+                "id": "max_unavailable",
+                "label": "Maximum unavailable nodes",
+                "type": "number",
+                "default": 0,
+                "validation": {
+                  "min": 0
+                }
+              },
               {
                 "id": "service_account",
                 "label": "Node service account",
@@ -492,8 +732,16 @@
                 "type": "select",
                 "data_source": {
                   "resource": "iam.serviceAccounts",
-                  "params": { "project_id": { "from_field": "project_id" } },
-                  "display": { "value_key": "email", "label_key": "email", "description_key": "displayName" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    }
+                  },
+                  "display": {
+                    "value_key": "email",
+                    "label_key": "email",
+                    "description_key": "displayName"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -503,13 +751,42 @@
                 "label": "Access scopes",
                 "description": "OAuth access scopes granted to Compute Engine VMs in this node pool.",
                 "type": "list",
-                "default": ["https://www.googleapis.com/auth/cloud-platform"]
+                "default": [
+                  "https://www.googleapis.com/auth/cloud-platform"
+                ]
               },
-              { "id": "labels", "label": "Node labels", "type": "map", "default": {} },
-              { "id": "tags", "label": "Network tags", "type": "list", "default": [] },
-              { "id": "metadata", "label": "Instance metadata", "type": "map", "default": { "disable-legacy-endpoints": "true" } },
-              { "id": "enable_secure_boot", "label": "Enable Secure Boot", "type": "boolean", "default": true },
-              { "id": "enable_integrity_monitoring", "label": "Enable integrity monitoring", "type": "boolean", "default": true },
+              {
+                "id": "labels",
+                "label": "Node labels",
+                "type": "map",
+                "default": {}
+              },
+              {
+                "id": "tags",
+                "label": "Network tags",
+                "type": "list",
+                "default": []
+              },
+              {
+                "id": "metadata",
+                "label": "Instance metadata",
+                "type": "map",
+                "default": {
+                  "disable-legacy-endpoints": "true"
+                }
+              },
+              {
+                "id": "enable_secure_boot",
+                "label": "Enable Secure Boot",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "enable_integrity_monitoring",
+                "label": "Enable integrity monitoring",
+                "type": "boolean",
+                "default": true
+              },
               {
                 "id": "enable_image_streaming",
                 "label": "Enable image streaming",
@@ -522,12 +799,16 @@
                 "label": "Maximum pods per node",
                 "description": "Maximum number of Pods scheduled on each node in this pool.",
                 "type": "number",
-                "validation": { "min": 1 }
+                "validation": {
+                  "min": 1
+                }
               }
             ]
           }
         ]
       }
     ]
-  }
+  },
+  "deprecated": true,
+  "deprecation_note": "Superseded by gke-autopilot-cluster, gke-standard-cluster and gke-node-pool. One entry here drives three module blocks, so a single request owns several independently-meaningful resources \u2014 you cannot delete one without the others, and the inventory shows one row for many. Existing resources keep working; create new ones with the replacements."
 }

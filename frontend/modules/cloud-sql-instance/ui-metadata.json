@@ -1,0 +1,329 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "cloud-sql-instance",
+  "version": "1.0.0",
+  "display": {
+    "label": "Cloud SQL Instance",
+    "icon": "cloud-sql",
+    "description": "A single PostgreSQL or MySQL Cloud SQL instance with networking, backups and Query Insights",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the Cloud SQL instance will be provisioned.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "cloud_sql_instance",
+    "key_field": "name",
+    "key_label": "Instance ID",
+    "key_description": "Lowercase Cloud SQL instance name and Terraform map key. Databases and IAM users are requested separately.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Instance configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Instance ID",
+            "description": "Lowercase Cloud SQL instance name.",
+            "locked_after_create": true,
+            "type": "text",
+            "required": true,
+            "validation": {
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter and contain only lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "locked_after_create": true,
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "engine",
+            "label": "Database engine",
+            "type": "select",
+            "required": true,
+            "default": "postgres",
+            "options": [
+              { "value": "postgres", "label": "PostgreSQL" },
+              { "value": "mysql", "label": "MySQL" }
+            ]
+          },
+          {
+            "id": "database_version",
+            "label": "Database version",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "cloudsql.databaseVersions",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "engine": { "from_field": "engine" }
+              },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "edition",
+            "label": "Cloud SQL edition",
+            "description": "Select explicitly. PostgreSQL 16+ and MySQL 8.4+ can otherwise default to Enterprise Plus.",
+            "type": "select",
+            "required": true,
+            "default": "ENTERPRISE",
+            "options": [
+              { "value": "ENTERPRISE", "label": "Enterprise" },
+              { "value": "ENTERPRISE_PLUS", "label": "Enterprise Plus" }
+            ]
+          },
+          {
+            "id": "availability_type",
+            "label": "Availability",
+            "type": "select",
+            "default": "ZONAL",
+            "options": [
+              { "value": "ZONAL", "label": "Zonal" },
+              { "value": "REGIONAL", "label": "Regional high availability" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "machine-storage",
+        "label": "Machine and storage",
+        "fields": [
+          {
+            "id": "tier",
+            "label": "Machine tier",
+            "description": "Available tiers are loaded for the selected project and region. Edition compatibility is validated before apply.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "cloudsql.tiers",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "region" }
+              },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "cache_ttl": 300,
+              "allow_custom": true
+            }
+          },
+          {
+            "id": "disk_type",
+            "label": "Disk type",
+            "type": "select",
+            "default": "PD_SSD",
+            "options": [
+              { "value": "PD_SSD", "label": "SSD persistent disk" },
+              { "value": "PD_HDD", "label": "HDD persistent disk" },
+              { "value": "HYPERDISK_BALANCED", "label": "Hyperdisk Balanced" }
+            ]
+          },
+          {
+            "id": "disk_autoresize",
+            "label": "Enable disk autoresize",
+            "description": "When enabled, Terraform leaves disk size under Cloud SQL management to avoid a shrink attempt after growth.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "disk_size",
+            "label": "Initial disk size (GB)",
+            "type": "number",
+            "validation": { "min": 10 },
+            "depends_on": { "field": "disk_autoresize", "value": false }
+          },
+          {
+            "id": "disk_autoresize_limit",
+            "label": "Disk autoresize limit (GB)",
+            "description": "Set 0 for no cap.",
+            "type": "number",
+            "default": 0,
+            "validation": { "min": 0 },
+            "depends_on": { "field": "disk_autoresize", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Connectivity",
+        "fields": [
+          {
+            "id": "ipv4_enabled",
+            "label": "Enable public IPv4",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "private_network",
+            "label": "Private VPC network",
+            "description": "Select a VPC only after creating its standalone Private Service Access connection.",
+            "type": "select",
+            "nullable": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "allocated_ip_range",
+            "label": "Allocated private-service range",
+            "description": "Choose an existing VPC_PEERING range. The connection is intentionally managed by the separate Private Service Access resource.",
+            "type": "select",
+            "nullable": true,
+            "depends_on": { "field": "private_network", "value": "", "operator": "neq" },
+            "data_source": {
+              "resource": "servicenetworking.psa",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "network": { "from_field": "private_network" },
+                "type": { "static": "reserved_range" }
+              },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "enable_private_path_for_google_cloud_services",
+            "label": "Enable private path for Google services",
+            "type": "boolean",
+            "default": false,
+            "depends_on": { "field": "private_network", "value": "", "operator": "neq" }
+          },
+          {
+            "id": "ssl_mode",
+            "label": "SSL mode",
+            "type": "select",
+            "default": "ENCRYPTED_ONLY",
+            "options": [
+              { "value": "ENCRYPTED_ONLY", "label": "Encrypted connections only" },
+              { "value": "ALLOW_UNENCRYPTED_AND_ENCRYPTED", "label": "Allow encrypted and unencrypted connections" },
+              { "value": "TRUSTED_CLIENT_CERTIFICATE_REQUIRED", "label": "Trusted client certificate required" }
+            ]
+          },
+          {
+            "id": "authorized_networks",
+            "label": "Authorized public networks",
+            "description": "CIDR ranges allowed to connect through the public IP.",
+            "type": "repeatable",
+            "depends_on": { "field": "ipv4_enabled", "value": true },
+            "fields": [
+              { "id": "name", "label": "Name", "type": "text" },
+              { "id": "value", "label": "CIDR range", "type": "text", "required": true, "validation": { "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}/([0-9]|[12][0-9]|3[0-2])$", "pattern_error": "Enter a valid IPv4 CIDR range." } },
+              { "id": "expiration_time", "label": "Expiration time (RFC3339)", "type": "text" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "protection",
+        "label": "Protection and authentication",
+        "collapsed": true,
+        "fields": [
+          { "id": "deletion_protection", "label": "Terraform deletion protection", "type": "boolean", "default": true },
+          { "id": "deletion_protection_enabled", "label": "Cloud SQL API deletion protection", "type": "boolean", "default": true },
+          {
+            "id": "connector_enforcement",
+            "label": "Connector enforcement",
+            "type": "select",
+            "nullable": true,
+            "options": [
+              { "value": "NOT_REQUIRED", "label": "Not required" },
+              { "value": "REQUIRED", "label": "Require Cloud SQL connectors" }
+            ]
+          },
+          {
+            "id": "password_validation_policy",
+            "label": "Password validation policy",
+            "type": "object",
+            "fields": [
+              { "id": "enabled", "label": "Enable policy", "type": "boolean", "default": true },
+              { "id": "min_length", "label": "Minimum length", "type": "number", "default": 12, "validation": { "min": 1 } },
+              { "id": "complexity", "label": "Complexity", "type": "select", "default": "COMPLEXITY_DEFAULT", "options": [{ "value": "COMPLEXITY_DEFAULT", "label": "Default complexity" }] },
+              { "id": "reuse_interval", "label": "Password reuse interval", "type": "number", "validation": { "min": 0 } },
+              { "id": "disallow_username_substring", "label": "Disallow username in password", "type": "boolean", "default": true },
+              { "id": "password_change_interval", "label": "Minimum password change interval", "description": "Duration accepted by Cloud SQL, for example 86400s. Leave empty to use the service default.", "type": "text" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "backup",
+        "label": "Backups and recovery",
+        "collapsed": true,
+        "fields": [
+          { "id": "backup_enabled", "label": "Enable automated backups", "type": "boolean", "default": true },
+          { "id": "backup_start_time", "label": "Backup start time (UTC)", "type": "text", "placeholder": "03:00", "validation": { "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$", "pattern_error": "Use HH:MM in UTC." } },
+          { "id": "backup_location", "label": "Backup location", "type": "text", "placeholder": "us" },
+          { "id": "binary_log_enabled", "label": "Enable binary logging", "type": "boolean", "default": false, "depends_on": { "field": "engine", "value": "mysql" } },
+          { "id": "point_in_time_recovery_enabled", "label": "Enable point-in-time recovery", "type": "boolean", "default": false, "depends_on": { "field": "engine", "value": "postgres" } },
+          { "id": "transaction_log_retention_days", "label": "Transaction-log retention days", "description": "Requires PITR: binary logging for MySQL or point-in-time recovery for PostgreSQL.", "type": "number", "validation": { "min": 1, "max": 35 } },
+          { "id": "retained_backups", "label": "Retained backups", "type": "number", "default": 7, "validation": { "min": 1, "max": 365 } }
+        ]
+      },
+      {
+        "id": "maintenance-observability",
+        "label": "Maintenance and Query Insights",
+        "collapsed": true,
+        "fields": [
+          { "id": "maintenance_day", "label": "Maintenance day", "type": "select", "nullable": true, "options": [{ "value": "1", "label": "Monday" }, { "value": "2", "label": "Tuesday" }, { "value": "3", "label": "Wednesday" }, { "value": "4", "label": "Thursday" }, { "value": "5", "label": "Friday" }, { "value": "6", "label": "Saturday" }, { "value": "7", "label": "Sunday" }] },
+          { "id": "maintenance_hour", "label": "Maintenance hour (UTC)", "type": "number", "validation": { "min": 0, "max": 23 } },
+          { "id": "maintenance_update_track", "label": "Update track", "type": "select", "default": "stable", "options": [{ "value": "canary", "label": "Canary" }, { "value": "stable", "label": "Stable" }, { "value": "week5", "label": "Week 5" }] },
+          { "id": "query_insights_enabled", "label": "Enable Query Insights", "type": "boolean", "default": true },
+          { "id": "query_string_length", "label": "Query string length", "description": "Enterprise supports 256-4500 bytes. Enterprise Plus supports 1024-100000 bytes.", "type": "number", "default": 1024, "validation": { "min": 256, "max": 100000 }, "depends_on": { "field": "query_insights_enabled", "value": true } },
+          { "id": "query_plans_per_minute", "label": "Query plans per minute", "description": "Enterprise supports 0-20. Enterprise Plus supports 0-200.", "type": "number", "default": 5, "validation": { "min": 0, "max": 200 }, "depends_on": { "field": "query_insights_enabled", "value": true } },
+          { "id": "record_application_tags", "label": "Record application tags", "type": "boolean", "default": true, "depends_on": { "field": "query_insights_enabled", "value": true } },
+          { "id": "record_client_address", "label": "Record client address", "type": "boolean", "default": false, "depends_on": { "field": "query_insights_enabled", "value": true } }
+        ]
+      },
+      {
+        "id": "flags",
+        "label": "Database flags",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "database_flags",
+            "label": "Database flags",
+            "description": "Flags are loaded for the selected database version. The flag description identifies restart requirements.",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Flag name",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "cloudsql.flags",
+                  "params": { "project_id": { "from_field": "project_id" }, "database_version": { "from_field": "database_version" } },
+                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "cache_ttl": 300,
+                  "allow_custom": true
+                }
+              },
+              { "id": "value", "label": "Flag value", "type": "text", "required": true }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

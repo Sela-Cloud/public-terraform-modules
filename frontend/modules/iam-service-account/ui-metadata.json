@@ -1,0 +1,96 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "iam-service-account",
+  "version": "1.0.0",
+  "display": {
+    "label": "IAM Service Account",
+    "icon": "iam",
+    "description": "A single service account, with optional IAM bindings on the account itself",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the service account is created.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "iam_service_account",
+    "key_field": "service_account_name",
+    "key_label": "Service Account ID",
+    "key_description": "Account ID of the service account to create; also the Terraform map key.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Service Account",
+        "description": "Creates one new service account. Project-level role grants are requested through the IAM Project Binding resource.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "service_account_name",
+            "label": "Service Account ID",
+            "type": "text",
+            "required": true,
+            "locked_after_create": true,
+            "placeholder": "my-app-sa",
+            "description": "Account ID for the new service account. The email becomes <id>@<project>.iam.gserviceaccount.com.",
+            "validation": {
+              "min": 6,
+              "max": 30,
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter and contain only lowercase letters, numbers and hyphens."
+            }
+          }
+        ]
+      },
+      {
+        "id": "sa_iam",
+        "label": "Service Account IAM Policy",
+        "description": "Grant other members roles directly ON this service account.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "iam_members",
+            "label": "Service Account Members",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "member",
+                "label": "Member Principal",
+                "type": "text",
+                "required": true,
+                "placeholder": "user:jane@example.com or serviceAccount:other@project.iam.gserviceaccount.com"
+              },
+              {
+                "id": "role",
+                "label": "Role on Service Account",
+                "type": "select",
+                "required": true,
+                "default": "roles/iam.serviceAccountUser",
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {
+                    "project_id": { "from_field": "project_id" },
+                    "scope": { "static": "all" }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "title",
+                    "description_key": "description"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

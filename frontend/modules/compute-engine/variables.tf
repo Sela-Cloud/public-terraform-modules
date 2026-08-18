@@ -7,7 +7,6 @@ variable "compute_instance" {
     generate_internal_ip    = bool,
     internal_ip_address     = list(string),
     vm_description          = string,
-    instance_count          = number,
     network                 = string,
     subnetwork              = string,
     machine_zone            = list(string),
@@ -50,7 +49,6 @@ variable "compute_instance" {
       internal_ip_address     = [""]
       machine_zone            = []
       vm_description          = ""
-      instance_count          = 1
       network                 = ""
       subnetwork              = ""
       vm_deletion_protect     = true

@@ -3,7 +3,6 @@ locals {
     for cluster_key, cluster in var.gke_cluster : cluster.mode == "standard" ? {
       for node_pool in cluster.node_pools : "${cluster_key}-${node_pool.name}" => merge(node_pool, {
         cluster_key = cluster_key
-        project_id  = cluster.project_id
         location    = cluster.location_type == "zonal" ? cluster.zone : cluster.region
       })
     } : {}

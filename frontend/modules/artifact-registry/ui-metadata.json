@@ -8,6 +8,13 @@
     "description": "Standard, remote, and virtual Artifact Registry repositories with cleanup, scanning, and additive IAM access.",
     "category": "regional"
   },
+  "satellites": [
+    {
+      "address": "google_artifact_registry_repository_iam_member.this",
+      "driven_by": "iam_bindings",
+      "note": "Additive repository IAM bindings are not adopted on import; existing bindings stay unmanaged. Leaving this list empty produces no Terraform diff, so access already granted on the repository is neither captured nor removed."
+    }
+  ],
   "globals": [
     {
       "id": "project_id",
@@ -182,7 +189,7 @@
           { "id": "remote_yum_repository_base", "label": "YUM repository base", "type": "select", "depends_on": { "field": "format", "value": "YUM" }, "options": [{ "value": "CENTOS", "label": "CentOS" }, { "value": "CENTOS_DEBUG", "label": "CentOS Debug" }, { "value": "CENTOS_VAULT", "label": "CentOS Vault" }, { "value": "CENTOS_STREAM", "label": "CentOS Stream" }, { "value": "ROCKY", "label": "Rocky Linux" }, { "value": "EPEL", "label": "EPEL" }] },
           { "id": "remote_yum_repository_path", "label": "YUM repository path", "type": "text", "placeholder": "pub/rocky/9/BaseOS/x86_64/os", "depends_on": { "field": "format", "value": "YUM" } },
           { "id": "remote_credentials_username", "label": "Upstream username", "type": "text" },
-          { "id": "remote_password_secret", "label": "Secret Manager password secret", "type": "select", "data_source": { "resource": "secretmanager.secrets", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
+          { "id": "remote_password_secret", "label": "Secret Manager password secret", "type": "select", "ui_only": true, "description": "Selects which secret the version list below is drawn from. This control has no Terraform attribute of its own; only the chosen secret version is written to tfvars.", "data_source": { "resource": "secretmanager.secrets", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
           { "id": "remote_password_secret_version", "label": "Secret Manager password version", "description": "Only secret version metadata is listed; the password itself is never read by this application.", "type": "select", "data_source": { "resource": "secretmanager.secretVersions", "params": { "project_id": { "from_field": "project_id" }, "secret": { "from_field": "remote_password_secret" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
           { "id": "disable_upstream_validation", "label": "Disable upstream validation", "description": "Advanced: bypasses Google validation of the upstream and credentials at repository creation.", "type": "boolean", "default": false }
         ]
