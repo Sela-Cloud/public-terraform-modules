@@ -18,6 +18,21 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "gke_autopilot",
+    "target": "google_container_cluster.this",
+    "id_template": "projects/{project_id}/locations/{region}/clusters/{name}",
+    "identity_fields": [
+      "project_id",
+      "region",
+      "name"
+    ],
+    "field_map": {
+      "location": "region",
+      "resource_labels": "labels"
+    },
+    "requires_review": false
+  },
   "resource": {
     "variable": "gke_autopilot_cluster",
     "key_field": "name",
@@ -49,8 +64,15 @@
             "required": true,
             "data_source": {
               "resource": "compute.regions",
-              "params": { "project_id": { "from_field": "project_id" } },
-              "display": { "value_key": "name", "label_key": "name" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
               "cache_ttl": 300
             }
           },
@@ -86,9 +108,18 @@
             "type": "select",
             "default": "REGULAR",
             "options": [
-              { "value": "RAPID", "label": "Rapid" },
-              { "value": "REGULAR", "label": "Regular" },
-              { "value": "STABLE", "label": "Stable" }
+              {
+                "value": "RAPID",
+                "label": "Rapid"
+              },
+              {
+                "value": "REGULAR",
+                "label": "Regular"
+              },
+              {
+                "value": "STABLE",
+                "label": "Stable"
+              }
             ]
           },
           {
@@ -110,8 +141,15 @@
             "required": true,
             "data_source": {
               "resource": "compute.networks",
-              "params": { "project_id": { "from_field": "project_id" } },
-              "display": { "value_key": "name", "label_key": "name" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
               "cache_ttl": 300
             }
           },
@@ -123,11 +161,20 @@
             "data_source": {
               "resource": "compute.subnetworks",
               "params": {
-                "project_id": { "from_field": "project_id" },
-                "region": { "from_field": "region" },
-                "network": { "from_field": "network" }
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "region": {
+                  "from_field": "region"
+                },
+                "network": {
+                  "from_field": "network"
+                }
               },
-              "display": { "value_key": "name", "label_key": "name" },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
               "cache_ttl": 300
             }
           },
@@ -154,21 +201,30 @@
             "label": "Private control-plane endpoint",
             "type": "boolean",
             "default": false,
-            "depends_on": { "field": "private_nodes", "value": true }
+            "depends_on": {
+              "field": "private_nodes",
+              "value": true
+            }
           },
           {
             "id": "master_ipv4_cidr_block",
             "label": "Control-plane IPv4 CIDR block",
             "description": "Private control-plane /28 range.",
             "type": "text",
-            "depends_on": { "field": "private_nodes", "value": true }
+            "depends_on": {
+              "field": "private_nodes",
+              "value": true
+            }
           },
           {
             "id": "master_global_access",
             "label": "Global private endpoint access",
             "type": "boolean",
             "default": false,
-            "depends_on": { "field": "private_nodes", "value": true }
+            "depends_on": {
+              "field": "private_nodes",
+              "value": true
+            }
           },
           {
             "id": "master_authorized_networks",
@@ -190,7 +246,10 @@
             "description": "Only configurable when Dataplane V2 is disabled.",
             "type": "boolean",
             "default": true,
-            "depends_on": { "field": "enable_dataplane_v2", "value": false }
+            "depends_on": {
+              "field": "enable_dataplane_v2",
+              "value": false
+            }
           },
           {
             "id": "enable_http_load_balancing",
@@ -267,13 +326,18 @@
             "id": "logging_components",
             "label": "Cloud Logging components",
             "type": "list",
-            "default": ["SYSTEM_COMPONENTS", "WORKLOADS"]
+            "default": [
+              "SYSTEM_COMPONENTS",
+              "WORKLOADS"
+            ]
           },
           {
             "id": "monitoring_components",
             "label": "Cloud Monitoring components",
             "type": "list",
-            "default": ["SYSTEM_COMPONENTS"]
+            "default": [
+              "SYSTEM_COMPONENTS"
+            ]
           },
           {
             "id": "enable_managed_prometheus",
@@ -307,8 +371,14 @@
             "type": "select",
             "default": "CHANNEL_DISABLED",
             "options": [
-              { "value": "CHANNEL_DISABLED", "label": "Disabled" },
-              { "value": "CHANNEL_STANDARD", "label": "Standard" }
+              {
+                "value": "CHANNEL_DISABLED",
+                "label": "Disabled"
+              },
+              {
+                "value": "CHANNEL_STANDARD",
+                "label": "Standard"
+              }
             ]
           },
           {
@@ -328,17 +398,43 @@
             "type": "repeatable",
             "default": [],
             "fields": [
-              { "id": "name", "label": "Exclusion name", "type": "text", "required": true },
-              { "id": "start_time", "label": "Start time", "description": "RFC3339 UTC timestamp.", "type": "text", "required": true },
-              { "id": "end_time", "label": "End time", "description": "RFC3339 UTC timestamp.", "type": "text", "required": true },
+              {
+                "id": "name",
+                "label": "Exclusion name",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "start_time",
+                "label": "Start time",
+                "description": "RFC3339 UTC timestamp.",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "end_time",
+                "label": "End time",
+                "description": "RFC3339 UTC timestamp.",
+                "type": "text",
+                "required": true
+              },
               {
                 "id": "scope",
                 "label": "Exclusion scope",
                 "type": "select",
                 "options": [
-                  { "value": "NO_UPGRADES", "label": "No upgrades" },
-                  { "value": "NO_MINOR_UPGRADES", "label": "No minor upgrades" },
-                  { "value": "NO_MINOR_OR_NODE_UPGRADES", "label": "No minor or node upgrades" }
+                  {
+                    "value": "NO_UPGRADES",
+                    "label": "No upgrades"
+                  },
+                  {
+                    "value": "NO_MINOR_UPGRADES",
+                    "label": "No minor upgrades"
+                  },
+                  {
+                    "value": "NO_MINOR_OR_NODE_UPGRADES",
+                    "label": "No minor or node upgrades"
+                  }
                 ]
               }
             ]

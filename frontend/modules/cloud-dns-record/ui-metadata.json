@@ -17,6 +17,19 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "cloud_dns_record",
+    "target": "google_dns_record_set.this",
+    "id_template": "projects/{project_id}/managedZones/{managed_zone}/rrsets/{name}/{type}",
+    "identity_fields": [
+      "project_id",
+      "managed_zone",
+      "name",
+      "type",
+      "record_key"
+    ],
+    "requires_review": false
+  },
   "resource": {
     "variable": "cloud_dns_record",
     "key_field": "record_key",

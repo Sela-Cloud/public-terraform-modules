@@ -18,6 +18,21 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "cloud_sql_database",
+    "target": "google_sql_database.this",
+    "id_template": "projects/{project_id}/instances/{instance_name}/databases/{name}",
+    "identity_fields": [
+      "project_id",
+      "instance_name",
+      "name",
+      "database_key"
+    ],
+    "field_map": {
+      "instance": "instance_name"
+    },
+    "requires_review": false
+  },
   "resource": {
     "variable": "cloud_sql_database",
     "key_field": "database_key",
@@ -45,13 +60,17 @@
           {
             "id": "instance_name",
             "label": "Cloud SQL instance ID",
-            "description": "The Cloud SQL instance that hosts this database. Pick from the instances that exist in this project, or type a name if the instance is being created in the same change. Read replicas are not listed — they cannot own databases.",
+            "description": "The Cloud SQL instance that hosts this database. Pick from the instances that exist in this project, or type a name if the instance is being created in the same change. Read replicas are not listed \u2014 they cannot own databases.",
             "locked_after_create": true,
             "type": "select",
             "required": true,
             "data_source": {
               "resource": "cloudsql.instances",
-              "params": { "project_id": { "from_field": "project_id" } },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
               "display": {
                 "value_key": "name",
                 "label_key": "name",
@@ -80,16 +99,30 @@
         "label": "Character set and lifecycle",
         "collapsed": true,
         "fields": [
-          { "id": "charset", "label": "Charset (optional)", "type": "text" },
-          { "id": "collation", "label": "Collation (optional)", "type": "text" },
+          {
+            "id": "charset",
+            "label": "Charset (optional)",
+            "type": "text"
+          },
+          {
+            "id": "collation",
+            "label": "Collation (optional)",
+            "type": "text"
+          },
           {
             "id": "deletion_policy",
             "label": "Deletion policy",
             "type": "select",
             "default": "ABANDON",
             "options": [
-              { "value": "ABANDON", "label": "Abandon on Terraform destroy" },
-              { "value": "DELETE", "label": "Delete on Terraform destroy" }
+              {
+                "value": "ABANDON",
+                "label": "Abandon on Terraform destroy"
+              },
+              {
+                "value": "DELETE",
+                "label": "Delete on Terraform destroy"
+              }
             ]
           }
         ]

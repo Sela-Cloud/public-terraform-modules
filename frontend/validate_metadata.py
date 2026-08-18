@@ -509,6 +509,10 @@ class Report:
     def error(self, module, rule, message):
         self.entries.append((module, "error", rule, message))
 
+    def note(self, module, rule, message):
+        """Neither an error nor a warning: something true and worth seeing, needing no action."""
+        self.entries.append((module, "note", rule, message))
+
     def warn(self, module, rule, message):
         self.entries.append((module, "warning", rule, message))
 
@@ -522,6 +526,10 @@ class Report:
     @property
     def warnings(self):
         return [e for e in self.entries if e[1] == "warning"]
+
+    @property
+    def notes(self):
+        return [e for e in self.entries if e[1] == "note"]
 
 
 # --------------------------------------------------------------------------------------
@@ -942,11 +950,18 @@ def check_target_provider(root, name, main_text, module_blocks, imp_module, imp,
         for b in blocks:
             provider = top_level_assignment_expr(b.body, "provider")
             if provider and provider.strip() != "google":
-                report.warn(
+                # Informational, not a problem. Verified against Terraform v1.15.8: an import block
+                # targeting `module.<label>["key"].<resource>` resolves the provider from that
+                # resource's own configuration inside the module, so the beta provider is used
+                # without the import block restating it — a probe against a nonexistent
+                # google-beta cluster reached the API and returned 404, not a provider error.
+                # It would matter only for a target declared in the wrapper itself, which import
+                # never targets.
+                report.note(
                     name,
                     "import",
-                    "target %s is declared against provider %s; a generated import block must name "
-                    "that provider or it will resolve against the default google provider"
+                    "target %s uses provider %s; resolved from the module's own configuration, so "
+                    "the generated import block needs no provider argument"
                     % (target, provider.strip()),
                 )
             return

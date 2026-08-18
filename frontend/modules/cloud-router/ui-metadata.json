@@ -17,6 +17,17 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "cloud_router",
+    "target": "google_compute_router.this",
+    "id_template": "projects/{project_id}/regions/{region}/routers/{name}",
+    "identity_fields": [
+      "project_id",
+      "region",
+      "name"
+    ],
+    "requires_review": false
+  },
   "resource": {
     "variable": "cloud_router",
     "key_field": "name",

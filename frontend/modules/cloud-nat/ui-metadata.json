@@ -17,6 +17,18 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "cloud_nat",
+    "target": "google_compute_router_nat.this",
+    "id_template": "projects/{project_id}/regions/{region}/routers/{router}/{name}",
+    "identity_fields": [
+      "project_id",
+      "region",
+      "router",
+      "name"
+    ],
+    "requires_review": false
+  },
   "resource": {
     "variable": "cloud_nat",
     "key_field": "name",

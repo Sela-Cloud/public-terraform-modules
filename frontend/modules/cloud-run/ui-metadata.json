@@ -18,6 +18,22 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "cloud_run_v2",
+    "target": "google_cloud_run_v2_service.main",
+    "id_template": "projects/{project_id}/locations/{location}/services/{service_name}",
+    "identity_fields": [
+      "project_id",
+      "location",
+      "service_name"
+    ],
+    "field_map": {
+      "name": "service_name",
+      "labels": "service_labels",
+      "deletion_protection": "cloud_run_deletion_protection"
+    },
+    "requires_review": false
+  },
   "resource": {
     "variable": "cloud_run",
     "key_field": "service_name",

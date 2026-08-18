@@ -24,6 +24,17 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "artifact_registry",
+    "target": "google_artifact_registry_repository.this",
+    "id_template": "projects/{project_id}/locations/{location}/repositories/{repository_id}",
+    "identity_fields": [
+      "project_id",
+      "location",
+      "repository_id"
+    ],
+    "requires_review": false
+  },
   "resource": {
     "variable": "artifact_registry",
     "key_field": "repository_id",
@@ -57,8 +68,16 @@
             "required": true,
             "data_source": {
               "resource": "artifactregistry.locations",
-              "params": { "project_id": { "from_field": "project_id" } },
-              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -71,13 +90,34 @@
             "required": true,
             "default": "DOCKER",
             "options": [
-              { "value": "DOCKER", "label": "Docker" },
-              { "value": "MAVEN", "label": "Maven" },
-              { "value": "NPM", "label": "npm" },
-              { "value": "PYTHON", "label": "Python" },
-              { "value": "GENERIC", "label": "Generic" },
-              { "value": "APT", "label": "APT (remote only)" },
-              { "value": "YUM", "label": "YUM (remote only)" }
+              {
+                "value": "DOCKER",
+                "label": "Docker"
+              },
+              {
+                "value": "MAVEN",
+                "label": "Maven"
+              },
+              {
+                "value": "NPM",
+                "label": "npm"
+              },
+              {
+                "value": "PYTHON",
+                "label": "Python"
+              },
+              {
+                "value": "GENERIC",
+                "label": "Generic"
+              },
+              {
+                "value": "APT",
+                "label": "APT (remote only)"
+              },
+              {
+                "value": "YUM",
+                "label": "YUM (remote only)"
+              }
             ]
           },
           {
@@ -87,16 +127,27 @@
             "required": true,
             "default": "STANDARD_REPOSITORY",
             "options": [
-              { "value": "STANDARD_REPOSITORY", "label": "Standard" },
-              { "value": "REMOTE_REPOSITORY", "label": "Remote proxy" },
-              { "value": "VIRTUAL_REPOSITORY", "label": "Virtual" }
+              {
+                "value": "STANDARD_REPOSITORY",
+                "label": "Standard"
+              },
+              {
+                "value": "REMOTE_REPOSITORY",
+                "label": "Remote proxy"
+              },
+              {
+                "value": "VIRTUAL_REPOSITORY",
+                "label": "Virtual"
+              }
             ]
           },
           {
             "id": "description",
             "label": "Description",
             "type": "text",
-            "validation": { "max": 1024 }
+            "validation": {
+              "max": 1024
+            }
           },
           {
             "id": "labels",
@@ -109,7 +160,10 @@
         "id": "format-options",
         "label": "Format options",
         "collapsed": true,
-        "depends_on": { "field": "mode", "value": "STANDARD_REPOSITORY" },
+        "depends_on": {
+          "field": "mode",
+          "value": "STANDARD_REPOSITORY"
+        },
         "fields": [
           {
             "id": "docker_immutable_tags",
@@ -117,18 +171,33 @@
             "description": "Tags cannot be moved or deleted after creation.",
             "type": "boolean",
             "default": false,
-            "depends_on": { "field": "format", "value": "DOCKER" }
+            "depends_on": {
+              "field": "format",
+              "value": "DOCKER"
+            }
           },
           {
             "id": "maven_version_policy",
             "label": "Maven version policy",
             "type": "select",
             "default": "VERSION_POLICY_UNSPECIFIED",
-            "depends_on": { "field": "format", "value": "MAVEN" },
+            "depends_on": {
+              "field": "format",
+              "value": "MAVEN"
+            },
             "options": [
-              { "value": "VERSION_POLICY_UNSPECIFIED", "label": "Unspecified" },
-              { "value": "RELEASE", "label": "Release only" },
-              { "value": "SNAPSHOT", "label": "Snapshot only" }
+              {
+                "value": "VERSION_POLICY_UNSPECIFIED",
+                "label": "Unspecified"
+              },
+              {
+                "value": "RELEASE",
+                "label": "Release only"
+              },
+              {
+                "value": "SNAPSHOT",
+                "label": "Snapshot only"
+              }
             ]
           },
           {
@@ -136,7 +205,10 @@
             "label": "Allow Maven snapshot overwrites",
             "type": "boolean",
             "default": false,
-            "depends_on": { "field": "format", "value": "MAVEN" }
+            "depends_on": {
+              "field": "format",
+              "value": "MAVEN"
+            }
           }
         ]
       },
@@ -153,8 +225,19 @@
             "nullable": true,
             "data_source": {
               "resource": "kms.cryptoKeys",
-              "params": { "project_id": { "from_field": "project_id" }, "location": { "from_field": "location" } },
-              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "location": {
+                  "from_field": "location"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -166,7 +249,10 @@
         "label": "Remote upstream",
         "description": "Uses an existing Secret Manager secret version when credentials are required. This catalog never creates or stores that secret.",
         "collapsed": true,
-        "depends_on": { "field": "mode", "value": "REMOTE_REPOSITORY" },
+        "depends_on": {
+          "field": "mode",
+          "value": "REMOTE_REPOSITORY"
+        },
         "fields": [
           {
             "id": "remote_upstream",
@@ -174,24 +260,182 @@
             "type": "select",
             "required": true,
             "options": [
-              { "value": "DOCKER_HUB", "label": "Docker Hub" },
-              { "value": "MAVEN_CENTRAL", "label": "Maven Central" },
-              { "value": "NPMJS", "label": "npm registry" },
-              { "value": "PYPI", "label": "PyPI" },
-              { "value": "APT", "label": "APT public repository" },
-              { "value": "YUM", "label": "YUM public repository" },
-              { "value": "CUSTOM", "label": "Custom URI" }
+              {
+                "value": "DOCKER_HUB",
+                "label": "Docker Hub"
+              },
+              {
+                "value": "MAVEN_CENTRAL",
+                "label": "Maven Central"
+              },
+              {
+                "value": "NPMJS",
+                "label": "npm registry"
+              },
+              {
+                "value": "PYPI",
+                "label": "PyPI"
+              },
+              {
+                "value": "APT",
+                "label": "APT public repository"
+              },
+              {
+                "value": "YUM",
+                "label": "YUM public repository"
+              },
+              {
+                "value": "CUSTOM",
+                "label": "Custom URI"
+              }
             ]
           },
-          { "id": "remote_custom_uri", "label": "Custom upstream URI", "type": "text", "placeholder": "https://registry.example.com", "depends_on": { "field": "remote_upstream", "value": "CUSTOM" } },
-          { "id": "remote_apt_repository_base", "label": "APT repository base", "type": "select", "depends_on": { "field": "format", "value": "APT" }, "options": [{ "value": "DEBIAN", "label": "Debian" }, { "value": "UBUNTU", "label": "Ubuntu" }, { "value": "DEBIAN_SNAPSHOT", "label": "Debian Snapshot" }] },
-          { "id": "remote_apt_repository_path", "label": "APT repository path", "type": "text", "placeholder": "debian/dists/stable", "depends_on": { "field": "format", "value": "APT" } },
-          { "id": "remote_yum_repository_base", "label": "YUM repository base", "type": "select", "depends_on": { "field": "format", "value": "YUM" }, "options": [{ "value": "CENTOS", "label": "CentOS" }, { "value": "CENTOS_DEBUG", "label": "CentOS Debug" }, { "value": "CENTOS_VAULT", "label": "CentOS Vault" }, { "value": "CENTOS_STREAM", "label": "CentOS Stream" }, { "value": "ROCKY", "label": "Rocky Linux" }, { "value": "EPEL", "label": "EPEL" }] },
-          { "id": "remote_yum_repository_path", "label": "YUM repository path", "type": "text", "placeholder": "pub/rocky/9/BaseOS/x86_64/os", "depends_on": { "field": "format", "value": "YUM" } },
-          { "id": "remote_credentials_username", "label": "Upstream username", "type": "text" },
-          { "id": "remote_password_secret", "label": "Secret Manager password secret", "type": "select", "ui_only": true, "description": "Selects which secret the version list below is drawn from. This control has no Terraform attribute of its own; only the chosen secret version is written to tfvars.", "data_source": { "resource": "secretmanager.secrets", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
-          { "id": "remote_password_secret_version", "label": "Secret Manager password version", "description": "Only secret version metadata is listed; the password itself is never read by this application.", "type": "select", "data_source": { "resource": "secretmanager.secretVersions", "params": { "project_id": { "from_field": "project_id" }, "secret": { "from_field": "remote_password_secret" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
-          { "id": "disable_upstream_validation", "label": "Disable upstream validation", "description": "Advanced: bypasses Google validation of the upstream and credentials at repository creation.", "type": "boolean", "default": false }
+          {
+            "id": "remote_custom_uri",
+            "label": "Custom upstream URI",
+            "type": "text",
+            "placeholder": "https://registry.example.com",
+            "depends_on": {
+              "field": "remote_upstream",
+              "value": "CUSTOM"
+            }
+          },
+          {
+            "id": "remote_apt_repository_base",
+            "label": "APT repository base",
+            "type": "select",
+            "depends_on": {
+              "field": "format",
+              "value": "APT"
+            },
+            "options": [
+              {
+                "value": "DEBIAN",
+                "label": "Debian"
+              },
+              {
+                "value": "UBUNTU",
+                "label": "Ubuntu"
+              },
+              {
+                "value": "DEBIAN_SNAPSHOT",
+                "label": "Debian Snapshot"
+              }
+            ]
+          },
+          {
+            "id": "remote_apt_repository_path",
+            "label": "APT repository path",
+            "type": "text",
+            "placeholder": "debian/dists/stable",
+            "depends_on": {
+              "field": "format",
+              "value": "APT"
+            }
+          },
+          {
+            "id": "remote_yum_repository_base",
+            "label": "YUM repository base",
+            "type": "select",
+            "depends_on": {
+              "field": "format",
+              "value": "YUM"
+            },
+            "options": [
+              {
+                "value": "CENTOS",
+                "label": "CentOS"
+              },
+              {
+                "value": "CENTOS_DEBUG",
+                "label": "CentOS Debug"
+              },
+              {
+                "value": "CENTOS_VAULT",
+                "label": "CentOS Vault"
+              },
+              {
+                "value": "CENTOS_STREAM",
+                "label": "CentOS Stream"
+              },
+              {
+                "value": "ROCKY",
+                "label": "Rocky Linux"
+              },
+              {
+                "value": "EPEL",
+                "label": "EPEL"
+              }
+            ]
+          },
+          {
+            "id": "remote_yum_repository_path",
+            "label": "YUM repository path",
+            "type": "text",
+            "placeholder": "pub/rocky/9/BaseOS/x86_64/os",
+            "depends_on": {
+              "field": "format",
+              "value": "YUM"
+            }
+          },
+          {
+            "id": "remote_credentials_username",
+            "label": "Upstream username",
+            "type": "text"
+          },
+          {
+            "id": "remote_password_secret",
+            "label": "Secret Manager password secret",
+            "type": "select",
+            "ui_only": true,
+            "description": "Selects which secret the version list below is drawn from. This control has no Terraform attribute of its own; only the chosen secret version is written to tfvars.",
+            "data_source": {
+              "resource": "secretmanager.secrets",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "remote_password_secret_version",
+            "label": "Secret Manager password version",
+            "description": "Only secret version metadata is listed; the password itself is never read by this application.",
+            "type": "select",
+            "data_source": {
+              "resource": "secretmanager.secretVersions",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "secret": {
+                  "from_field": "remote_password_secret"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "disable_upstream_validation",
+            "label": "Disable upstream validation",
+            "description": "Advanced: bypasses Google validation of the upstream and credentials at repository creation.",
+            "type": "boolean",
+            "default": false
+          }
         ]
       },
       {
@@ -199,7 +443,10 @@
         "label": "Virtual upstream repositories",
         "description": "Only live repositories in this project and location are listed. They are already in the same regional Terraform workspace, so no cross-workspace dependency is created.",
         "collapsed": true,
-        "depends_on": { "field": "mode", "value": "VIRTUAL_REPOSITORY" },
+        "depends_on": {
+          "field": "mode",
+          "value": "VIRTUAL_REPOSITORY"
+        },
         "fields": [
           {
             "id": "virtual_upstream_policies",
@@ -207,9 +454,50 @@
             "type": "repeatable",
             "required": true,
             "fields": [
-              { "id": "id", "label": "Policy ID", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]{0,62}$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
-              { "id": "repository", "label": "Existing upstream repository", "type": "select", "required": true, "data_source": { "resource": "artifactregistry.repositories", "params": { "project_id": { "from_field": "project_id" }, "location": { "from_field": "location" } }, "display": { "value_key": "name", "label_key": "repositoryId", "description_key": "description" }, "cache_ttl": 300 } },
-              { "id": "priority", "label": "Priority", "description": "Higher values are pulled first.", "type": "number", "required": true, "default": 10, "validation": { "min": 1 } }
+              {
+                "id": "id",
+                "label": "Policy ID",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "pattern": "^[a-z][a-z0-9-]{0,62}$",
+                  "pattern_error": "Use lowercase letters, numbers, and hyphens."
+                }
+              },
+              {
+                "id": "repository",
+                "label": "Existing upstream repository",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "artifactregistry.repositories",
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "location": {
+                      "from_field": "location"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "repositoryId",
+                    "description_key": "description"
+                  },
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "priority",
+                "label": "Priority",
+                "description": "Higher values are pulled first.",
+                "type": "number",
+                "required": true,
+                "default": 10,
+                "validation": {
+                  "min": 1
+                }
+              }
             ]
           }
         ]
@@ -232,15 +520,94 @@
             "description": "For Docker repositories, use TAGGED or UNTAGGED with tag prefixes. For Maven, NPM, Python, and Generic packages, use package/version prefixes and age or most-recent-version rules.",
             "type": "repeatable",
             "fields": [
-              { "id": "id", "label": "Policy ID", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]{0,62}$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
-              { "id": "action", "label": "Action", "type": "select", "required": true, "default": "DELETE", "options": [{ "value": "DELETE", "label": "Delete matching versions" }, { "value": "KEEP", "label": "Keep matching versions" }] },
-              { "id": "tag_state", "label": "Tag state", "type": "select", "default": "ANY", "options": [{ "value": "ANY", "label": "Any" }, { "value": "TAGGED", "label": "Tagged" }, { "value": "UNTAGGED", "label": "Untagged" }] },
-              { "id": "tag_prefixes", "label": "Tag prefixes", "description": "Docker tagged versions only.", "type": "list", "depends_on": { "field": "tag_state", "value": "TAGGED" } },
-              { "id": "package_name_prefixes", "label": "Package name prefixes", "type": "list" },
-              { "id": "version_name_prefixes", "label": "Version name prefixes", "type": "list" },
-              { "id": "older_than", "label": "Older than", "description": "Duration such as 30d or 2592000s.", "type": "text" },
-              { "id": "newer_than", "label": "Newer than", "description": "Duration such as 7d or 604800s.", "type": "text" },
-              { "id": "keep_count", "label": "Keep most recent versions", "description": "Set this instead of age conditions to retain the newest versions.", "type": "number", "validation": { "min": 1 } }
+              {
+                "id": "id",
+                "label": "Policy ID",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "pattern": "^[a-z][a-z0-9-]{0,62}$",
+                  "pattern_error": "Use lowercase letters, numbers, and hyphens."
+                }
+              },
+              {
+                "id": "action",
+                "label": "Action",
+                "type": "select",
+                "required": true,
+                "default": "DELETE",
+                "options": [
+                  {
+                    "value": "DELETE",
+                    "label": "Delete matching versions"
+                  },
+                  {
+                    "value": "KEEP",
+                    "label": "Keep matching versions"
+                  }
+                ]
+              },
+              {
+                "id": "tag_state",
+                "label": "Tag state",
+                "type": "select",
+                "default": "ANY",
+                "options": [
+                  {
+                    "value": "ANY",
+                    "label": "Any"
+                  },
+                  {
+                    "value": "TAGGED",
+                    "label": "Tagged"
+                  },
+                  {
+                    "value": "UNTAGGED",
+                    "label": "Untagged"
+                  }
+                ]
+              },
+              {
+                "id": "tag_prefixes",
+                "label": "Tag prefixes",
+                "description": "Docker tagged versions only.",
+                "type": "list",
+                "depends_on": {
+                  "field": "tag_state",
+                  "value": "TAGGED"
+                }
+              },
+              {
+                "id": "package_name_prefixes",
+                "label": "Package name prefixes",
+                "type": "list"
+              },
+              {
+                "id": "version_name_prefixes",
+                "label": "Version name prefixes",
+                "type": "list"
+              },
+              {
+                "id": "older_than",
+                "label": "Older than",
+                "description": "Duration such as 30d or 2592000s.",
+                "type": "text"
+              },
+              {
+                "id": "newer_than",
+                "label": "Newer than",
+                "description": "Duration such as 7d or 604800s.",
+                "type": "text"
+              },
+              {
+                "id": "keep_count",
+                "label": "Keep most recent versions",
+                "description": "Set this instead of age conditions to retain the newest versions.",
+                "type": "number",
+                "validation": {
+                  "min": 1
+                }
+              }
             ]
           },
           {
@@ -250,8 +617,14 @@
             "type": "select",
             "nullable": true,
             "options": [
-              { "value": "INHERITED", "label": "Inherited" },
-              { "value": "DISABLED", "label": "Disabled" }
+              {
+                "value": "INHERITED",
+                "label": "Inherited"
+              },
+              {
+                "value": "DISABLED",
+                "label": "Disabled"
+              }
             ]
           }
         ]
@@ -267,8 +640,34 @@
             "description": "Each entry grants one member one role without replacing existing access.",
             "type": "repeatable",
             "fields": [
-              { "id": "role", "label": "Role", "type": "select", "required": true, "data_source": { "resource": "iam.roles", "params": { "project_id": { "from_field": "project_id" } }, "display": { "value_key": "name", "label_key": "name", "description_key": "description" }, "allow_custom": true, "cache_ttl": 300 } },
-              { "id": "member", "label": "Member", "description": "For example: user:person@example.com or serviceAccount:name@project.iam.gserviceaccount.com.", "type": "text", "required": true }
+              {
+                "id": "role",
+                "label": "Role",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "member",
+                "label": "Member",
+                "description": "For example: user:person@example.com or serviceAccount:name@project.iam.gserviceaccount.com.",
+                "type": "text",
+                "required": true
+              }
             ]
           }
         ]

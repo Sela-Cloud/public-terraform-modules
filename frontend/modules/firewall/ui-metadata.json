@@ -17,6 +17,16 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "firewall",
+    "target": "google_compute_firewall.this",
+    "id_template": "projects/{project_id}/global/firewalls/{name}",
+    "identity_fields": [
+      "project_id",
+      "name"
+    ],
+    "requires_review": false
+  },
   "resource": {
     "variable": "firewall",
     "key_field": "name",

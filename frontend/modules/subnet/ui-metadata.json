@@ -17,6 +17,17 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "subnet",
+    "target": "google_compute_subnetwork.this",
+    "id_template": "projects/{project_id}/regions/{region}/subnetworks/{name}",
+    "identity_fields": [
+      "project_id",
+      "region",
+      "name"
+    ],
+    "requires_review": false
+  },
   "resource": {
     "variable": "subnet",
     "key_field": "name",
