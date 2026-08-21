@@ -28,6 +28,7 @@ import glob
 import json
 import os
 import re
+import subprocess
 import sys
 
 # --------------------------------------------------------------------------------------
@@ -1105,6 +1106,51 @@ def collect_catalog_refs(root: str, modules: list) -> dict:
     return refs
 
 
+#: Where the wrappers' ?ref= pins are resolved from. Matches the source= URL in every wrapper.
+REMOTE_URL = "https://github.com/Sela-Cloud/public-terraform-modules"
+
+
+def check_refs_exist(refs, report):
+    """A pinned ref that was never tagged breaks everything that runs `terraform init`.
+
+    Uniformity is not enough. Bumping every wrapper to `?ref=v0.5.9` and not tagging it leaves a
+    catalog that passes every other check here and fails at `terraform init` with
+    `invalid ref: "v0.5.9"` -- for exported code *and* for every deploy, because the worker copies
+    these same wrappers and inits them. It is a repository-wide outage produced by a missing git tag,
+    so it belongs in CI rather than in a request log.
+
+    A network failure is reported as a warning, not an error: this must not turn an offline run into
+    a red build.
+    """
+    for ref in sorted(refs):
+        try:
+            result = subprocess.run(
+                ["git", "ls-remote", "--tags", "--heads", REMOTE_URL, ref, "refs/tags/" + ref],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            report.warn("<catalog>", "R8", "could not verify ref %r exists: %s" % (ref, exc))
+            continue
+        if result.returncode != 0:
+            report.warn(
+                "<catalog>",
+                "R8",
+                "could not verify ref %r exists: git ls-remote failed (%s)"
+                % (ref, (result.stderr or "").strip()[:120]),
+            )
+            continue
+        if not result.stdout.strip():
+            report.error(
+                "<catalog>",
+                "R8",
+                "wrappers pin ?ref=%s but no such tag or branch exists on %s -- every "
+                "`terraform init` will fail with 'invalid ref: \"%s\"'. Tag the release and push "
+                "the tag." % (ref, REMOTE_URL, ref),
+            )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     default_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1141,6 +1187,9 @@ def main(argv=None):
             "%s in %s" % (ref, ", ".join(sorted(mods))) for ref, mods in sorted(refs.items())
         )
         report.error("<catalog>", "R8", "remote ?ref= pins are not uniform: %s" % detail)
+
+    # R8b: every pinned ref must actually exist on the remote
+    check_refs_exist(refs, report)
 
     # ---- output ----
     module_order = modules + ["<catalog>"]
