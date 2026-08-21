@@ -257,6 +257,10 @@
           "type": "boolean",
           "description": "If true, this control does not map to a Terraform attribute or global; it only parameterises another field's data_source (e.g., artifact-registry's remote_password_secret). Exempts the field from the CI check that every control maps to an object attribute or a global (MODULE_CONTRACT R6).",
           "default": false
+        },
+        "sensitive": {
+          "type": "boolean",
+          "description": "The value is a secret in its own right, not a reference to one. Marks a field whose value must not be logged, and whose presence makes an exported archive secret-bearing. Do not set it for a field naming a Secret Manager secret or version \u2014 those carry no secret material."
         }
       }
     },
@@ -264,8 +268,6 @@
       "type": "object",
       "description": "Declares how an existing cloud resource is adopted into this module. Omit it and the module is create-only.",
       "required": [
-        "target",
-        "id_template",
         "identity_fields"
       ],
       "additionalProperties": false,
@@ -309,6 +311,14 @@
           "type": "boolean",
           "description": "Forces human review of this module's imports regardless of the generic flow. Set it for anything sensitive.",
           "default": false
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/import_target"
+          },
+          "description": "For modules owning several addresses. The first entry is the primary \u2014 its attributes supply the tfvars key. Use this instead of `target`/`id_template`."
         }
       }
     },
@@ -510,6 +520,53 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/field"
+          }
+        }
+      }
+    },
+    "import_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "target",
+        "id_template"
+      ],
+      "description": "One Terraform address a single tfvars entry owns. Modules that own a set of resources declare several; a VPN is a gateway plus forwarding rules plus a tunnel.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable identifier for this target within the module."
+        },
+        "target": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_-]*$",
+          "description": "Resource address inside the wrapped remote module."
+        },
+        "id_template": {
+          "type": "string",
+          "description": "The provider's documented import ID format for this resource type."
+        },
+        "index": {
+          "type": "string",
+          "description": "Index suffix when the resource is count/for_each indexed inside the module, e.g. \"[0]\"."
+        },
+        "required": {
+          "type": "boolean",
+          "default": true,
+          "description": "When false, a target that does not exist is skipped rather than failing the import. The cloud is the authority on existence, which avoids re-implementing the module's own conditional logic here."
+        },
+        "field_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Resource attribute path -> field id, for this target's contribution."
+        },
+        "ignore": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }

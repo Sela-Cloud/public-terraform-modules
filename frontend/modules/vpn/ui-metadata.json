@@ -17,6 +17,47 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "import": {
+    "module": "vpn",
+    "identity_fields": [
+      "project_id",
+      "region",
+      "name"
+    ],
+    "targets": [
+      {
+        "id": "tunnel",
+        "target": "google_compute_vpn_tunnel.this",
+        "id_template": "projects/{project_id}/regions/{region}/vpnTunnels/{name}"
+      },
+      {
+        "id": "gateway",
+        "target": "google_compute_vpn_gateway.this",
+        "id_template": "projects/{project_id}/regions/{region}/targetVpnGateways/{name}-gateway"
+      },
+      {
+        "id": "address",
+        "target": "google_compute_address.this",
+        "id_template": "projects/{project_id}/regions/{region}/addresses/{name}-ip"
+      },
+      {
+        "id": "forwarding_esp",
+        "target": "google_compute_forwarding_rule.esp",
+        "id_template": "projects/{project_id}/regions/{region}/forwardingRules/{name}-esp"
+      },
+      {
+        "id": "forwarding_udp500",
+        "target": "google_compute_forwarding_rule.udp_500",
+        "id_template": "projects/{project_id}/regions/{region}/forwardingRules/{name}-udp500"
+      },
+      {
+        "id": "forwarding_udp4500",
+        "target": "google_compute_forwarding_rule.udp_4500",
+        "id_template": "projects/{project_id}/regions/{region}/forwardingRules/{name}-udp4500"
+      }
+    ],
+    "requires_review": true
+  },
   "resource": {
     "variable": "vpn",
     "key_field": "name",
@@ -87,7 +128,8 @@
             "label": "Pre-shared secret",
             "description": "Stored in Terraform state; use a dedicated secret-management flow before production.",
             "type": "text",
-            "required": true
+            "required": true,
+            "sensitive": true
           },
           {
             "id": "ike_version",

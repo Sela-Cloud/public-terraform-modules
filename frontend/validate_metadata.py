@@ -784,54 +784,119 @@ def validate_import(root, name, meta, imp, main_text, module_blocks, labels, rep
     else:
         target_block = module_blocks[labels.index(imp_module)]
 
-    # import.target must name a resource in the remote module it wraps
-    target = imp.get("target")
-    if not target:
-        report.error(name, "import", "import.target is required")
-    elif "." not in target:
-        report.error(name, "import", "import.target %r must be '<type>.<name>'" % target)
-    elif target.startswith("module."):
-        report.error(
-            name, "import", "import.target %r must not include the module.… prefix" % target
-        )
-    elif target_block is not None:
-        source = top_level_assignment_expr(target_block.body, "source") or ""
-        m = _SOURCE_SUBPATH_RE.search(source)
-        if not m:
-            report.warn(
+    # Every declared target must name a resource in the remote module it wraps. A composite module
+    # declares several (`targets`); a single-target module declares one (`target`). Both are checked
+    # the same way, because an unverified address is the one mistake that adopts the wrong resource.
+    declared = imp.get("targets")
+    if declared:
+        if not isinstance(declared, list) or not declared:
+            report.error(name, "import", "import.targets must be a non-empty array")
+            declared = []
+        entries = []
+        for idx, entry in enumerate(declared or []):
+            if not isinstance(entry, dict):
+                report.error(name, "import", "import.targets[%d] must be an object" % idx)
+                continue
+            for key in ("id", "target", "id_template"):
+                if not entry.get(key):
+                    report.error(
+                        name, "import", "import.targets[%d] is missing %s" % (idx, key)
+                    )
+            entries.append(entry)
+        ids = [e.get("id") for e in entries if e.get("id")]
+        if len(ids) != len(set(ids)):
+            report.error(name, "import", "import.targets ids must be unique: %s" % ids)
+        if entries and not any(e.get("required", True) for e in entries):
+            report.error(
                 name,
                 "import",
-                "could not derive the remote module subpath from source %s; import.target unverified" % source,
+                "at least one import.targets entry must be required, or an import could succeed "
+                "having adopted nothing",
             )
-        else:
-            subpath = m.group(1)
-            remote_dir = os.path.join(root, "modules", subpath)
-            if not os.path.isdir(remote_dir):
-                report.error(
+        if imp.get("target"):
+            report.error(
+                name, "import", "declare either import.target or import.targets, not both"
+            )
+    else:
+        if not imp.get("target"):
+            report.error(name, "import", "import.target (or import.targets) is required")
+        if not imp.get("id_template"):
+            report.error(name, "import", "import.id_template is required")
+        entries = [{"id": "primary", "target": imp.get("target"),
+                    "id_template": imp.get("id_template"),
+                    "field_map": imp.get("field_map")}]
+
+    remote_resources = None
+    for entry in entries:
+        target = entry.get("target")
+        if not target:
+            continue
+        label = entry.get("id") or "primary"
+        if "." not in target:
+            report.error(
+                name, "import", "target %r (%s) must be '<type>.<name>'" % (target, label)
+            )
+            continue
+        if target.startswith("module."):
+            report.error(
+                name, "import",
+                "target %r (%s) must not include the module.… prefix" % (target, label),
+            )
+            continue
+        if target_block is None:
+            continue
+        if remote_resources is None:
+            source = top_level_assignment_expr(target_block.body, "source") or ""
+            m = _SOURCE_SUBPATH_RE.search(source)
+            if not m:
+                report.warn(
                     name,
                     "import",
-                    "remote module directory modules/%s does not exist, so import.target %r cannot be verified"
-                    % (subpath, target),
+                    "could not derive the remote module subpath from source %s; targets unverified"
+                    % source,
                 )
+                remote_resources = set()
             else:
-                rtype, _, rname = target.partition(".")
-                found = False
-                for fname in sorted(os.listdir(remote_dir)):
-                    if not fname.endswith(".tf"):
-                        continue
-                    text = open(os.path.join(remote_dir, fname), encoding="utf-8").read()
-                    for block in top_level_blocks(text):
-                        if block.type == "resource" and block.labels[:2] == [rtype, rname]:
-                            found = True
-                            break
-                    if found:
-                        break
-                if not found:
+                subpath = m.group(1)
+                remote_dir = os.path.join(root, "modules", subpath)
+                if not os.path.isdir(remote_dir):
                     report.error(
                         name,
                         "import",
-                        "import.target %r is not declared in modules/%s" % (target, subpath),
+                        "remote module directory modules/%s does not exist, so targets cannot be "
+                        "verified" % subpath,
                     )
+                    remote_resources = set()
+                else:
+                    remote_resources = set()
+                    for fname in sorted(os.listdir(remote_dir)):
+                        if not fname.endswith(".tf"):
+                            continue
+                        text = open(os.path.join(remote_dir, fname), encoding="utf-8").read()
+                        for block in top_level_blocks(text):
+                            if block.type == "resource" and len(block.labels) >= 2:
+                                remote_resources.add(".".join(block.labels[:2]))
+                    remote_resources.add("__subpath__:" + subpath)
+        if remote_resources and target not in remote_resources:
+            subpath = next(
+                (r.split(":", 1)[1] for r in remote_resources if r.startswith("__subpath__:")), "?"
+            )
+            report.error(
+                name,
+                "import",
+                "target %r (%s) is not declared in modules/%s" % (target, label, subpath),
+            )
+
+    # every target's id_template placeholders must be identity fields
+    for entry in entries:
+        for ph in sorted(set(re.findall(r"\{([^{}]+)\}", entry.get("id_template") or ""))):
+            if ph not in (imp.get("identity_fields") or []):
+                report.error(
+                    name,
+                    "import",
+                    "target %s id_template placeholder {%s} is not in identity_fields"
+                    % (entry.get("id"), ph),
+                )
 
     # field_map values must be real field ids
     field_map = imp.get("field_map") or {}
@@ -852,14 +917,10 @@ def validate_import(root, name, meta, imp, main_text, module_blocks, labels, rep
         identity = []
     template = imp.get("id_template") or ""
     if not template:
-        report.error(name, "import", "import.id_template is required")
-    for ph in sorted(set(re.findall(r"\{([^{}]+)\}", template))):
-        if ph not in identity:
-            report.error(
-                name,
-                "import",
-                "id_template placeholder {%s} is not listed in identity_fields" % ph,
-            )
+        # Only a single-target block needs a spec-level template; a `targets` block carries one per
+        # entry, already checked above.
+        if not imp.get("targets"):
+            report.error(name, "import", "import.id_template is required")
     for fid in identity:
         if fid not in known_ids:
             report.warn(
