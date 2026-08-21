@@ -41,3 +41,4 @@ bridge-application/--data-raw
 bridge-application/--header
 bridge-application/__pycache__/
 bridge-application/env/
+__pycache__
