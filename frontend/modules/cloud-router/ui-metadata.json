@@ -17,6 +17,12 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "provides": [
+    {
+      "data_source": "compute.routers",
+      "value_field": "name"
+    }
+  ],
   "import": {
     "module": "cloud_router",
     "target": "google_compute_router.this",

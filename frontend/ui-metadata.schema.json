@@ -45,6 +45,29 @@
         "$ref": "#/definitions/extra"
       }
     },
+    "provides": {
+      "type": "array",
+      "description": "What a resource built from this module can supply to another module's field. A field declares what it needs with data_source.resource; this declares what this module produces, so the platform can offer a resource that is being created in the same request as a value for a field that would otherwise only list what already exists in the cloud.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "data_source",
+          "value_field"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "data_source": {
+            "type": "string",
+            "description": "The data_source.resource identifier this module satisfies, e.g. compute.networks."
+          },
+          "value_field": {
+            "type": "string",
+            "description": "Which of this module's own fields holds the value a consumer needs. Must be a real field id, and is usually the key_field."
+          }
+        }
+      }
+    },
     "import": {
       "$ref": "#/definitions/import"
     },

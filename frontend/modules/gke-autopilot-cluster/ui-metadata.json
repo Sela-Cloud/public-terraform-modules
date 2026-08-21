@@ -18,6 +18,12 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "provides": [
+    {
+      "data_source": "container.clusters",
+      "value_field": "name"
+    }
+  ],
   "import": {
     "module": "gke_autopilot",
     "target": "google_container_cluster.this",

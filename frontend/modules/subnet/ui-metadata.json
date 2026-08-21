@@ -17,6 +17,12 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "provides": [
+    {
+      "data_source": "compute.subnetworks",
+      "value_field": "name"
+    }
+  ],
   "import": {
     "module": "subnet",
     "target": "google_compute_subnetwork.this",

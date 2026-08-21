@@ -1,5 +1,5 @@
 module "cloud_nat" {
-  source                              = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-nat?ref=v0.5.8"
+  source                              = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-nat?ref=v0.5.9"
   for_each                            = var.cloud_nat
   project_id                          = var.project_id
   name                                = each.value.name

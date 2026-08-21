@@ -17,6 +17,12 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "provides": [
+    {
+      "data_source": "dns.managedZones",
+      "value_field": "name"
+    }
+  ],
   "import": {
     "module": "cloud_dns_zone",
     "target": "google_dns_managed_zone.this",

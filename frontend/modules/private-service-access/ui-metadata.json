@@ -17,6 +17,12 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "provides": [
+    {
+      "data_source": "servicenetworking.psa",
+      "value_field": "name"
+    }
+  ],
   "import": {
     "module": "private_service_access",
     "identity_fields": [

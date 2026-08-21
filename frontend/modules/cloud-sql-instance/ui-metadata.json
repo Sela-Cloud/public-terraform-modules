@@ -18,6 +18,12 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "provides": [
+    {
+      "data_source": "cloudsql.instances",
+      "value_field": "name"
+    }
+  ],
   "import": {
     "module": "cloud_sql_instance",
     "target": "google_sql_database_instance.this",

@@ -18,6 +18,12 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "provides": [
+    {
+      "data_source": "container.clusters",
+      "value_field": "name"
+    }
+  ],
   "resource": {
     "variable": "gke_standard_cluster",
     "key_field": "name",

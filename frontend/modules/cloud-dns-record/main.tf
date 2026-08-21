@@ -1,5 +1,5 @@
 module "cloud_dns_record" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-dns-record?ref=v0.5.8"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-dns-record?ref=v0.5.9"
   # Keyed directly by the tfvars map key so that the Terraform address of one record is
   # module.cloud_dns_record["<map key>"] and can be derived rather than declared (IMPORT_PLAN R10).
   # The previous local re-keyed by "name|type" via values(), which discarded the map key entirely

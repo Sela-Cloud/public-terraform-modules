@@ -18,6 +18,12 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "provides": [
+    {
+      "data_source": "compute.networks",
+      "value_field": "name"
+    }
+  ],
   "import": {
     "module": "vpc_network",
     "target": "google_compute_network.this",

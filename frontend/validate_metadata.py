@@ -726,6 +726,9 @@ def validate_module(root: str, name: str, report: Report) -> dict:
     # ---- data sources ----
     check_data_sources(name, meta, report)
 
+    # ---- provides ----
+    check_provides(name, meta, report)
+
     # ---- import block ----
     imp = meta.get("import")
     if isinstance(imp, dict):
@@ -755,6 +758,58 @@ def check_data_sources(name, meta, report):
                 walk(value)
 
     walk(meta)
+
+
+def check_provides(name, meta, report):
+    """A `provides` entry must name a real data source and a real field of this module.
+
+    `provides` is how a module says "a resource of mine can be the value of someone else's field" --
+    vpc-network provides `compute.networks`, which is what `subnet.network` needs. The platform uses
+    it to offer a resource being created in the same request as a value for a field that would
+    otherwise list only what already exists in the cloud. A typo in either half fails silently: the
+    field just never offers the new resource, which looks like the feature not working.
+    """
+    entries = meta.get("provides")
+    if entries is None:
+        return
+
+    resource = meta.get("resource") or {}
+    field_ids = {f.get("id") for f in (meta.get("globals") or []) if isinstance(f, dict)}
+    for section in resource.get("sections") or []:
+        if isinstance(section, dict):
+            field_ids |= {
+                f.get("id") for f in (section.get("fields") or []) if isinstance(f, dict)
+            }
+    # The key field is a value a consumer can use even when it is not itself a declared field --
+    # several modules carry the resource name only as `key_field`.
+    field_ids.add(resource.get("key_field"))
+
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        data_source = entry.get("data_source")
+        if data_source not in KNOWN_DATA_SOURCES:
+            report.error(
+                name,
+                "provides",
+                "provides.data_source %r is not implemented by the API, so no field will ever "
+                "match it" % data_source,
+            )
+        value_field = entry.get("value_field")
+        if value_field not in field_ids:
+            report.error(
+                name,
+                "provides",
+                "provides.value_field %r is not a field id or the key_field of this module"
+                % value_field,
+            )
+
+    if meta.get("deprecated"):
+        report.warn(
+            name,
+            "provides",
+            "a deprecated module declares provides; new resources should not be steered towards it",
+        )
 
 
 def validate_import(root, name, meta, imp, main_text, module_blocks, labels, report):
