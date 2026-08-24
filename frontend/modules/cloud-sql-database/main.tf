@@ -1,5 +1,5 @@
 module "cloud_sql_database" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-database?ref=v0.5.10"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-database?ref=v0.5.11"
   for_each = var.cloud_sql_database
 
   project_id      = var.project_id

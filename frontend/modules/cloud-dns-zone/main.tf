@@ -1,5 +1,5 @@
 module "cloud_dns_zone" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-dns-zone?ref=v0.5.10"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-dns-zone?ref=v0.5.11"
   for_each = var.cloud_dns_zone
 
   project_id               = var.project_id
