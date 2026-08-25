@@ -9,6 +9,11 @@ locals {
     var.instance_count,
     length(var.zone)
   )
+
+  # var.data_disk defaults to null, so length() must be guarded before it is used
+  # in any count expression below.
+  data_disk_count = var.data_disk == null ? 0 : length(var.data_disk)
+  data_disk_total = var.instance_count * local.data_disk_count
 }
 
 data "google_compute_zones" "available" {
@@ -145,15 +150,15 @@ resource "google_compute_disk_resource_policy_attachment" "boot_diskpolicy_attac
 #################################
 
 resource "google_compute_disk" "gce_data_disk" {
-  count   = var.data_disk == null ? 0 : var.instance_count * length(var.data_disk)
-  name    = "${var.machine_name}-boot-disk"
-  size    = var.data_disk[count.index % length(var.data_disk)].disk_size_gb
-  type    = var.data_disk[count.index % length(var.data_disk)].disk_type
+  count   = local.data_disk_total
+  name    = "${var.machine_name}-data-disk-${floor(count.index / local.data_disk_count) + 1}-${(count.index % local.data_disk_count) + 1}"
+  size    = var.data_disk[count.index % local.data_disk_count].disk_size_gb
+  type    = var.data_disk[count.index % local.data_disk_count].disk_type
   project = var.project
-  zone    = google_compute_instance.gce_vm[floor(count.index / length(var.data_disk))].zone
+  zone    = google_compute_instance.gce_vm[floor(count.index / local.data_disk_count)].zone
   labels = merge(
     var.disk_labels,
-    tomap({ "type" = "boot" })
+    tomap({ "type" = "data" })
   )
   physical_block_size_bytes = 4096
   lifecycle {
@@ -166,9 +171,9 @@ resource "google_compute_disk" "gce_data_disk" {
 ##########################################
 
 resource "google_compute_attached_disk" "gce_data_disk_attach" {
-  count      = var.data_disk == null ? 0 : var.instance_count * length(var.data_disk)
+  count      = local.data_disk_total
   disk       = google_compute_disk.gce_data_disk[count.index].id
-  instance   = google_compute_instance.gce_vm[floor(count.index / length(var.data_disk))].id
+  instance   = google_compute_instance.gce_vm[floor(count.index / local.data_disk_count)].id
   depends_on = [google_compute_disk.gce_data_disk]
 }
 
@@ -177,9 +182,9 @@ resource "google_compute_attached_disk" "gce_data_disk_attach" {
 ###############################################
 
 resource "google_compute_disk_resource_policy_attachment" "gce_data_disk_policy_attach" {
-  count   = var.snapshot_policy_name == null ? 0 : var.instance_count * length(var.data_disk)
+  count   = var.snapshot_policy_name == null ? 0 : local.data_disk_total
   name    = var.snapshot_policy_name
   project = var.project
   disk    = google_compute_disk.gce_data_disk[count.index].name
-  zone    = google_compute_instance.gce_vm[floor(count.index / length(var.data_disk))].zone
+  zone    = google_compute_instance.gce_vm[floor(count.index / local.data_disk_count)].zone
 }
