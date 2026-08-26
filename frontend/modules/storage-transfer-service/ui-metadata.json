@@ -107,7 +107,19 @@
                 "sensitive": true,
                 "depends_on": { "field": "auth_method", "value": "access_key" }
               },
-              { "id": "dest_gcs_bucket", "label": "Destination Cloud Storage bucket", "type": "text", "required": true },
+              {
+                "id": "dest_gcs_bucket",
+                "label": "Destination Cloud Storage bucket",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "storage.buckets",
+                  "params": { "project_id": { "from_field": "project_id" } },
+                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
               { "id": "dest_path", "label": "Destination path prefix (optional)", "type": "text" },
               { "id": "include_prefixes", "label": "Include only object prefixes", "type": "list" },
               { "id": "exclude_prefixes", "label": "Exclude object prefixes", "type": "list" },
@@ -195,7 +207,19 @@
                 "required": true,
                 "sensitive": true
               },
-              { "id": "dest_gcs_bucket", "label": "Destination Cloud Storage bucket", "type": "text", "required": true },
+              {
+                "id": "dest_gcs_bucket",
+                "label": "Destination Cloud Storage bucket",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "storage.buckets",
+                  "params": { "project_id": { "from_field": "project_id" } },
+                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
               { "id": "dest_path", "label": "Destination path prefix (optional)", "type": "text" },
               { "id": "include_prefixes", "label": "Include only object prefixes", "type": "list" },
               { "id": "exclude_prefixes", "label": "Exclude object prefixes", "type": "list" },

@@ -91,6 +91,7 @@ KNOWN_DATA_SOURCES = {
     "secretmanager.secrets",
     "servicenetworking.connections",
     "servicenetworking.psa",
+    "storage.buckets",
     "subnet.subnetworks",
     "vpc.networks",
 }
