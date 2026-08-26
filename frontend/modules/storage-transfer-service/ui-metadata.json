@@ -1,0 +1,263 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "storage-transfer-service",
+  "version": "1.0.0",
+  "display": {
+    "label": "Storage Transfer Service",
+    "icon": "storage-transfer-service",
+    "description": "Copy objects from AWS S3 or Azure Blob Storage into a Cloud Storage bucket, once or on a recurring schedule.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "storage_transfer_service",
+    "key_field": "name",
+    "key_label": "Deployment name",
+    "key_description": "A name for this group of transfer jobs.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Deployment name",
+            "type": "text",
+            "required": true,
+            "placeholder": "backup-jobs",
+            "validation": { "min": 1, "max": 50, "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter." }
+          },
+          {
+            "id": "source_type",
+            "label": "Source",
+            "description": "Where transfer jobs in this deployment copy from. Choose one; the matching job list appears below.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "aws_s3", "label": "AWS S3" },
+              { "value": "azure_blob", "label": "Azure Blob Storage" }
+            ]
+          },
+          {
+            "id": "grant_destination_bucket_access",
+            "label": "Grant the transfer service access to destination buckets",
+            "description": "Automatically grants this project's Storage Transfer service agent write access to every destination bucket used below. Turn off if bucket access is already managed elsewhere.",
+            "type": "boolean",
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "aws-jobs",
+        "label": "AWS S3 transfer jobs",
+        "description": "Each job copies from one AWS S3 bucket into one Cloud Storage destination.",
+        "depends_on": { "field": "source_type", "value": "aws_s3" },
+        "fields": [
+          {
+            "id": "aws_jobs",
+            "label": "Transfer jobs",
+            "type": "repeatable",
+            "fields": [
+              { "id": "job_name", "label": "Job name", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
+              { "id": "description", "label": "Description", "type": "text" },
+              { "id": "enabled", "label": "Enabled", "type": "boolean", "default": true },
+              { "id": "bucket_name", "label": "S3 bucket name", "type": "text", "required": true },
+              { "id": "path", "label": "Path prefix (optional)", "type": "text" },
+              {
+                "id": "auth_method",
+                "label": "Authentication method",
+                "type": "select",
+                "required": true,
+                "default": "role_arn",
+                "options": [
+                  { "value": "role_arn", "label": "IAM role ARN" },
+                  { "value": "access_key", "label": "Access key / secret key" }
+                ]
+              },
+              {
+                "id": "role_arn",
+                "label": "AWS IAM role ARN",
+                "description": "The AWS IAM role Storage Transfer Service assumes to read this bucket.",
+                "type": "text",
+                "required": true,
+                "placeholder": "arn:aws:iam::123456789012:role/gcp-storage-transfer",
+                "depends_on": { "field": "auth_method", "value": "role_arn" }
+              },
+              {
+                "id": "access_key_id",
+                "label": "AWS access key ID",
+                "type": "text",
+                "required": true,
+                "sensitive": true,
+                "depends_on": { "field": "auth_method", "value": "access_key" }
+              },
+              {
+                "id": "secret_access_key",
+                "label": "AWS secret access key",
+                "type": "text",
+                "required": true,
+                "sensitive": true,
+                "depends_on": { "field": "auth_method", "value": "access_key" }
+              },
+              { "id": "dest_gcs_bucket", "label": "Destination Cloud Storage bucket", "type": "text", "required": true },
+              { "id": "dest_path", "label": "Destination path prefix (optional)", "type": "text" },
+              { "id": "include_prefixes", "label": "Include only object prefixes", "type": "list" },
+              { "id": "exclude_prefixes", "label": "Exclude object prefixes", "type": "list" },
+              {
+                "id": "overwrite_when",
+                "label": "Overwrite objects in destination",
+                "type": "select",
+                "default": "NEVER",
+                "options": [
+                  { "value": "NEVER", "label": "Never overwrite" },
+                  { "value": "DIFFERENT", "label": "Overwrite when different" },
+                  { "value": "ALWAYS", "label": "Always overwrite" }
+                ]
+              },
+              { "id": "delete_objects_from_source_after_transfer", "label": "Delete source objects after transfer", "type": "boolean", "default": false },
+              { "id": "delete_objects_unique_in_sink", "label": "Delete destination objects not present in source", "type": "boolean", "default": false },
+              {
+                "id": "schedule",
+                "label": "Recurring schedule",
+                "description": "Leave empty to run this job once, immediately, when deployed.",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "start_date",
+                    "label": "Start date",
+                    "type": "object",
+                    "fields": [
+                      { "id": "year", "label": "Year", "type": "number", "required": true, "validation": { "min": 2020 } },
+                      { "id": "month", "label": "Month", "type": "number", "required": true, "validation": { "min": 1, "max": 12 } },
+                      { "id": "day", "label": "Day", "type": "number", "required": true, "validation": { "min": 1, "max": 31 } }
+                    ]
+                  },
+                  {
+                    "id": "end_date",
+                    "label": "End date (optional)",
+                    "type": "object",
+                    "nullable": true,
+                    "fields": [
+                      { "id": "year", "label": "Year", "type": "number", "required": true, "validation": { "min": 2020 } },
+                      { "id": "month", "label": "Month", "type": "number", "required": true, "validation": { "min": 1, "max": 12 } },
+                      { "id": "day", "label": "Day", "type": "number", "required": true, "validation": { "min": 1, "max": 31 } }
+                    ]
+                  },
+                  {
+                    "id": "start_time",
+                    "label": "Start time of day (optional, UTC)",
+                    "type": "object",
+                    "nullable": true,
+                    "fields": [
+                      { "id": "hours", "label": "Hour (0-23)", "type": "number", "required": true, "validation": { "min": 0, "max": 23 } },
+                      { "id": "minutes", "label": "Minute", "type": "number", "required": true, "validation": { "min": 0, "max": 59 } },
+                      { "id": "seconds", "label": "Second", "type": "number", "default": 0, "validation": { "min": 0, "max": 59 } }
+                    ]
+                  },
+                  { "id": "repeat_interval_days", "label": "Repeat every N days (leave empty to run once on start date)", "type": "number", "validation": { "min": 1 } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "azure-jobs",
+        "label": "Azure Blob transfer jobs",
+        "description": "Each job copies from one Azure Blob container into one Cloud Storage destination.",
+        "depends_on": { "field": "source_type", "value": "azure_blob" },
+        "fields": [
+          {
+            "id": "azure_jobs",
+            "label": "Transfer jobs",
+            "type": "repeatable",
+            "fields": [
+              { "id": "job_name", "label": "Job name", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
+              { "id": "description", "label": "Description", "type": "text" },
+              { "id": "enabled", "label": "Enabled", "type": "boolean", "default": true },
+              { "id": "storage_account", "label": "Storage account", "type": "text", "required": true },
+              { "id": "container", "label": "Container", "type": "text", "required": true },
+              { "id": "path", "label": "Path prefix (optional)", "type": "text" },
+              {
+                "id": "sas_token",
+                "label": "SAS token",
+                "description": "A shared access signature token scoped to this container, granting Storage Transfer Service read access.",
+                "type": "text",
+                "required": true,
+                "sensitive": true
+              },
+              { "id": "dest_gcs_bucket", "label": "Destination Cloud Storage bucket", "type": "text", "required": true },
+              { "id": "dest_path", "label": "Destination path prefix (optional)", "type": "text" },
+              { "id": "include_prefixes", "label": "Include only object prefixes", "type": "list" },
+              { "id": "exclude_prefixes", "label": "Exclude object prefixes", "type": "list" },
+              {
+                "id": "overwrite_when",
+                "label": "Overwrite objects in destination",
+                "type": "select",
+                "default": "NEVER",
+                "options": [
+                  { "value": "NEVER", "label": "Never overwrite" },
+                  { "value": "DIFFERENT", "label": "Overwrite when different" },
+                  { "value": "ALWAYS", "label": "Always overwrite" }
+                ]
+              },
+              { "id": "delete_objects_from_source_after_transfer", "label": "Delete source objects after transfer", "type": "boolean", "default": false },
+              { "id": "delete_objects_unique_in_sink", "label": "Delete destination objects not present in source", "type": "boolean", "default": false },
+              {
+                "id": "schedule",
+                "label": "Recurring schedule",
+                "description": "Leave empty to run this job once, immediately, when deployed.",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "start_date",
+                    "label": "Start date",
+                    "type": "object",
+                    "fields": [
+                      { "id": "year", "label": "Year", "type": "number", "required": true, "validation": { "min": 2020 } },
+                      { "id": "month", "label": "Month", "type": "number", "required": true, "validation": { "min": 1, "max": 12 } },
+                      { "id": "day", "label": "Day", "type": "number", "required": true, "validation": { "min": 1, "max": 31 } }
+                    ]
+                  },
+                  {
+                    "id": "end_date",
+                    "label": "End date (optional)",
+                    "type": "object",
+                    "nullable": true,
+                    "fields": [
+                      { "id": "year", "label": "Year", "type": "number", "required": true, "validation": { "min": 2020 } },
+                      { "id": "month", "label": "Month", "type": "number", "required": true, "validation": { "min": 1, "max": 12 } },
+                      { "id": "day", "label": "Day", "type": "number", "required": true, "validation": { "min": 1, "max": 31 } }
+                    ]
+                  },
+                  {
+                    "id": "start_time",
+                    "label": "Start time of day (optional, UTC)",
+                    "type": "object",
+                    "nullable": true,
+                    "fields": [
+                      { "id": "hours", "label": "Hour (0-23)", "type": "number", "required": true, "validation": { "min": 0, "max": 23 } },
+                      { "id": "minutes", "label": "Minute", "type": "number", "required": true, "validation": { "min": 0, "max": 59 } },
+                      { "id": "seconds", "label": "Second", "type": "number", "default": 0, "validation": { "min": 0, "max": 59 } }
+                    ]
+                  },
+                  { "id": "repeat_interval_days", "label": "Repeat every N days (leave empty to run once on start date)", "type": "number", "validation": { "min": 1 } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
