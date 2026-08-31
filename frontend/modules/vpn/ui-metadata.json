@@ -149,20 +149,38 @@
             ]
           },
           {
+            "id": "routing_mode",
+            "label": "Routing",
+            "description": "Route-based lets GCP routes direct traffic into the tunnel (0.0.0.0/0 selectors, managed automatically). Policy-based matches traffic against the selectors you specify below.",
+            "type": "select",
+            "required": true,
+            "default": "ROUTE_BASED",
+            "options": [
+              { "value": "ROUTE_BASED", "label": "Route-based" },
+              { "value": "POLICY_BASED", "label": "Policy-based" }
+            ]
+          },
+          {
+            "id": "destination_ranges",
+            "label": "Destination IP ranges",
+            "description": "Remote (on-premises) CIDR ranges to route into this tunnel.",
+            "type": "list",
+            "required": true,
+            "depends_on": { "field": "routing_mode", "value": "ROUTE_BASED" }
+          },
+          {
             "id": "local_traffic_selector",
             "label": "Local traffic selectors",
             "type": "list",
-            "default": [
-              "0.0.0.0/0"
-            ]
+            "required": true,
+            "depends_on": { "field": "routing_mode", "value": "POLICY_BASED" }
           },
           {
             "id": "remote_traffic_selector",
             "label": "Remote traffic selectors",
             "type": "list",
-            "default": [
-              "0.0.0.0/0"
-            ]
+            "required": true,
+            "depends_on": { "field": "routing_mode", "value": "POLICY_BASED" }
           },
           {
             "id": "description",
