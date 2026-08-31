@@ -37,7 +37,7 @@ variable "ip_version" {
 }
 
 variable "network_tier" {
-  description = "Network service tier: PREMIUM or STANDARD. Only applies to REGIONAL addresses -- google_compute_global_address has no network_tier."
+  description = "Network service tier: PREMIUM or STANDARD. Only applies to REGIONAL EXTERNAL addresses -- global addresses and internal addresses have no network_tier."
   type        = string
   default     = "PREMIUM"
 
@@ -45,6 +45,52 @@ variable "network_tier" {
     condition     = contains(["PREMIUM", "STANDARD"], var.network_tier)
     error_message = "network_tier must be 'PREMIUM' or 'STANDARD'."
   }
+}
+
+variable "address_type" {
+  description = "EXTERNAL or INTERNAL. Only applies to REGIONAL addresses -- GLOBAL addresses in this module are always external."
+  type        = string
+  default     = "EXTERNAL"
+
+  validation {
+    condition     = contains(["EXTERNAL", "INTERNAL"], var.address_type)
+    error_message = "address_type must be 'EXTERNAL' or 'INTERNAL'."
+  }
+}
+
+variable "network" {
+  description = "Network for an INTERNAL address."
+  type        = string
+  default     = null
+}
+
+variable "subnetwork" {
+  description = "Subnetwork for an INTERNAL address."
+  type        = string
+  default     = null
+}
+
+variable "purpose" {
+  description = "Purpose of an INTERNAL address: GCE_ENDPOINT (non-shared) or SHARED_LOADBALANCER_VIP."
+  type        = string
+  default     = "GCE_ENDPOINT"
+
+  validation {
+    condition     = contains(["GCE_ENDPOINT", "SHARED_LOADBALANCER_VIP"], var.purpose)
+    error_message = "purpose must be 'GCE_ENDPOINT' or 'SHARED_LOADBALANCER_VIP'."
+  }
+}
+
+variable "assign_automatically" {
+  description = "If true, GCP assigns the address automatically. If false, address must be set to a specific IP to reserve."
+  type        = bool
+  default     = true
+}
+
+variable "address" {
+  description = "A specific IP address to reserve. Only used when assign_automatically is false."
+  type        = string
+  default     = null
 }
 
 variable "description" {

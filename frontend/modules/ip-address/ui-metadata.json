@@ -5,7 +5,7 @@
   "display": {
     "label": "IP addresses",
     "icon": "ip-address",
-    "description": "Reserve a static external IP address.",
+    "description": "Reserve a static internal or external IP address.",
     "category": "regional"
   },
   "globals": [
@@ -21,7 +21,7 @@
     "variable": "ip_address",
     "key_field": "name",
     "key_label": "Address name",
-    "key_description": "Name of the reserved external IP address.",
+    "key_description": "Name of the reserved IP address.",
     "sections": [
       {
         "id": "basics",
@@ -61,10 +61,79 @@
             }
           },
           {
+            "id": "address_type",
+            "label": "IP address purpose",
+            "description": "External addresses can be reached from the internet. Internal addresses are only reachable within a VPC network.",
+            "type": "select",
+            "default": "EXTERNAL",
+            "depends_on": { "field": "type", "value": "REGIONAL" },
+            "options": [
+              { "value": "EXTERNAL", "label": "External" },
+              { "value": "INTERNAL", "label": "Internal" }
+            ]
+          },
+          {
+            "id": "network",
+            "label": "Network",
+            "type": "select",
+            "depends_on": { "field": "address_type", "value": "INTERNAL" },
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnetwork",
+            "label": "Subnetwork",
+            "type": "select",
+            "depends_on": { "field": "address_type", "value": "INTERNAL" },
+            "data_source": {
+              "resource": "compute.subnetworks",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "region" },
+                "network": { "from_field": "network" }
+              },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "purpose",
+            "label": "Purpose",
+            "type": "select",
+            "default": "GCE_ENDPOINT",
+            "depends_on": { "field": "address_type", "value": "INTERNAL" },
+            "options": [
+              { "value": "GCE_ENDPOINT", "label": "Non-shared" },
+              { "value": "SHARED_LOADBALANCER_VIP", "label": "Shared Loadbalancer VIP" }
+            ]
+          },
+          {
+            "id": "assign_automatically",
+            "label": "Assign automatically",
+            "description": "Turn off to reserve a specific IP address instead of letting GCP pick one.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "address",
+            "label": "IP address",
+            "description": "The specific IP address to reserve.",
+            "type": "text",
+            "required": true,
+            "depends_on": { "field": "assign_automatically", "value": false }
+          },
+          {
             "id": "ip_version",
             "label": "IP version",
             "type": "select",
             "default": "IPV4",
+            "depends_on": { "field": "address_type", "value": "EXTERNAL" },
             "options": [
               { "value": "IPV4", "label": "IPv4" },
               { "value": "IPV6", "label": "IPv6" }
