@@ -10,7 +10,7 @@ locals {
 }
 
 module "gke_autopilot" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-autopilot?ref=v0.6.11"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-autopilot?ref=v0.6.12"
 
   for_each = {
     for key, cluster in var.gke_cluster : key => cluster
@@ -62,7 +62,7 @@ module "gke_autopilot" {
 }
 
 module "gke_standard_cluster" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.6.11"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.6.12"
 
   for_each = {
     for key, cluster in var.gke_cluster : key => cluster
@@ -117,7 +117,7 @@ module "gke_standard_cluster" {
 }
 
 module "gke_standard_node_pool" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-node-pool?ref=v0.6.11"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-node-pool?ref=v0.6.12"
   for_each = local.standard_node_pools
 
   project_id         = var.project_id

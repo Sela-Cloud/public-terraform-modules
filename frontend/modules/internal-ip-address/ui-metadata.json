@@ -1,0 +1,127 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "internal-ip-address",
+  "version": "1.0.0",
+  "display": {
+    "label": "Internal IP addresses",
+    "icon": "ip-address",
+    "description": "Reserve a static internal regional IP address.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "import": {
+    "module": "internal_ip_address",
+    "target": "google_compute_address.this",
+    "id_template": "projects/{project_id}/regions/{region}/addresses/{name}",
+    "identity_fields": ["project_id", "region", "name"],
+    "requires_review": false
+  },
+  "resource": {
+    "variable": "internal_ip_address",
+    "key_field": "name",
+    "key_label": "Address name",
+    "key_description": "Name of the reserved internal IP address.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Address name",
+            "type": "text",
+            "required": true,
+            "placeholder": "internal-app-ip",
+            "validation": { "min": 1, "max": 63, "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter." }
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "network",
+            "label": "Network",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnetwork",
+            "label": "Subnetwork",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.subnetworks",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "region" },
+                "network": { "from_field": "network" }
+              },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "purpose",
+            "label": "Purpose",
+            "type": "select",
+            "default": "GCE_ENDPOINT",
+            "options": [
+              { "value": "GCE_ENDPOINT", "label": "Non-shared" },
+              { "value": "SHARED_LOADBALANCER_VIP", "label": "Shared Loadbalancer VIP" }
+            ]
+          },
+          {
+            "id": "assign_automatically",
+            "label": "Assign automatically",
+            "description": "Turn off to reserve a specific IP address instead of letting GCP pick one.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "address",
+            "label": "IP address",
+            "description": "The specific IP address to reserve.",
+            "type": "text",
+            "required": true,
+            "depends_on": { "field": "assign_automatically", "value": false }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text"
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}

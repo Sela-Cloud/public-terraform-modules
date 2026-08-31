@@ -163,5 +163,7 @@
         ]
       }
     ]
-  }
+  },
+  "deprecated": true,
+  "deprecation_note": "Superseded by external-ip-address, internal-ip-address and global-ip-address. A type/address_type field selected between google_compute_address and google_compute_global_address (different resource types) and, within that, between EXTERNAL and INTERNAL shapes, so no single static target could be used to import an existing address. Existing resources keep working; create new ones with the replacements."
 }

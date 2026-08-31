@@ -1,0 +1,84 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "global-ip-address",
+  "version": "1.0.0",
+  "display": {
+    "label": "Global IP addresses",
+    "icon": "ip-address",
+    "description": "Reserve a static global IP address, for use by global resources such as global load balancers.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "import": {
+    "module": "global_ip_address",
+    "target": "google_compute_global_address.this",
+    "id_template": "projects/{project_id}/global/addresses/{name}",
+    "identity_fields": ["project_id", "name"],
+    "requires_review": false
+  },
+  "resource": {
+    "variable": "global_ip_address",
+    "key_field": "name",
+    "key_label": "Address name",
+    "key_description": "Name of the reserved global IP address.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Address name",
+            "type": "text",
+            "required": true,
+            "placeholder": "global-lb-ip",
+            "validation": { "min": 1, "max": 63, "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter." }
+          },
+          {
+            "id": "ip_version",
+            "label": "IP version",
+            "type": "select",
+            "default": "IPV4",
+            "options": [
+              { "value": "IPV4", "label": "IPv4" },
+              { "value": "IPV6", "label": "IPv6" }
+            ]
+          },
+          {
+            "id": "assign_automatically",
+            "label": "Assign automatically",
+            "description": "Turn off to reserve a specific IP address instead of letting GCP pick one.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "address",
+            "label": "IP address",
+            "description": "The specific IP address to reserve.",
+            "type": "text",
+            "required": true,
+            "depends_on": { "field": "assign_automatically", "value": false }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text"
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}
