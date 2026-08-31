@@ -1,5 +1,5 @@
 module "gke_standard_cluster" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.6.2"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gke-standard-cluster?ref=v0.6.4"
   for_each = var.gke_standard_cluster
 
   project_id                          = var.project_id

@@ -17,7 +17,7 @@ locals {
 
 module "custom_roles" {
   for_each    = local.custom_role_configs
-  source      = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/custom-role?ref=v0.6.2"
+  source      = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/custom-role?ref=v0.6.4"
   project     = var.project_id
   role_id     = each.value.custom_role_id
   permissions = each.value.custom_role_permissions
@@ -26,7 +26,7 @@ module "custom_roles" {
 module "service_accounts" {
   for_each = local.service_account_configs
 
-  source                         = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/service-account?ref=v0.6.2"
+  source                         = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/service-account?ref=v0.6.4"
   project_id                     = var.project_id
   service_account_name           = each.value.service_account_name
   iam_members                    = each.value.iam_members
@@ -36,7 +36,7 @@ module "service_accounts" {
 module "member_roles" {
   for_each = local.project_role_configs
 
-  source  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/member-iam?ref=v0.6.2"
+  source  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/member-iam?ref=v0.6.4"
   project = var.project_id
 
   service_account_address = try(module.service_accounts[each.key].email, null)
