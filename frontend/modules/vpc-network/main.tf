@@ -1,5 +1,5 @@
 module "vpc_network" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/vpc-network?ref=v0.6.4"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/vpc-network?ref=v0.6.5"
   for_each = var.vpc_network
 
   project_id                                = var.project_id

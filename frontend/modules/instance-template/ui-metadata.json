@@ -1,0 +1,892 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "instance-template",
+  "version": "1.0.0",
+  "display": {
+    "label": "Instance Template",
+    "icon": "instance-template",
+    "description": "Reusable VM blueprint defining machine type, disks, networking and identity for managed instance groups",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the instance template will be created.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "instance_template",
+    "key_field": "name_prefix",
+    "key_label": "Name prefix",
+    "key_description": "Prefix for the template name. Compute Engine appends a unique suffix, so a new template is created rather than an existing one replaced.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Identity, region and machine shape of the instances this template creates.",
+        "fields": [
+          {
+            "id": "name_prefix",
+            "label": "Name prefix",
+            "description": "Prefix for the generated template name. Compute Engine appends a unique suffix.",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-app-tpl",
+            "validation": {
+              "max": 37,
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter and contain only lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "description",
+            "label": "Template description",
+            "description": "Description of the instance template itself.",
+            "type": "text",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "instance_description",
+            "label": "Instance description",
+            "description": "Description applied to every instance created from this template.",
+            "type": "text",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "description": "Region in which the instance template is created.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "machine_type_zone",
+            "label": "Machine type lookup zone",
+            "description": "Only used to list machine types below. An instance template is regional, so this zone is not saved.",
+            "type": "select",
+            "required": false,
+            "ui_only": true,
+            "data_source": {
+              "resource": "compute.zones",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "machine_type",
+            "label": "Machine type",
+            "description": "Machine type for the instances, e.g. e2-medium.",
+            "type": "select",
+            "required": true,
+            "default": "e2-medium",
+            "data_source": {
+              "resource": "compute.machineTypes",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "zone": {
+                  "from_field": "machine_type_zone"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "description": "Labels applied to the instances, provided as a map.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      },
+      {
+        "id": "boot_disk",
+        "label": "Boot Disk",
+        "description": "Source image and boot disk settings.",
+        "fields": [
+          {
+            "id": "source_image",
+            "label": "Source image",
+            "description": "Exact source disk image. Leave blank to track the image family below instead.",
+            "type": "text",
+            "required": false,
+            "default": "",
+            "placeholder": "rocky-linux-9-optimized-gcp-v20240111"
+          },
+          {
+            "id": "source_image_family",
+            "label": "Source image family",
+            "description": "Image family to track when no exact image is given. New instances pick up the latest image in the family.",
+            "type": "text",
+            "required": false,
+            "default": "rocky-linux-9-optimized-gcp"
+          },
+          {
+            "id": "source_image_project",
+            "label": "Source image project",
+            "description": "Project that hosts the source image or family.",
+            "type": "text",
+            "required": false,
+            "default": "rocky-linux-cloud"
+          },
+          {
+            "id": "disk_size_gb",
+            "label": "Boot disk size (GB)",
+            "type": "number",
+            "required": false,
+            "default": 100,
+            "validation": {
+              "min": 10,
+              "max": 65536
+            }
+          },
+          {
+            "id": "disk_type",
+            "label": "Boot disk type",
+            "type": "select",
+            "required": false,
+            "default": "pd-standard",
+            "options": [
+              {
+                "value": "pd-standard",
+                "label": "Standard persistent disk"
+              },
+              {
+                "value": "pd-balanced",
+                "label": "Balanced persistent disk"
+              },
+              {
+                "value": "pd-ssd",
+                "label": "SSD persistent disk"
+              }
+            ]
+          },
+          {
+            "id": "auto_delete",
+            "label": "Auto-delete boot disk",
+            "description": "Delete the boot disk when its instance is deleted.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "disk_labels",
+            "label": "Boot disk labels",
+            "description": "Labels applied to the boot disk, provided as a map.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          },
+          {
+            "id": "disk_encryption_key",
+            "label": "Disk encryption key",
+            "description": "Full resource ID of a Cloud KMS key used to encrypt every disk on the instance. Leave blank to use Google-managed encryption.",
+            "type": "text",
+            "required": false,
+            "default": "",
+            "placeholder": "projects/PROJECT/locations/REGION/keyRings/RING/cryptoKeys/KEY"
+          },
+          {
+            "id": "disk_resource_policies",
+            "label": "Boot disk resource policies",
+            "description": "Resource policies (short names or IDs) attached to the boot disk, typically for scheduled snapshots.",
+            "type": "list",
+            "required": false,
+            "default": []
+          }
+        ]
+      },
+      {
+        "id": "additional_disks",
+        "label": "Additional Disks",
+        "description": "Extra disks attached to every instance created from this template.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "additional_disks",
+            "label": "Additional disks",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "disk_name",
+                "label": "Disk name",
+                "description": "Leave blank to let Compute Engine name the disk.",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "device_name",
+                "label": "Device name",
+                "description": "Name the guest OS sees under /dev/disk/by-id/google-*.",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "disk_size_gb",
+                "label": "Disk size (GB)",
+                "type": "number",
+                "required": true,
+                "default": 30
+              },
+              {
+                "id": "disk_type",
+                "label": "Disk type",
+                "type": "select",
+                "required": true,
+                "default": "pd-standard",
+                "options": [
+                  {
+                    "value": "pd-standard",
+                    "label": "Standard persistent disk"
+                  },
+                  {
+                    "value": "pd-balanced",
+                    "label": "Balanced persistent disk"
+                  },
+                  {
+                    "value": "pd-ssd",
+                    "label": "SSD persistent disk"
+                  },
+                  {
+                    "value": "local-ssd",
+                    "label": "Local SSD (scratch, 375 GB fixed)"
+                  }
+                ]
+              },
+              {
+                "id": "mode",
+                "label": "Attach mode",
+                "type": "select",
+                "required": false,
+                "default": "READ_WRITE",
+                "options": [
+                  {
+                    "value": "READ_WRITE",
+                    "label": "Read/write"
+                  },
+                  {
+                    "value": "READ_ONLY",
+                    "label": "Read only"
+                  }
+                ]
+              },
+              {
+                "id": "auto_delete",
+                "label": "Auto-delete",
+                "type": "boolean",
+                "required": false,
+                "default": true
+              },
+              {
+                "id": "source_image",
+                "label": "Source image",
+                "description": "Create the disk from an image. Leave blank for an empty disk.",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "source_snapshot",
+                "label": "Source snapshot",
+                "description": "Create the disk from a snapshot. Leave blank for an empty disk.",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "disk_labels",
+                "label": "Disk labels",
+                "type": "map",
+                "required": false,
+                "default": {}
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Networking",
+        "description": "VPC network, subnet and external access.",
+        "fields": [
+          {
+            "id": "network",
+            "label": "Network",
+            "description": "Name or self_link of the VPC network. Use this for legacy or auto-mode networks; use the subnetwork below for custom-mode networks.",
+            "type": "select",
+            "required": false,
+            "default": "",
+            "data_source": {
+              "resource": "compute.networks",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnetwork",
+            "label": "Subnetwork",
+            "description": "Subnet to attach the instances to. It must be in the template's region.",
+            "type": "select",
+            "required": false,
+            "default": "",
+            "data_source": {
+              "resource": "compute.subnetworks",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "region": {
+                  "from_field": "region"
+                },
+                "network": {
+                  "from_field": "network"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "ipCidrRange"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnetwork_project",
+            "label": "Subnetwork project",
+            "description": "Project that owns the subnet, when it lives in a Shared VPC host project. Leave blank to use the project above.",
+            "type": "text",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "network_ip",
+            "label": "Internal IP address",
+            "description": "Fixed private IP for the instance. Leave blank to let Compute Engine allocate one.",
+            "type": "text",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "network_tags",
+            "label": "Network tags",
+            "description": "Network tags used by firewall rules and routes, provided as a list.",
+            "type": "list",
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "nic_type",
+            "label": "NIC type",
+            "description": "Network interface type. Leave unset to accept the API default for the image.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "options": [
+              {
+                "value": "VIRTIO_NET",
+                "label": "VirtIO"
+              },
+              {
+                "value": "GVNIC",
+                "label": "gVNIC (higher throughput; image must support it)"
+              }
+            ]
+          },
+          {
+            "id": "stack_type",
+            "label": "Stack type",
+            "description": "Whether the interface is IPv4-only or dual-stack. Leave unset for the API default (IPv4 only).",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "options": [
+              {
+                "value": "IPV4_ONLY",
+                "label": "IPv4 only"
+              },
+              {
+                "value": "IPV4_IPV6",
+                "label": "IPv4 and IPv6"
+              }
+            ]
+          },
+          {
+            "id": "can_ip_forward",
+            "label": "Enable IP forwarding",
+            "description": "Allow instances to send and receive packets for addresses other than their own. Required for NAT and router instances.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "total_egress_bandwidth_tier",
+            "label": "Egress bandwidth tier",
+            "description": "Higher tier raises egress bandwidth on supported machine families.",
+            "type": "select",
+            "required": false,
+            "default": "DEFAULT",
+            "options": [
+              {
+                "value": "DEFAULT",
+                "label": "Default"
+              },
+              {
+                "value": "TIER_1",
+                "label": "Tier 1"
+              }
+            ]
+          },
+          {
+            "id": "access_config",
+            "label": "External IPv4 access",
+            "description": "Add an entry to give instances an external IPv4 address. Leave empty for no public access.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "nat_ip",
+                "label": "Static external IP",
+                "description": "Leave blank for an ephemeral address.",
+                "type": "text",
+                "required": false,
+                "default": ""
+              },
+              {
+                "id": "network_tier",
+                "label": "Network tier",
+                "type": "select",
+                "required": true,
+                "default": "PREMIUM",
+                "options": [
+                  {
+                    "value": "PREMIUM",
+                    "label": "Premium"
+                  },
+                  {
+                    "value": "STANDARD",
+                    "label": "Standard"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ipv6_access_config",
+            "label": "External IPv6 access",
+            "description": "Add an entry to give instances external IPv6 access. Requires a dual-stack subnet and stack type IPv4 and IPv6.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "network_tier",
+                "label": "Network tier",
+                "type": "select",
+                "required": true,
+                "default": "PREMIUM",
+                "options": [
+                  {
+                    "value": "PREMIUM",
+                    "label": "Premium"
+                  },
+                  {
+                    "value": "STANDARD",
+                    "label": "Standard"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "alias_ip_range",
+            "label": "Alias IP range",
+            "description": "Secondary IP range assigned to the interface, for example for GKE-style pod addressing.",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "fields": [
+              {
+                "id": "ip_cidr_range",
+                "label": "IP CIDR range",
+                "description": "A netmask such as /24. It must fall inside the chosen subnetwork.",
+                "type": "text",
+                "required": true,
+                "placeholder": "/24"
+              },
+              {
+                "id": "subnetwork_range_name",
+                "label": "Secondary range name",
+                "description": "Secondary range to allocate from. Leave blank to use the subnet's primary range.",
+                "type": "text",
+                "required": false,
+                "default": ""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "access",
+        "label": "Identity & Access",
+        "description": "Service account attached to every instance.",
+        "fields": [
+          {
+            "id": "service_account",
+            "label": "Service account",
+            "description": "Service account attached to the instances.",
+            "type": "object",
+            "required": true,
+            "fields": [
+              {
+                "id": "email",
+                "label": "Email",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "iam.serviceAccounts",
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    }
+                  },
+                  "display": {
+                    "value_key": "email",
+                    "label_key": "email",
+                    "description_key": "displayName"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "scopes",
+                "label": "Scopes",
+                "description": "OAuth scopes granted to the instances. Prefer cloud-platform and control access with IAM roles.",
+                "type": "list",
+                "required": true,
+                "default": [
+                  "cloud-platform"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Security",
+        "description": "Shielded VM and Confidential VM settings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "enable_shielded_vm",
+            "label": "Enable Shielded VM",
+            "description": "Requires an image that supports Shielded VM.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "shielded_instance_config",
+            "label": "Shielded VM configuration",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "depends_on": {
+              "field": "enable_shielded_vm",
+              "value": true
+            },
+            "fields": [
+              {
+                "id": "enable_secure_boot",
+                "label": "Enable secure boot",
+                "type": "boolean",
+                "required": true,
+                "default": true
+              },
+              {
+                "id": "enable_vtpm",
+                "label": "Enable vTPM",
+                "type": "boolean",
+                "required": true,
+                "default": true
+              },
+              {
+                "id": "enable_integrity_monitoring",
+                "label": "Enable integrity monitoring",
+                "type": "boolean",
+                "required": true,
+                "default": true
+              }
+            ]
+          },
+          {
+            "id": "enable_confidential_vm",
+            "label": "Enable Confidential VM",
+            "description": "Requires an image and machine type that support Confidential Computing. Instances are forced to TERMINATE on host maintenance.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "confidential_instance_type",
+            "label": "Confidential computing technology",
+            "description": "Choosing SEV_SNP forces the minimum CPU platform to AMD Milan.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "depends_on": {
+              "field": "enable_confidential_vm",
+              "value": true
+            },
+            "options": [
+              {
+                "value": "SEV",
+                "label": "AMD SEV"
+              },
+              {
+                "value": "SEV_SNP",
+                "label": "AMD SEV-SNP"
+              },
+              {
+                "value": "TDX",
+                "label": "Intel TDX"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "scheduling",
+        "label": "Scheduling",
+        "description": "Provisioning model and host maintenance behaviour.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "spot",
+            "label": "Spot instance",
+            "description": "Provision instances as Spot VMs. Much cheaper, and Compute Engine can reclaim them at any time.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "spot_instance_termination_action",
+            "label": "Spot termination action",
+            "description": "What Compute Engine does when it reclaims a Spot VM.",
+            "type": "select",
+            "required": false,
+            "default": "STOP",
+            "depends_on": {
+              "field": "spot",
+              "value": true
+            },
+            "options": [
+              {
+                "value": "STOP",
+                "label": "Stop"
+              },
+              {
+                "value": "DELETE",
+                "label": "Delete"
+              }
+            ]
+          },
+          {
+            "id": "preemptible",
+            "label": "Preemptible instance",
+            "description": "Legacy preemptible VMs, capped at 24 hours. Prefer Spot above for new workloads.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "automatic_restart",
+            "label": "Automatic restart",
+            "description": "Restart instances that Compute Engine terminates. Forced off for Spot and preemptible instances.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "on_host_maintenance",
+            "label": "On host maintenance",
+            "description": "Behaviour during host maintenance. Forced to TERMINATE for Spot, preemptible, GPU and Confidential instances.",
+            "type": "select",
+            "required": false,
+            "default": "MIGRATE",
+            "options": [
+              {
+                "value": "MIGRATE",
+                "label": "Live migrate"
+              },
+              {
+                "value": "TERMINATE",
+                "label": "Terminate"
+              }
+            ]
+          },
+          {
+            "id": "maintenance_interval",
+            "label": "Maintenance interval",
+            "description": "Set to Periodic to group planned maintenance into predictable windows. Leave unset for the default behaviour.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "options": [
+              {
+                "value": "PERIODIC",
+                "label": "Periodic"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced Settings",
+        "description": "Metadata, startup script, CPU platform and accelerators.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "metadata",
+            "label": "Metadata",
+            "description": "Instance metadata, provided as a map.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          },
+          {
+            "id": "startup_script",
+            "label": "Startup script",
+            "description": "Script run on every instance at boot.",
+            "type": "text",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "min_cpu_platform",
+            "label": "Minimum CPU platform",
+            "description": "Friendly CPU platform name such as Intel Skylake. Leave blank to accept any platform.",
+            "type": "text",
+            "required": false,
+            "default": "",
+            "placeholder": "Intel Skylake"
+          },
+          {
+            "id": "threads_per_core",
+            "label": "Threads per core",
+            "description": "Set to 1 to disable simultaneous multithreading. Leave unset for the machine type's default.",
+            "type": "number",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "validation": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          {
+            "id": "enable_nested_virtualization",
+            "label": "Enable nested virtualization",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "resource_policies",
+            "label": "Instance resource policies",
+            "description": "Self-links of resource policies attached to the instances. Currently at most one is supported.",
+            "type": "list",
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "gpu",
+            "label": "GPU",
+            "description": "Attach guest accelerators. Instances with a GPU are forced to TERMINATE on host maintenance.",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "fields": [
+              {
+                "id": "type",
+                "label": "Accelerator type",
+                "type": "text",
+                "required": true,
+                "placeholder": "nvidia-tesla-t4"
+              },
+              {
+                "id": "count",
+                "label": "Count",
+                "type": "number",
+                "required": true,
+                "default": 1,
+                "validation": {
+                  "min": 1
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
