@@ -1,0 +1,794 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "mig",
+  "version": "1.0.0",
+  "display": {
+    "label": "Managed Instance Group",
+    "icon": "mig",
+    "description": "Regional managed instance group that runs, auto-heals and autoscales VMs from an instance template",
+    "category": "regional"
+  },
+
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the managed instance group will be created.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+
+  "resource": {
+    "variable": "mig",
+    "key_field": "hostname",
+    "key_label": "Hostname",
+    "key_description": "Base instance name for the group. Compute Engine appends a unique suffix to each VM, and the group is named after it unless a name is given below.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "The template to run, where to run it, and how many instances.",
+        "fields": [
+          {
+            "id": "hostname",
+            "label": "Hostname",
+            "description": "Base instance name for VMs in the group.",
+            "type": "text",
+            "required": true,
+            "placeholder": "web",
+            "validation": {
+              "max": 54,
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter and contain only lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "description": "Region the instance group runs in. Instances are spread across its zones.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": {
+                "project_id": { "from_field": "project_id" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "instance_template",
+            "label": "Instance template self-link",
+            "description": "Full self-link of the instance template the group creates VMs from. Take it from the Instance Template resource's self-link output; because Compute Engine generates the template's name, this cannot be picked from a list.",
+            "type": "text",
+            "required": true,
+            "placeholder": "https://www.googleapis.com/compute/v1/projects/PROJECT/global/instanceTemplates/web-tpl-20240101000000000000"
+          },
+          {
+            "id": "mig_name",
+            "label": "Instance group name",
+            "description": "Name of the managed instance group. Leave blank to use the hostname with a -mig suffix.",
+            "type": "text",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "target_size",
+            "label": "Target size",
+            "description": "Number of running instances. Ignored once autoscaling is enabled below.",
+            "type": "number",
+            "required": false,
+            "default": 1,
+            "validation": { "min": 0 },
+            "depends_on": {
+              "field": "autoscaling_enabled",
+              "value": false
+            }
+          },
+          {
+            "id": "distribution_policy_zones",
+            "label": "Distribution zones",
+            "description": "Zones the instances are spread across. Leave empty to use every zone in the region.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "compute.zones",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "region" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+
+      {
+        "id": "health",
+        "label": "Health Check & Auto-healing",
+        "description": "The health check that decides whether an instance is working. Auto-healing recreates instances that fail it.",
+        "fields": [
+          {
+            "id": "health_check_name",
+            "label": "Health check name",
+            "description": "Leave blank to name it after the hostname.",
+            "type": "text",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "health_check",
+            "label": "Health check",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "type",
+                "label": "Protocol",
+                "description": "Choose None to create no health check, which also turns off auto-healing.",
+                "type": "select",
+                "required": true,
+                "default": "tcp",
+                "options": [
+                  { "value": "tcp", "label": "TCP" },
+                  { "value": "http", "label": "HTTP" },
+                  { "value": "https", "label": "HTTPS" },
+                  { "value": "", "label": "None (no health check, no auto-healing)" }
+                ]
+              },
+              {
+                "id": "port",
+                "label": "Port",
+                "type": "number",
+                "required": true,
+                "default": 80,
+                "validation": { "min": 1, "max": 65535 }
+              },
+              {
+                "id": "initial_delay_sec",
+                "label": "Initial delay (seconds)",
+                "description": "How long a new instance is given to boot before auto-healing starts judging it. Set this above your real startup time or the group will recreate instances in a loop.",
+                "type": "number",
+                "required": true,
+                "default": 30,
+                "validation": { "min": 0 }
+              },
+              {
+                "id": "check_interval_sec",
+                "label": "Check interval (seconds)",
+                "type": "number",
+                "required": true,
+                "default": 30,
+                "validation": { "min": 1 }
+              },
+              {
+                "id": "timeout_sec",
+                "label": "Timeout (seconds)",
+                "description": "Must not exceed the check interval.",
+                "type": "number",
+                "required": true,
+                "default": 10,
+                "validation": { "min": 1 }
+              },
+              {
+                "id": "healthy_threshold",
+                "label": "Healthy threshold",
+                "description": "Consecutive successes before an instance counts as healthy.",
+                "type": "number",
+                "required": true,
+                "default": 1,
+                "validation": { "min": 1 }
+              },
+              {
+                "id": "unhealthy_threshold",
+                "label": "Unhealthy threshold",
+                "description": "Consecutive failures before an instance counts as unhealthy.",
+                "type": "number",
+                "required": true,
+                "default": 5,
+                "validation": { "min": 1 }
+              },
+              {
+                "id": "request_path",
+                "label": "Request path",
+                "description": "HTTP and HTTPS only.",
+                "type": "text",
+                "required": false,
+                "default": "/"
+              },
+              {
+                "id": "host",
+                "label": "Host header",
+                "description": "HTTP and HTTPS only. Leave blank to use the instance IP.",
+                "type": "text",
+                "required": false,
+                "default": ""
+              },
+              {
+                "id": "request",
+                "label": "Request string",
+                "description": "TCP only. Sent once the connection is open.",
+                "type": "text",
+                "required": false,
+                "default": ""
+              },
+              {
+                "id": "response",
+                "label": "Expected response",
+                "description": "Leave blank to accept any response.",
+                "type": "text",
+                "required": false,
+                "default": ""
+              },
+              {
+                "id": "proxy_header",
+                "label": "Proxy header",
+                "type": "select",
+                "required": false,
+                "default": "NONE",
+                "options": [
+                  { "value": "NONE", "label": "None" },
+                  { "value": "PROXY_V1", "label": "PROXY v1" }
+                ]
+              },
+              {
+                "id": "enable_logging",
+                "label": "Enable health check logging",
+                "type": "boolean",
+                "required": false,
+                "default": true
+              }
+            ]
+          },
+          {
+            "id": "lifecycle_policy",
+            "label": "Repair policy",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "force_update_on_repair",
+                "label": "Update instance on repair",
+                "description": "Yes applies the group's current template while repairing an instance, so a repaired VM is never restored to an older template.",
+                "type": "select",
+                "required": true,
+                "default": "YES",
+                "options": [
+                  { "value": "YES", "label": "Yes" },
+                  { "value": "NO", "label": "No" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "autoscaling",
+        "label": "Autoscaling",
+        "description": "Scale the group automatically instead of holding a fixed target size.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "autoscaling_enabled",
+            "label": "Enable autoscaling",
+            "description": "Creates an autoscaler for the group. The target size above is then ignored.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "autoscaler_name",
+            "label": "Autoscaler name",
+            "description": "Leave blank to name it after the hostname.",
+            "type": "text",
+            "required": false,
+            "default": "",
+            "depends_on": { "field": "autoscaling_enabled", "value": true }
+          },
+          {
+            "id": "min_replicas",
+            "label": "Minimum replicas",
+            "type": "number",
+            "required": false,
+            "default": 1,
+            "validation": { "min": 0 },
+            "depends_on": { "field": "autoscaling_enabled", "value": true }
+          },
+          {
+            "id": "max_replicas",
+            "label": "Maximum replicas",
+            "description": "Must be at least the minimum.",
+            "type": "number",
+            "required": false,
+            "default": 1,
+            "validation": { "min": 1 },
+            "depends_on": { "field": "autoscaling_enabled", "value": true }
+          },
+          {
+            "id": "cooldown_period",
+            "label": "Cooldown period (seconds)",
+            "description": "How long a new instance is ignored for scaling decisions while it warms up.",
+            "type": "number",
+            "required": false,
+            "default": 60,
+            "validation": { "min": 0 },
+            "depends_on": { "field": "autoscaling_enabled", "value": true }
+          },
+          {
+            "id": "autoscaling_mode",
+            "label": "Autoscaling mode",
+            "description": "Leave unset for the default, which scales both directions.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "depends_on": { "field": "autoscaling_enabled", "value": true },
+            "options": [
+              { "value": "ON", "label": "On (scale in and out)" },
+              { "value": "ONLY_SCALE_OUT", "label": "Only scale out" },
+              { "value": "OFF", "label": "Off (recommendations only)" }
+            ]
+          },
+          {
+            "id": "autoscaling_cpu",
+            "label": "CPU utilization policy",
+            "description": "Add one entry to scale on average CPU utilization.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "autoscaling_enabled", "value": true },
+            "fields": [
+              {
+                "id": "target",
+                "label": "Target utilization",
+                "description": "Fraction between 0 and 1, so 0.6 means 60 percent.",
+                "type": "number",
+                "required": true,
+                "default": 0.6,
+                "validation": { "min": 0, "max": 1 }
+              },
+              {
+                "id": "predictive_method",
+                "label": "Predictive method",
+                "type": "select",
+                "required": false,
+                "default": "NONE",
+                "options": [
+                  { "value": "NONE", "label": "None (react to current load)" },
+                  { "value": "OPTIMIZE_AVAILABILITY", "label": "Optimize availability (scale ahead of forecast load)" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "autoscaling_lb",
+            "label": "Load balancing utilization policy",
+            "description": "Add one entry to scale on how much of the backend's serving capacity is used.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "autoscaling_enabled", "value": true },
+            "fields": [
+              {
+                "id": "target",
+                "label": "Target utilization",
+                "description": "Fraction between 0 and 1.",
+                "type": "number",
+                "required": true,
+                "default": 0.8,
+                "validation": { "min": 0, "max": 1 }
+              }
+            ]
+          },
+          {
+            "id": "autoscaling_metric",
+            "label": "Cloud Monitoring metric policies",
+            "description": "Scale on an arbitrary Cloud Monitoring metric.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "autoscaling_enabled", "value": true },
+            "fields": [
+              {
+                "id": "name",
+                "label": "Metric name",
+                "type": "text",
+                "required": true,
+                "placeholder": "pubsub.googleapis.com/subscription/num_undelivered_messages"
+              },
+              {
+                "id": "target",
+                "label": "Target value",
+                "type": "number",
+                "required": true
+              },
+              {
+                "id": "type",
+                "label": "Target type",
+                "type": "select",
+                "required": true,
+                "default": "GAUGE",
+                "options": [
+                  { "value": "GAUGE", "label": "Gauge" },
+                  { "value": "DELTA_PER_SECOND", "label": "Delta per second" },
+                  { "value": "DELTA_PER_MINUTE", "label": "Delta per minute" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "scaling_schedules",
+            "label": "Scaling schedules",
+            "description": "Hold a minimum number of instances during recurring windows, for example business hours.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "autoscaling_enabled", "value": true },
+            "fields": [
+              {
+                "id": "name",
+                "label": "Schedule name",
+                "type": "text",
+                "required": true,
+                "placeholder": "business-hours"
+              },
+              {
+                "id": "schedule",
+                "label": "Start schedule (cron)",
+                "description": "Unix cron expression for when the window starts.",
+                "type": "text",
+                "required": true,
+                "placeholder": "0 9 * * MON-FRI"
+              },
+              {
+                "id": "duration_sec",
+                "label": "Duration (seconds)",
+                "type": "number",
+                "required": true,
+                "default": 28800,
+                "validation": { "min": 300 }
+              },
+              {
+                "id": "min_required_replicas",
+                "label": "Minimum replicas during window",
+                "type": "number",
+                "required": true,
+                "validation": { "min": 0 }
+              },
+              {
+                "id": "time_zone",
+                "label": "Time zone",
+                "description": "IANA time zone name.",
+                "type": "text",
+                "required": false,
+                "default": "UTC",
+                "placeholder": "Asia/Kolkata"
+              },
+              {
+                "id": "disabled",
+                "label": "Disabled",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              }
+            ]
+          },
+          {
+            "id": "autoscaling_scale_in_control",
+            "label": "Scale-in control",
+            "description": "Caps how fast the autoscaler may remove instances. Leave the limits blank to allow unrestricted scale-in.",
+            "type": "object",
+            "required": false,
+            "depends_on": { "field": "autoscaling_enabled", "value": true },
+            "fields": [
+              {
+                "id": "fixed_replicas",
+                "label": "Maximum instances removed",
+                "type": "number",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "validation": { "min": 0 }
+              },
+              {
+                "id": "percent_replicas",
+                "label": "Maximum percent removed",
+                "type": "number",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "validation": { "min": 0, "max": 100 }
+              },
+              {
+                "id": "time_window_sec",
+                "label": "Time window (seconds)",
+                "description": "Window the limit above applies over.",
+                "type": "number",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "validation": { "min": 0 }
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "update",
+        "label": "Rolling Update",
+        "description": "How the group rolls out a new instance template.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "update_policy",
+            "label": "Update policy",
+            "description": "Leave empty to let Compute Engine use its own defaults.",
+            "type": "repeatable",
+            "required": false,
+            "default": [
+              {
+                "minimal_action": "REPLACE",
+                "type": "PROACTIVE",
+                "max_surge_fixed": 0,
+                "min_ready_sec": 0,
+                "replacement_method": "RECREATE"
+              }
+            ],
+            "fields": [
+              {
+                "id": "type",
+                "label": "Update type",
+                "type": "select",
+                "required": true,
+                "default": "PROACTIVE",
+                "options": [
+                  { "value": "PROACTIVE", "label": "Proactive (roll out immediately)" },
+                  { "value": "OPPORTUNISTIC", "label": "Opportunistic (only when instances are recreated anyway)" }
+                ]
+              },
+              {
+                "id": "minimal_action",
+                "label": "Minimal action",
+                "description": "The least disruptive action allowed when applying a new template.",
+                "type": "select",
+                "required": true,
+                "default": "REPLACE",
+                "options": [
+                  { "value": "REFRESH", "label": "Refresh (no downtime)" },
+                  { "value": "RESTART", "label": "Restart" },
+                  { "value": "REPLACE", "label": "Replace" }
+                ]
+              },
+              {
+                "id": "replacement_method",
+                "label": "Replacement method",
+                "description": "Recreate keeps instance names; Substitute creates replacements with new names and needs surge capacity.",
+                "type": "select",
+                "required": true,
+                "default": "RECREATE",
+                "options": [
+                  { "value": "RECREATE", "label": "Recreate (reuse instance names)" },
+                  { "value": "SUBSTITUTE", "label": "Substitute (new instance names)" }
+                ]
+              },
+              {
+                "id": "max_surge_fixed",
+                "label": "Maximum surge",
+                "description": "Extra instances allowed above the target size during a rollout. Must be 0 when the replacement method is Recreate.",
+                "type": "number",
+                "required": true,
+                "default": 0,
+                "validation": { "min": 0 }
+              },
+              {
+                "id": "min_ready_sec",
+                "label": "Minimum ready (seconds)",
+                "description": "How long a new instance must stay healthy before the rollout continues.",
+                "type": "number",
+                "required": true,
+                "default": 0,
+                "validation": { "min": 0, "max": 3600 }
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "stateful",
+        "label": "Stateful Configuration",
+        "description": "Disks and IPs preserved when an instance is recreated or repaired.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "stateful_disks",
+            "label": "Stateful disks",
+            "description": "Disks kept across instance recreation. The device name must match one attached by the instance template.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "device_name",
+                "label": "Device name",
+                "type": "text",
+                "required": true,
+                "placeholder": "data"
+              },
+              {
+                "id": "delete_rule",
+                "label": "Delete rule",
+                "description": "What happens to the disk when its instance is deleted.",
+                "type": "select",
+                "required": false,
+                "default": "NEVER",
+                "options": [
+                  { "value": "NEVER", "label": "Never delete" },
+                  { "value": "ON_PERMANENT_INSTANCE_DELETION", "label": "Delete with the instance" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "stateful_ips",
+            "label": "Stateful IPs",
+            "description": "IP addresses kept across instance recreation.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "interface_name",
+                "label": "Interface name",
+                "type": "text",
+                "required": true,
+                "default": "nic0",
+                "placeholder": "nic0"
+              },
+              {
+                "id": "is_external",
+                "label": "External IP",
+                "description": "On for the external address, off for the internal one.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "delete_rule",
+                "label": "Delete rule",
+                "type": "select",
+                "required": false,
+                "default": "NEVER",
+                "options": [
+                  { "value": "NEVER", "label": "Never delete" },
+                  { "value": "ON_PERMANENT_INSTANCE_DELETION", "label": "Delete with the instance" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "advanced",
+        "label": "Advanced Settings",
+        "description": "Named ports, legacy target pools and Terraform timeouts.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "named_ports",
+            "label": "Named ports",
+            "description": "Port names a load balancer backend service can refer to.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Port name",
+                "type": "text",
+                "required": true,
+                "placeholder": "http"
+              },
+              {
+                "id": "port",
+                "label": "Port number",
+                "type": "number",
+                "required": true,
+                "default": 80,
+                "validation": { "min": 1, "max": 65535 }
+              }
+            ]
+          },
+          {
+            "id": "target_pools",
+            "label": "Target pools",
+            "description": "Self-links of legacy network load balancer target pools to add the group to.",
+            "type": "list",
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "wait_for_instances",
+            "label": "Wait for instances",
+            "description": "Make Terraform block until every instance is created or updated. If the group never becomes stable, the apply keeps retrying until it times out.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "mig_timeouts",
+            "label": "Terraform timeouts",
+            "description": "Raise these when waiting for instances and VMs are slow to start.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "create",
+                "label": "Create timeout",
+                "type": "text",
+                "required": true,
+                "default": "5m",
+                "placeholder": "5m"
+              },
+              {
+                "id": "update",
+                "label": "Update timeout",
+                "type": "text",
+                "required": true,
+                "default": "5m",
+                "placeholder": "5m"
+              },
+              {
+                "id": "delete",
+                "label": "Delete timeout",
+                "type": "text",
+                "required": true,
+                "default": "15m",
+                "placeholder": "15m"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "satellites": [
+    {
+      "address": "google_compute_health_check.tcp",
+      "driven_by": "health_check",
+      "note": "A TCP health check is created alongside the group when the health check protocol is TCP."
+    },
+    {
+      "address": "google_compute_health_check.http",
+      "driven_by": "health_check",
+      "note": "An HTTP health check is created alongside the group when the health check protocol is HTTP."
+    },
+    {
+      "address": "google_compute_health_check.https",
+      "driven_by": "health_check",
+      "note": "An HTTPS health check is created alongside the group when the health check protocol is HTTPS."
+    },
+    {
+      "address": "google_compute_region_autoscaler.autoscaler",
+      "driven_by": "autoscaling_enabled",
+      "note": "Enabling autoscaling also creates a regional autoscaler that owns the group's instance count."
+    }
+  ]
+}
