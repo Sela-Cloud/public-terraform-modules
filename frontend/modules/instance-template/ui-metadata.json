@@ -869,8 +869,9 @@
               {
                 "id": "type",
                 "label": "Accelerator type",
+                "description": "Accelerator model to attach, for example nvidia-tesla-t4. Leave blank to attach no GPU.",
                 "type": "text",
-                "required": true,
+                "required": false,
                 "placeholder": "nvidia-tesla-t4"
               },
               {

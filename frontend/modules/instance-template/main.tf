@@ -3,7 +3,7 @@
  *****************************************/
 
 module "instance_template" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/instance_template?ref=v0.6.7"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/instance_template?ref=v0.6.8"
   for_each = var.instance_template
 
   project_id           = var.project_id
@@ -90,5 +90,8 @@ module "instance_template" {
   enable_nested_virtualization = each.value.enable_nested_virtualization
   threads_per_core             = each.value.threads_per_core
   resource_policies            = each.value.resource_policies
-  gpu                          = each.value.gpu
+
+  # "No accelerator type" means no GPU. The remote module gates only on gpu != null, so a
+  # block left with a blank type would emit guest_accelerator with a null type and fail apply.
+  gpu = try(trimspace(each.value.gpu.type), "") != "" ? each.value.gpu : null
 }

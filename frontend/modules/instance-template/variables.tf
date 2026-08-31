@@ -94,8 +94,8 @@ variable "instance_template" {
     threads_per_core             = optional(number, null)
     resource_policies            = optional(list(string), [])
     gpu = optional(object({
-      type  = string
-      count = number
+      type  = optional(string)
+      count = optional(number, 1)
     }), null)
   }))
   default = {}
