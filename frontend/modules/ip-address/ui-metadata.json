@@ -36,10 +36,22 @@
             "validation": { "min": 1, "max": 63, "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter." }
           },
           {
+            "id": "type",
+            "label": "Type",
+            "description": "Regional addresses attach to resources in one region. Global addresses are used by global resources such as global load balancers.",
+            "type": "select",
+            "required": true,
+            "default": "REGIONAL",
+            "options": [
+              { "value": "REGIONAL", "label": "Regional" },
+              { "value": "GLOBAL", "label": "Global" }
+            ]
+          },
+          {
             "id": "region",
             "label": "Region",
             "type": "select",
-            "required": true,
+            "depends_on": { "field": "type", "value": "REGIONAL" },
             "data_source": {
               "resource": "compute.regions",
               "params": { "project_id": { "from_field": "project_id" } },
@@ -49,10 +61,21 @@
             }
           },
           {
+            "id": "ip_version",
+            "label": "IP version",
+            "type": "select",
+            "default": "IPV4",
+            "options": [
+              { "value": "IPV4", "label": "IPv4" },
+              { "value": "IPV6", "label": "IPv6" }
+            ]
+          },
+          {
             "id": "network_tier",
             "label": "Network service tier",
             "type": "select",
             "default": "PREMIUM",
+            "depends_on": { "field": "type", "value": "REGIONAL" },
             "options": [
               { "value": "PREMIUM", "label": "Premium" },
               { "value": "STANDARD", "label": "Standard" }

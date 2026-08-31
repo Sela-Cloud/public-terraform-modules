@@ -1,5 +1,5 @@
 module "cloud_sql_user" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-user?ref=v0.6.8"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-user?ref=v0.6.9"
   for_each = var.cloud_sql_user
 
   project_id      = var.project_id
