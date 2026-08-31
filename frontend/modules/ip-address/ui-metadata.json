@@ -1,0 +1,75 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "ip-address",
+  "version": "1.0.0",
+  "display": {
+    "label": "IP addresses",
+    "icon": "ip-address",
+    "description": "Reserve a static external IP address.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "ip_address",
+    "key_field": "name",
+    "key_label": "Address name",
+    "key_description": "Name of the reserved external IP address.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Address name",
+            "type": "text",
+            "required": true,
+            "placeholder": "public-web-ip",
+            "validation": { "min": 1, "max": 63, "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter." }
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "network_tier",
+            "label": "Network service tier",
+            "type": "select",
+            "default": "PREMIUM",
+            "options": [
+              { "value": "PREMIUM", "label": "Premium" },
+              { "value": "STANDARD", "label": "Standard" }
+            ]
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text"
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}
