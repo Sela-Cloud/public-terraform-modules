@@ -57,6 +57,7 @@
               "resource": "compute.regions",
               "params": { "project_id": { "from_field": "project_id" } },
               "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -86,6 +87,7 @@
                 "region": { "from_field": "region" }
               },
               "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -147,6 +149,7 @@
               "resource": "compute.networks",
               "params": { "project_id": { "from_field": "project_id" } },
               "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -163,6 +166,7 @@
                 "network": { "from_field": "network" }
               },
               "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },

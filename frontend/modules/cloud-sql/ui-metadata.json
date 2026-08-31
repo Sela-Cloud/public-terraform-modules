@@ -46,6 +46,7 @@
                 "label_key": "name",
                 "description_key": "description"
               },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -86,6 +87,7 @@
                 "label_key": "name",
                 "description_key": "description"
               },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -237,6 +239,7 @@
                 "label_key": "name",
                 "description_key": "description"
               },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -269,6 +272,7 @@
                 "label_key": "name",
                 "description_key": "description"
               },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },

@@ -78,6 +78,7 @@
               "resource": "compute.globalAddresses",
               "params": { "project_id": { "from_field": "project_id" } },
               "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           }
@@ -174,6 +175,7 @@
                   "resource": "compute.zones",
                   "params": { "project_id": { "from_field": "project_id" } },
                   "display": { "value_key": "name", "label_key": "name" },
+                  "allow_custom": true,
                   "cache_ttl": 300
                 }
               },
@@ -206,6 +208,7 @@
                   "resource": "compute.regions",
                   "params": { "project_id": { "from_field": "project_id" } },
                   "display": { "value_key": "name", "label_key": "name" },
+                  "allow_custom": true,
                   "cache_ttl": 300
                 }
               },

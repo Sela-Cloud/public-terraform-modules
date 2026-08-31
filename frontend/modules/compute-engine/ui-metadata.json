@@ -61,6 +61,7 @@
                 "value_key": "name",
                 "label_key": "name"
               },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -81,6 +82,7 @@
                 "value_key": "name",
                 "label_key": "name"
               },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -144,6 +146,7 @@
                 "value_key": "name",
                 "label_key": "name"
               },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -164,6 +167,7 @@
                 "value_key": "name",
                 "label_key": "name"
               },
+              "allow_custom": true,
               "cache_ttl": 300
             }
           },
@@ -327,6 +331,7 @@
                     "label_key": "email",
                     "description_key": "displayName"
                   },
+                  "allow_custom": true,
                   "cache_ttl": 300
                 }
               },
