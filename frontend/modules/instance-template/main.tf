@@ -3,7 +3,7 @@
  *****************************************/
 
 module "instance_template" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/instance_template?ref=v0.6.6"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/instance_template?ref=v0.6.7"
   for_each = var.instance_template
 
   project_id           = var.project_id
