@@ -16,7 +16,7 @@ variable "gcs_bucket" {
     enable_neg         = bool,
     neg_default_port   = optional(string),
     port               = optional(string),
-    labels             = map(string),
+    labels             = optional(map(string), {}),
     data_locations     = list(string),
     retention_policy = optional(object({
       is_locked        = bool

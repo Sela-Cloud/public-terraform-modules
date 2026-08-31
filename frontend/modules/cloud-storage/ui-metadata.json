@@ -157,7 +157,7 @@
             "label": "Labels",
             "description": "Key-value labels to attach to the bucket for organization and billing.",
             "type": "map",
-            "required": true,
+            "required": false,
             "default": {},
             "placeholder": "e.g. environment = prod"
           }
