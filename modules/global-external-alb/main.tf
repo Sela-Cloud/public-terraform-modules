@@ -162,8 +162,12 @@ resource "google_compute_url_map" "this" {
           dynamic "match_rules" {
             for_each = route_rules.value.paths
             content {
-              prefix_match        = (route_rules.value.match_mode == "PREFIX_MATCH" || (route_rules.value.match_mode == null && route_rules.value.path_rewrite != null)) ? match_rules.value : null
-              path_template_match = (route_rules.value.match_mode == "PATH_TEMPLATE_MATCH" || (route_rules.value.match_mode == null && route_rules.value.path_rewrite == null)) ? match_rules.value : null
+              # Default to prefix matching when match_mode is unset -- the sensible default for
+              # plain path routing. A path_template_rewrite is the one unambiguous signal that
+              # path-template matching was actually intended (path_prefix_rewrite only works with
+              # prefix_match anyway, so path_rewrite alone must not flip the default away from it).
+              prefix_match        = (route_rules.value.match_mode == "PREFIX_MATCH" || (route_rules.value.match_mode == null && route_rules.value.path_template_rewrite == null)) ? match_rules.value : null
+              path_template_match = (route_rules.value.match_mode == "PATH_TEMPLATE_MATCH" || (route_rules.value.match_mode == null && route_rules.value.path_template_rewrite != null)) ? match_rules.value : null
               full_path_match     = route_rules.value.match_mode == "FULL_PATH_MATCH" ? match_rules.value : null
               regex_match         = route_rules.value.match_mode == "REGEX_MATCH" ? match_rules.value : null
             }
