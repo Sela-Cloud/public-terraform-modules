@@ -17,7 +17,7 @@ locals {
 }
 
 module "cloud_sql_instance" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-instance?ref=v0.6.15"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-instance?ref=v0.6.16"
   for_each = var.cloud_sql
 
   project_id                                    = var.project_id
@@ -60,7 +60,7 @@ module "cloud_sql_instance" {
 }
 
 module "cloud_sql_database" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-database?ref=v0.6.15"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-database?ref=v0.6.16"
   for_each = local.databases
 
   project_id      = var.project_id
@@ -72,7 +72,7 @@ module "cloud_sql_database" {
 }
 
 module "cloud_sql_user" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-user?ref=v0.6.15"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/cloud-sql-user?ref=v0.6.16"
   for_each = local.iam_users
 
   project_id      = var.project_id
