@@ -1,0 +1,73 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "global-certificate-self-managed",
+  "version": "1.0.0",
+  "display": {
+    "label": "Global Certificate (Self-managed)",
+    "icon": "certificate-manager",
+    "description": "A Certificate Manager certificate built from your own certificate chain and private key.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "import": {
+    "module": "global_certificate_self_managed",
+    "target": "google_certificate_manager_certificate.this",
+    "id_template": "projects/{project_id}/locations/global/certificates/{name}",
+    "identity_fields": ["project_id", "name"],
+    "requires_review": true
+  },
+  "resource": {
+    "variable": "global_certificate_self_managed",
+    "key_field": "name",
+    "key_label": "Certificate name",
+    "key_description": "Name of the certificate.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Certificate name",
+            "type": "text",
+            "required": true,
+            "placeholder": "example-com-cert",
+            "validation": { "min": 1, "max": 64, "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$", "pattern_error": "Start with a letter; use letters, numbers, hyphens, or underscores after that." }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text"
+          },
+          {
+            "id": "pem_certificate",
+            "label": "Certificate",
+            "description": "Upload a PEM-encoded certificate chain file or paste the PEM-encoded payload into this field.",
+            "type": "text",
+            "required": true,
+            "multiline": true,
+            "uploadable": true
+          },
+          {
+            "id": "pem_private_key",
+            "label": "Private Key",
+            "description": "Upload the corresponding private key as a PEM-encoded file or paste the PEM-encoded payload into this field.",
+            "type": "text",
+            "required": true,
+            "multiline": true,
+            "uploadable": true,
+            "sensitive": true
+          }
+        ]
+      }
+    ]
+  }
+}

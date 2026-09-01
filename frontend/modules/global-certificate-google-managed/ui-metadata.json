@@ -1,0 +1,106 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "global-certificate-google-managed",
+  "version": "1.0.0",
+  "display": {
+    "label": "Global Certificate (Google-managed)",
+    "icon": "certificate-manager",
+    "description": "A Certificate Manager certificate issued and renewed automatically by Google for domains you name.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "import": {
+    "module": "global_certificate_google_managed",
+    "target": "google_certificate_manager_certificate.this",
+    "id_template": "projects/{project_id}/locations/global/certificates/{name}",
+    "identity_fields": ["project_id", "name"],
+    "requires_review": false
+  },
+  "resource": {
+    "variable": "global_certificate_google_managed",
+    "key_field": "name",
+    "key_label": "Certificate name",
+    "key_description": "Name of the certificate.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Certificate name",
+            "type": "text",
+            "required": true,
+            "placeholder": "example-com-cert",
+            "validation": { "min": 1, "max": 64, "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$", "pattern_error": "Start with a letter; use letters, numbers, hyphens, or underscores after that." }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text"
+          },
+          {
+            "id": "certificate_authority_type",
+            "label": "Certificate Authority",
+            "description": "Private CA issuance (Certificate Authority Service) isn't supported yet.",
+            "type": "select",
+            "default": "public",
+            "ui_only": true,
+            "options": [
+              { "value": "public", "label": "Public Certificate Authority" }
+            ]
+          },
+          {
+            "id": "domain_names",
+            "label": "Domain names",
+            "description": "Domains this certificate covers. Wildcard domains require DNS Authorization.",
+            "type": "list",
+            "required": true,
+            "placeholder": "example.com"
+          },
+          {
+            "id": "authorization_type",
+            "label": "Authorization type",
+            "description": "How Google verifies you own the domains above.",
+            "type": "select",
+            "required": true,
+            "default": "dns_authorization",
+            "options": [
+              { "value": "dns_authorization", "label": "DNS Authorization" },
+              { "value": "load_balancer_authorization", "label": "Load Balancer Authorization" }
+            ]
+          },
+          {
+            "id": "dns_authorization_names",
+            "label": "DNS authorizations",
+            "description": "Existing DNS Authorization resources covering the domains above.",
+            "type": "list",
+            "required": true,
+            "depends_on": { "field": "authorization_type", "value": "dns_authorization" },
+            "data_source": {
+              "resource": "certificatemanager.dnsAuthorizations",
+              "params": {
+                "project_id": { "from_field": "project_id" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

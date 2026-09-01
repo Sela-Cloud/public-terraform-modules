@@ -289,6 +289,11 @@
         "sensitive": {
           "type": "boolean",
           "description": "The value is a secret in its own right, not a reference to one. Marks a field whose value must not be logged, and whose presence makes an exported archive secret-bearing. Do not set it for a field naming a Secret Manager secret or version \u2014 those carry no secret material."
+        },
+        "uploadable": {
+          "type": "boolean",
+          "description": "Let a 'text' control also be filled by choosing a local file, read client-side and placed into the same string value \u2014 for values normally supplied as a file (a PEM certificate chain, a private key). Typing/pasting remains available either way.",
+          "default": false
         }
       }
     },
