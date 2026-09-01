@@ -1,0 +1,126 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "certificate-map",
+  "version": "1.0.0",
+  "display": {
+    "label": "Certificate Map",
+    "icon": "certificate-manager",
+    "description": "Groups certificates under hostname (SNI) or default-serving rules, for use by a load balancer's certificate_map_name.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "provides": [
+    {
+      "data_source": "certificatemanager.certificateMaps",
+      "value_field": "name"
+    }
+  ],
+  "import": {
+    "module": "certificate_map",
+    "target": "google_certificate_manager_certificate_map.this",
+    "id_template": "projects/{project_id}/locations/global/certificateMaps/{name}",
+    "identity_fields": ["project_id", "name"],
+    "requires_review": false
+  },
+  "satellites": [
+    {
+      "address": "google_certificate_manager_certificate_map_entry.entries",
+      "driven_by": "entries",
+      "note": "Map entries are not adopted on import; an empty or missing entries list produces no diff, so existing entries stay unmanaged."
+    }
+  ],
+  "resource": {
+    "variable": "certificate_map",
+    "key_field": "name",
+    "key_label": "Map name",
+    "key_description": "Name of the certificate map.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Map name",
+            "type": "text",
+            "required": true,
+            "placeholder": "example-cert-map",
+            "validation": { "min": 1, "max": 64, "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$", "pattern_error": "Start with a letter; use letters, numbers, hyphens, or underscores after that." }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text"
+          },
+          {
+            "id": "entries",
+            "label": "Map entries",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "entry_name",
+                "label": "Entry name",
+                "type": "text",
+                "required": true,
+                "validation": { "min": 1, "max": 64, "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$", "pattern_error": "Start with a letter; use letters, numbers, hyphens, or underscores after that." }
+              },
+              {
+                "id": "description",
+                "label": "Description",
+                "type": "text"
+              },
+              {
+                "id": "is_primary",
+                "label": "Primary entry",
+                "description": "Serve this entry's certificate when no hostname below matches. At most one entry per map can be primary.",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "hostname",
+                "label": "Hostname",
+                "description": "FQDN or wildcard hostname (e.g. *.example.com) used for SNI selection.",
+                "type": "text",
+                "required": true,
+                "depends_on": { "field": "is_primary", "value": false }
+              },
+              {
+                "id": "certificates",
+                "label": "Certificates",
+                "description": "Certificates to serve for this entry. Up to fifteen.",
+                "type": "list",
+                "required": true,
+                "data_source": {
+                  "resource": "certificatemanager.certificates",
+                  "params": {
+                    "project_id": { "from_field": "project_id" }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "labels",
+                "label": "Labels",
+                "type": "map"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

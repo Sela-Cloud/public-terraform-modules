@@ -53,6 +53,7 @@ KNOWN_DATA_SOURCES = {
     "artifactregistry.locations",
     "artifactregistry.repositories",
     "certificatemanager.certificateMaps",
+    "certificatemanager.certificates",
     "certificatemanager.dnsAuthorizations",
     "cloudsql.databaseVersions",
     "cloudsql.flags",

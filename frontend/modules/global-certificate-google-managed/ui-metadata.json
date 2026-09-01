@@ -17,6 +17,12 @@
       "placeholder": "my-gcp-project"
     }
   ],
+  "provides": [
+    {
+      "data_source": "certificatemanager.certificates",
+      "value_field": "name"
+    }
+  ],
   "import": {
     "module": "global_certificate_google_managed",
     "target": "google_certificate_manager_certificate.this",
