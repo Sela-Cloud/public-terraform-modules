@@ -68,7 +68,7 @@ resource "google_compute_backend_service" "this" {
   project                         = local.backend_project_id
   name                            = each.value.service_name
   protocol                        = "HTTP"
-  port_name                       = each.value.target_type == "umig" ? each.value.port_name : null
+  port_name                       = contains(["umig", "mig"], each.value.target_type) ? each.value.port_name : null
   load_balancing_scheme           = "EXTERNAL_MANAGED"
   timeout_sec                     = 30
   connection_draining_timeout_sec = 300
@@ -76,13 +76,13 @@ resource "google_compute_backend_service" "this" {
   health_checks                   = each.value.enable_health_check ? [google_compute_health_check.this[each.key].id] : null
 
   backend {
-    group = each.value.target_type == "umig" ? (
-      "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/zones/${each.value.umig_zone}/instanceGroups/${each.value.umig_name}"
-      ) : (
+    group = (
+      each.value.target_type == "umig" ? "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/zones/${each.value.umig_zone}/instanceGroups/${each.value.umig_name}" :
+      each.value.target_type == "mig" ? "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/regions/${each.value.mig_region}/instanceGroups/${each.value.mig_name}" :
       "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/regions/${each.value.neg_region}/networkEndpointGroups/${each.value.neg_name}"
     )
-    balancing_mode  = each.value.target_type == "umig" ? "UTILIZATION" : null
-    capacity_scaler = each.value.target_type == "umig" ? 1.0 : null
+    balancing_mode  = contains(["umig", "mig"], each.value.target_type) ? "UTILIZATION" : null
+    capacity_scaler = contains(["umig", "mig"], each.value.target_type) ? 1.0 : null
   }
 
   dynamic "cdn_policy" {

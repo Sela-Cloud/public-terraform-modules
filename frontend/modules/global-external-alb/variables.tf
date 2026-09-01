@@ -40,6 +40,8 @@ variable "global_external_alb" {
       umig_zone           = optional(string)
       neg_name            = optional(string)
       neg_region          = optional(string)
+      mig_name            = optional(string)
+      mig_region          = optional(string)
       port_name           = optional(string, "http")
       enable_health_check = optional(bool, false)
       health_check_port   = optional(number, 80)
@@ -111,9 +113,9 @@ variable "global_external_alb" {
   validation {
     condition = alltrue([
       for alb in values(var.global_external_alb) :
-      alltrue([for s in alb.backend_services : contains(["umig", "neg"], s.target_type)])
+      alltrue([for s in alb.backend_services : contains(["umig", "neg", "mig"], s.target_type)])
     ])
-    error_message = "backend_services target_type must be 'umig' or 'neg'."
+    error_message = "backend_services target_type must be 'umig', 'neg', or 'mig'."
   }
 
   validation {

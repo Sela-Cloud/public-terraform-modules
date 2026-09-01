@@ -65,6 +65,7 @@ KNOWN_DATA_SOURCES = {
     "compute.healthChecks",
     "compute.machineTypes",
     "compute.machine_types",
+    "compute.managedInstanceGroups",
     "compute.networkEndpointGroups",
     "compute.networks",
     "compute.psa",

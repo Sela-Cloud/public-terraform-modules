@@ -162,7 +162,8 @@
                 "default": "umig",
                 "options": [
                   { "value": "umig", "label": "Unmanaged instance group" },
-                  { "value": "neg", "label": "Serverless network endpoint group" }
+                  { "value": "neg", "label": "Serverless network endpoint group" },
+                  { "value": "mig", "label": "Managed instance group" }
                 ]
               },
               {
@@ -192,11 +193,37 @@
                 }
               },
               {
+                "id": "mig_name",
+                "label": "Managed instance group",
+                "type": "select",
+                "depends_on": { "field": "target_type", "value": "mig" },
+                "data_source": {
+                  "resource": "compute.managedInstanceGroups",
+                  "params": { "project_id": { "from_field": "project_id" }, "region": { "from_field": "mig_region" } },
+                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "mig_region",
+                "label": "Managed instance group region",
+                "type": "select",
+                "depends_on": { "field": "target_type", "value": "mig" },
+                "data_source": {
+                  "resource": "compute.regions",
+                  "params": { "project_id": { "from_field": "project_id" } },
+                  "display": { "value_key": "name", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
                 "id": "port_name",
                 "label": "Named port",
                 "type": "text",
                 "default": "http",
-                "depends_on": { "field": "target_type", "value": "umig" }
+                "depends_on": { "field": "target_type", "value": ["umig", "mig"], "operator": "in" }
               },
               {
                 "id": "neg_name",

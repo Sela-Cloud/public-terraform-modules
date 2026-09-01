@@ -63,16 +63,19 @@ variable "backend_buckets" {
 }
 
 variable "backend_services" {
-  description = "HTTP(S) backends, keyed by service_name. target_type selects umig or neg fields."
+  description = "HTTP(S) backends, keyed by service_name. target_type selects umig, neg, or mig fields."
   type = map(object({
     service_name = string
-    target_type  = string # "umig" or "neg"
+    target_type  = string # "umig", "neg", or "mig"
 
     umig_name = optional(string)
     umig_zone = optional(string)
 
     neg_name   = optional(string)
     neg_region = optional(string)
+
+    mig_name   = optional(string)
+    mig_region = optional(string)
 
     port_name = optional(string, "http")
 
@@ -102,9 +105,9 @@ variable "backend_services" {
 
   validation {
     condition = alltrue([
-      for svc in values(var.backend_services) : contains(["umig", "neg"], svc.target_type)
+      for svc in values(var.backend_services) : contains(["umig", "neg", "mig"], svc.target_type)
     ])
-    error_message = "backend_services target_type must be 'umig' or 'neg'."
+    error_message = "backend_services target_type must be 'umig', 'neg', or 'mig'."
   }
 
   validation {
@@ -121,6 +124,14 @@ variable "backend_services" {
       svc.target_type != "neg" || (try(trimspace(svc.neg_name), "") != "" && try(trimspace(svc.neg_region), "") != "")
     ])
     error_message = "backend_services with target_type 'neg' require neg_name and neg_region."
+  }
+
+  validation {
+    condition = alltrue([
+      for svc in values(var.backend_services) :
+      svc.target_type != "mig" || (try(trimspace(svc.mig_name), "") != "" && try(trimspace(svc.mig_region), "") != "")
+    ])
+    error_message = "backend_services with target_type 'mig' require mig_name and mig_region."
   }
 }
 
