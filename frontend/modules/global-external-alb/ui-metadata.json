@@ -96,7 +96,19 @@
             "type": "repeatable",
             "fields": [
               { "id": "bucket_name", "label": "Backend name", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
-              { "id": "gcs_bucket_name", "label": "Cloud Storage bucket name", "type": "text", "required": true },
+              {
+                "id": "gcs_bucket_name",
+                "label": "Cloud Storage bucket name",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "storage.buckets",
+                  "params": { "project_id": { "from_field": "project_id" } },
+                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
               { "id": "description", "label": "Description", "type": "text" },
               { "id": "enable_cdn", "label": "Enable Cloud CDN", "type": "boolean", "default": false },
               {

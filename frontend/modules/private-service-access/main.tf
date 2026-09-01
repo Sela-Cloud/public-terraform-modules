@@ -1,5 +1,5 @@
 module "private_service_access" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/private-service-access?ref=v0.6.14"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/private-service-access?ref=v0.6.15"
   for_each = var.private_service_access
 
   project_id    = var.project_id
