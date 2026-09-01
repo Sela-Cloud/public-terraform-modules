@@ -276,6 +276,11 @@
           "description": "If true, this field is read-only while editing an existing managed resource.",
           "default": false
         },
+        "multiline": {
+          "type": "boolean",
+          "description": "Render a text field as a multi-line editor rather than a single-line input. For values that are genuinely documents \u2014 startup scripts, cloud-init, embedded config. Only meaningful on type \"text\"; the stored value is an ordinary string either way.",
+          "default": false
+        },
         "ui_only": {
           "type": "boolean",
           "description": "If true, this control does not map to a Terraform attribute or global; it only parameterises another field's data_source (e.g., artifact-registry's remote_password_secret). Exempts the field from the CI check that every control maps to an object attribute or a global (MODULE_CONTRACT R6).",

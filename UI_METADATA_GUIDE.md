@@ -505,6 +505,7 @@ Supported `type` values:
 | `nullable` | `boolean` | Allows setting value to `null` (renders 'None' option). |
 | `locked_after_create` | `boolean` | Disables the field while editing a resource already managed by Terraform; use it for create-time-only values. |
 | `ui_only` | `boolean` | Marks a control that does not map to any Terraform attribute or global. See [`ui_only` Controls](#4-ui_only-controls). |
+| `multiline` | `boolean` | Renders a `text` control as a multi-line editor. See [Multi-line text](#4-multi-line-text). |
 | `options` | `array` | Options array for `select` type: `[{"value": "...", "label": "...", "description": "..."}]`. |
 | `validation` | `object` | Client validation rules (`min`, `max`, `pattern`, `pattern_error`). |
 | `depends_on` | `object` | Conditional visibility condition based on another field. |
@@ -596,7 +597,31 @@ standalone child resource (a database, a user, a node pool) can select its paren
 an operator retype a name that must match exactly. Both set `allow_custom: true` in practice, so a
 parent being created in the same change can still be named by hand.
 
-#### 4. `ui_only` Controls
+#### 4. Multi-line text
+
+`type: "text"` is a single-line input by default. Set `multiline: true` for values that are
+genuinely documents rather than identifiers — a startup script, cloud-init, an embedded config file:
+
+```json
+{
+  "id": "startup_script",
+  "label": "Startup script",
+  "type": "text",
+  "multiline": true,
+  "default": ""
+}
+```
+
+This changes the **input control only**. The value is an ordinary string throughout: the tfvars
+writer emits it as a quoted string with escaped newlines (`"#!/bin/bash\nset -eux\n"`), which is
+byte-for-byte the same value Terraform would read from a `<<-EOT` heredoc. A multi-line script is
+therefore already correct today without this flag; the flag exists so the operator gets a text area
+instead of typing a script into a one-line box.
+
+Only meaningful on `text`. It has no effect on `select`, `number`, `map`, `list`, `object` or
+`repeatable`.
+
+#### 5. `ui_only` Controls
 
 Every form control must map to **an attribute of the resource object, or a global** — that is R6 in
 `MODULE_CONTRACT.md`, and CI fails the build otherwise. `ui_only: true` is the declared exception,

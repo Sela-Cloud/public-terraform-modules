@@ -815,9 +815,10 @@
           {
             "id": "startup_script",
             "label": "Startup script",
-            "description": "Script run on every instance at boot.",
+            "description": "Script run on every instance at boot. Shell scripts start with a #! line.",
             "type": "text",
             "required": false,
+            "multiline": true,
             "default": ""
           },
           {
