@@ -101,7 +101,7 @@
             "label": "Peer gateway public IP",
             "type": "text",
             "required": true,
-            "placeholder": "203.0.113.10"
+            "placeholder": "34.120.10.5"
           },
           {
             "id": "shared_secret",
