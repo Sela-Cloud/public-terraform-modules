@@ -6,4 +6,5 @@ module "dns_authorization" {
   name        = each.value.name
   domain      = each.value.domain
   description = each.value.description
+  type        = each.value.type
 }

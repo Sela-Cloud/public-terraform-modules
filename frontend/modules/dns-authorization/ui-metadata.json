@@ -58,6 +58,17 @@
             "placeholder": "example.com"
           },
           {
+            "id": "type",
+            "label": "Authorization type",
+            "description": "Fixed record uses one shared CNAME per domain. Per-project record uses a project-specific CNAME instead, so the same domain can be authorized independently in more than one project -- use this if you need to provision certificates for the same domain in multiple projects. Per-project record only supports certificates issued by Google Trust Services.",
+            "type": "select",
+            "default": "FIXED_RECORD",
+            "options": [
+              { "value": "FIXED_RECORD", "label": "Fixed record" },
+              { "value": "PER_PROJECT_RECORD", "label": "Per-project record" }
+            ]
+          },
+          {
             "id": "description",
             "label": "Description",
             "type": "text"
