@@ -1,5 +1,5 @@
 module "secret_version" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/secret-version?ref=v0.7.0"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/secret-version?ref=v0.7.1"
   for_each = var.secret_version
 
   project_id  = var.project_id
