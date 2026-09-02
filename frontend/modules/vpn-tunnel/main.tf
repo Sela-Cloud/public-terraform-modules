@@ -1,5 +1,5 @@
 module "vpn_tunnel" {
-  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/vpn-tunnel?ref=v0.6.18"
+  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/vpn-tunnel?ref=v0.7.0"
   for_each                = var.vpn_tunnel
   project_id              = var.project_id
   name                    = each.value.name
