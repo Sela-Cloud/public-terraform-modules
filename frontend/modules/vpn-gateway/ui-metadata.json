@@ -1,0 +1,131 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "vpn-gateway",
+  "version": "1.0.0",
+  "display": {
+    "label": "Classic VPN Gateway",
+    "icon": "vpn",
+    "description": "A Classic VPN gateway: external IP, target VPN gateway, and its ESP/UDP forwarding rules. Attach one or more vpn-tunnel resources to it -- one gateway can carry several tunnels to different peers.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "provides": [
+    {
+      "data_source": "compute.targetVpnGateways",
+      "value_field": "name"
+    }
+  ],
+  "import": {
+    "module": "vpn_gateway",
+    "identity_fields": ["project_id", "region", "name"],
+    "targets": [
+      {
+        "id": "gateway",
+        "target": "google_compute_vpn_gateway.this",
+        "id_template": "projects/{project_id}/regions/{region}/targetVpnGateways/{name}"
+      },
+      {
+        "id": "address",
+        "target": "google_compute_address.this",
+        "id_template": "projects/{project_id}/regions/{region}/addresses/{name}-ip",
+        "required": false
+      },
+      {
+        "id": "forwarding_esp",
+        "target": "google_compute_forwarding_rule.esp",
+        "id_template": "projects/{project_id}/regions/{region}/forwardingRules/{name}-esp"
+      },
+      {
+        "id": "forwarding_udp500",
+        "target": "google_compute_forwarding_rule.udp_500",
+        "id_template": "projects/{project_id}/regions/{region}/forwardingRules/{name}-udp500"
+      },
+      {
+        "id": "forwarding_udp4500",
+        "target": "google_compute_forwarding_rule.udp_4500",
+        "id_template": "projects/{project_id}/regions/{region}/forwardingRules/{name}-udp4500"
+      }
+    ],
+    "requires_review": false
+  },
+  "resource": {
+    "variable": "vpn_gateway",
+    "key_field": "name",
+    "key_label": "Gateway name",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Gateway name",
+            "type": "text",
+            "required": true,
+            "validation": {
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Use an RFC 1035 name."
+            }
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "network",
+            "label": "VPC network",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "existing_static_ip_name",
+            "label": "Existing static IP",
+            "description": "Reuse an already-reserved regional external IP instead of creating a new one. Leave blank to reserve a new one.",
+            "type": "select",
+            "data_source": {
+              "resource": "compute.addresses",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "region" }
+              },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "description": "Remember to also open ESP and UDP 500/4500 for this IP via the firewall catalog module -- Cloud VPN needs those to pass traffic.",
+            "type": "text",
+            "default": ""
+          }
+        ]
+      }
+    ]
+  }
+}

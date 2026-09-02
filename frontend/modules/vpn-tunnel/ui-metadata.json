@@ -1,15 +1,13 @@
 {
   "$schema": "../../ui-metadata.schema.json",
-  "module": "vpn",
+  "module": "vpn-tunnel",
   "version": "1.0.0",
   "display": {
-    "label": "Classic VPN",
+    "label": "Classic VPN Tunnel",
     "icon": "vpn",
-    "description": "Route-based Classic VPN gateway, address, forwarding rules, and tunnel",
+    "description": "An IPsec tunnel attached to an existing vpn-gateway. A gateway can carry several tunnels to different peers.",
     "category": "regional"
   },
-  "deprecated": true,
-  "deprecation_note": "Replaced by vpn-gateway and vpn-tunnel, which split the gateway (address, target VPN gateway, forwarding rules) from the tunnel so one gateway can carry several tunnels, and let the gateway reuse an existing reserved IP. Existing deployments using this module are unaffected.",
   "globals": [
     {
       "id": "project_id",
@@ -20,53 +18,26 @@
     }
   ],
   "import": {
-    "module": "vpn",
-    "identity_fields": [
-      "project_id",
-      "region",
-      "name"
-    ],
-    "targets": [
-      {
-        "id": "tunnel",
-        "target": "google_compute_vpn_tunnel.this",
-        "id_template": "projects/{project_id}/regions/{region}/vpnTunnels/{name}"
-      },
-      {
-        "id": "gateway",
-        "target": "google_compute_vpn_gateway.this",
-        "id_template": "projects/{project_id}/regions/{region}/targetVpnGateways/{name}-gateway"
-      },
-      {
-        "id": "address",
-        "target": "google_compute_address.this",
-        "id_template": "projects/{project_id}/regions/{region}/addresses/{name}-ip"
-      },
-      {
-        "id": "forwarding_esp",
-        "target": "google_compute_forwarding_rule.esp",
-        "id_template": "projects/{project_id}/regions/{region}/forwardingRules/{name}-esp"
-      },
-      {
-        "id": "forwarding_udp500",
-        "target": "google_compute_forwarding_rule.udp_500",
-        "id_template": "projects/{project_id}/regions/{region}/forwardingRules/{name}-udp500"
-      },
-      {
-        "id": "forwarding_udp4500",
-        "target": "google_compute_forwarding_rule.udp_4500",
-        "id_template": "projects/{project_id}/regions/{region}/forwardingRules/{name}-udp4500"
-      }
-    ],
+    "module": "vpn_tunnel",
+    "target": "google_compute_vpn_tunnel.this",
+    "id_template": "projects/{project_id}/regions/{region}/vpnTunnels/{name}",
+    "identity_fields": ["project_id", "region", "name"],
     "requires_review": true
   },
+  "satellites": [
+    {
+      "address": "google_compute_route.this",
+      "driven_by": "destination_ranges",
+      "note": "Routes for a ROUTE_BASED tunnel are not adopted on import; existing routes stay unmanaged."
+    }
+  ],
   "resource": {
-    "variable": "vpn",
+    "variable": "vpn_tunnel",
     "key_field": "name",
     "key_label": "Tunnel name",
     "sections": [
       {
-        "id": "gateway",
+        "id": "tunnel",
         "label": "Gateway and tunnel",
         "fields": [
           {
@@ -82,19 +53,31 @@
           {
             "id": "region",
             "label": "Region",
+            "description": "Must match the gateway's own region.",
             "type": "select",
             "required": true,
             "data_source": {
               "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "gateway_name",
+            "label": "VPN gateway",
+            "description": "The vpn-gateway this tunnel attaches to. Pick from gateways that exist in this project, or type a name if the gateway is being created in the same change.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "compute.targetVpnGateways",
               "params": {
-                "project_id": {
-                  "from_field": "project_id"
-                }
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "region" }
               },
-              "display": {
-                "value_key": "name",
-                "label_key": "name"
-              },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -102,19 +85,13 @@
           {
             "id": "network",
             "label": "VPC network",
+            "description": "Only used for ROUTE_BASED routing (to create routes into the tunnel). Must match the gateway's own network.",
             "type": "select",
             "required": true,
             "data_source": {
               "resource": "compute.networks",
-              "params": {
-                "project_id": {
-                  "from_field": "project_id"
-                }
-              },
-              "display": {
-                "value_key": "name",
-                "label_key": "name"
-              },
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -140,20 +117,14 @@
             "type": "select",
             "default": "2",
             "options": [
-              {
-                "value": "1",
-                "label": "IKEv1"
-              },
-              {
-                "value": "2",
-                "label": "IKEv2"
-              }
+              { "value": "1", "label": "IKEv1" },
+              { "value": "2", "label": "IKEv2" }
             ]
           },
           {
             "id": "routing_mode",
             "label": "Routing",
-            "description": "Route-based lets GCP routes direct traffic into the tunnel (0.0.0.0/0 selectors, managed automatically). Policy-based matches traffic against the selectors you specify below.",
+            "description": "Route-based lets GCP routes direct traffic into the tunnel (0.0.0.0/0 selectors, managed automatically). Policy-based matches traffic against the selectors you specify below. Dynamic (BGP) routing isn't supported yet.",
             "type": "select",
             "required": true,
             "default": "ROUTE_BASED",
