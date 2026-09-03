@@ -1,5 +1,5 @@
 module "internal_ip_address" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/internal-ip-address?ref=v0.7.2"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/internal-ip-address?ref=v0.6.19"
   for_each = var.internal_ip_address
 
   project_id           = var.project_id

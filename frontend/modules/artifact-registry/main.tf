@@ -16,7 +16,7 @@ locals {
 }
 
 module "artifact_registry" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/artifact-registry?ref=v0.7.2"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/artifact-registry?ref=v0.6.19"
   for_each = local.repositories
 
   project_id                        = var.project_id

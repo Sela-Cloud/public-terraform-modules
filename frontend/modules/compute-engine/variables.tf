@@ -6,7 +6,7 @@ variable "compute_instance" {
     enable_external_ip      = bool,
     generate_internal_ip    = bool,
     internal_ip_address     = list(string),
-    vm_description          = string,
+    vm_description          = optional(string, ""),
     network                 = string,
     subnetwork              = string,
     machine_zone            = list(string),

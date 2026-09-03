@@ -42,9 +42,10 @@
           {
             "id": "vm_description",
             "label": "VM Description",
-            "description": "Description of instances.",
+            "description": "Description applied to the instances. Optional.",
             "type": "text",
-            "required": true
+            "required": false,
+            "default": ""
           },
           {
             "id": "region",

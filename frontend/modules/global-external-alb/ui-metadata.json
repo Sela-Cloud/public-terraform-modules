@@ -38,8 +38,9 @@
           {
             "id": "backend_project_id",
             "label": "Backend project ID",
-            "description": "Only needed for Shared VPC: the project where backend instance groups, NEGs, and buckets live. Leave blank to use the same project as the frontend.",
-            "type": "text"
+            "description": "The project where backend instance groups, NEGs, and buckets live. Usually the same as the project above; it differs under Shared VPC.",
+            "type": "text",
+            "required": true
           },
           {
             "id": "certificate_map_name",
