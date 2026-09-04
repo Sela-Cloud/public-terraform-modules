@@ -92,6 +92,7 @@ KNOWN_DATA_SOURCES = {
     "iam.serviceAccounts",
     "iam.service_accounts",
     "kms.cryptoKeys",
+    "run.services",
     "secretmanager.secretVersions",
     "secretmanager.secrets",
     "servicenetworking.connections",

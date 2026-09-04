@@ -51,8 +51,27 @@ resource "google_compute_backend_bucket" "this" {
   }
 }
 
+# A Cloud Run backend is attached to a load balancer through a serverless NEG. The operator picks
+# the service; this NEG is pure wiring between that service and this load balancer, with no
+# independent lifecycle, so the module creates it rather than asking for one to exist already.
+resource "google_compute_region_network_endpoint_group" "cloud_run" {
+  for_each = { for key, svc in var.backend_services : key => svc if svc.target_type == "cloud_run" }
+
+  project               = local.backend_project_id
+  name                  = "${each.value.service_name}-neg"
+  region                = each.value.cloud_run_region
+  network_endpoint_type = "SERVERLESS"
+
+  cloud_run {
+    service = each.value.cloud_run_service
+  }
+}
+
 resource "google_compute_health_check" "this" {
-  for_each = { for key, svc in var.backend_services : key => svc if svc.enable_health_check }
+  for_each = {
+    for key, svc in var.backend_services : key => svc
+    if svc.enable_health_check && svc.target_type != "cloud_run"
+  }
 
   project = local.backend_project_id
   name    = "${each.value.service_name}-hc"
@@ -73,13 +92,13 @@ resource "google_compute_backend_service" "this" {
   timeout_sec                     = 30
   connection_draining_timeout_sec = 300
   enable_cdn                      = each.value.enable_cdn
-  health_checks                   = each.value.enable_health_check ? [google_compute_health_check.this[each.key].id] : null
+  health_checks                   = contains(keys(google_compute_health_check.this), each.key) ? [google_compute_health_check.this[each.key].id] : null
 
   backend {
     group = (
       each.value.target_type == "umig" ? "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/zones/${each.value.umig_zone}/instanceGroups/${each.value.umig_name}" :
       each.value.target_type == "mig" ? "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/regions/${each.value.mig_region}/instanceGroups/${each.value.mig_name}" :
-      "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/regions/${each.value.neg_region}/networkEndpointGroups/${each.value.neg_name}"
+      google_compute_region_network_endpoint_group.cloud_run[each.key].id
     )
     balancing_mode  = contains(["umig", "mig"], each.value.target_type) ? "UTILIZATION" : null
     capacity_scaler = contains(["umig", "mig"], each.value.target_type) ? 1.0 : null

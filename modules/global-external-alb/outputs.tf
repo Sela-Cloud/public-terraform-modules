@@ -17,3 +17,8 @@ output "url_map_id" {
   description = "ID of the load balancer's URL map."
   value       = google_compute_url_map.this.id
 }
+
+output "cloud_run_neg_names" {
+  description = "Names of the serverless NEGs created for Cloud Run backends, keyed by backend service name."
+  value       = { for key, neg in google_compute_region_network_endpoint_group.cloud_run : key => neg.name }
+}
