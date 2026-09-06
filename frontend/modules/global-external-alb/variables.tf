@@ -38,6 +38,8 @@ variable "global_external_alb" {
       target_type         = string
       umig_name           = optional(string)
       umig_zone           = optional(string)
+      neg_name            = optional(string)
+      neg_region          = optional(string)
       cloud_run_service   = optional(string)
       cloud_run_region    = optional(string)
       mig_name            = optional(string)
@@ -113,9 +115,9 @@ variable "global_external_alb" {
   validation {
     condition = alltrue([
       for alb in values(var.global_external_alb) :
-      alltrue([for s in alb.backend_services : contains(["umig", "mig", "cloud_run"], s.target_type)])
+      alltrue([for s in alb.backend_services : contains(["umig", "mig", "neg", "cloud_run"], s.target_type)])
     ])
-    error_message = "backend_services target_type must be 'umig', 'mig', or 'cloud_run'."
+    error_message = "backend_services target_type must be 'umig', 'mig', 'neg', or 'cloud_run'."
   }
 
   validation {

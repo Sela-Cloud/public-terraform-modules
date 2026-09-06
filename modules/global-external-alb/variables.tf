@@ -63,13 +63,17 @@ variable "backend_buckets" {
 }
 
 variable "backend_services" {
-  description = "HTTP(S) backends, keyed by service_name. target_type selects umig, mig, or cloud_run fields."
+  description = "HTTP(S) backends, keyed by service_name. target_type selects umig, mig, neg, or cloud_run fields."
   type = map(object({
     service_name = string
-    target_type  = string # "umig", "mig", or "cloud_run"
+    target_type  = string # "umig", "mig", "neg", or "cloud_run"
 
     umig_name = optional(string)
     umig_zone = optional(string)
+
+    # An existing network endpoint group, created and owned elsewhere.
+    neg_name   = optional(string)
+    neg_region = optional(string)
 
     # A Cloud Run backend names the service directly; this module builds the serverless NEG
     # that fronts it, because such a NEG exists only to attach one service to one load
@@ -108,9 +112,9 @@ variable "backend_services" {
 
   validation {
     condition = alltrue([
-      for svc in values(var.backend_services) : contains(["umig", "mig", "cloud_run"], svc.target_type)
+      for svc in values(var.backend_services) : contains(["umig", "mig", "neg", "cloud_run"], svc.target_type)
     ])
-    error_message = "backend_services target_type must be 'umig', 'mig', or 'cloud_run'."
+    error_message = "backend_services target_type must be 'umig', 'mig', 'neg', or 'cloud_run'."
   }
 
   validation {
@@ -119,6 +123,14 @@ variable "backend_services" {
       svc.target_type != "umig" || (try(trimspace(svc.umig_name), "") != "" && try(trimspace(svc.umig_zone), "") != "")
     ])
     error_message = "backend_services with target_type 'umig' require umig_name and umig_zone."
+  }
+
+  validation {
+    condition = alltrue([
+      for svc in values(var.backend_services) :
+      svc.target_type != "neg" || (try(trimspace(svc.neg_name), "") != "" && try(trimspace(svc.neg_region), "") != "")
+    ])
+    error_message = "backend_services with target_type 'neg' require neg_name and neg_region."
   }
 
   validation {

@@ -98,6 +98,7 @@ resource "google_compute_backend_service" "this" {
     group = (
       each.value.target_type == "umig" ? "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/zones/${each.value.umig_zone}/instanceGroups/${each.value.umig_name}" :
       each.value.target_type == "mig" ? "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/regions/${each.value.mig_region}/instanceGroups/${each.value.mig_name}" :
+      each.value.target_type == "neg" ? "https://www.googleapis.com/compute/v1/projects/${local.backend_project_id}/regions/${each.value.neg_region}/networkEndpointGroups/${each.value.neg_name}" :
       google_compute_region_network_endpoint_group.cloud_run[each.key].id
     )
     balancing_mode  = contains(["umig", "mig"], each.value.target_type) ? "UTILIZATION" : null

@@ -163,7 +163,8 @@
                 "default": "umig",
                 "options": [
                   { "value": "umig", "label": "Unmanaged instance group" },
-                  { "value": "cloud_run", "label": "Cloud Run service" },
+                  { "value": "cloud_run", "label": "Cloud Run service (network endpoint group created for you)" },
+                  { "value": "neg", "label": "Existing serverless network endpoint group" },
                   { "value": "mig", "label": "Managed instance group" }
                 ]
               },
@@ -227,6 +228,33 @@
                 "depends_on": { "field": "target_type", "value": ["umig", "mig"], "operator": "in" }
               },
               {
+                "id": "neg_name",
+                "label": "Network endpoint group",
+                "description": "An existing serverless NEG, created and owned outside this load balancer.",
+                "type": "select",
+                "depends_on": { "field": "target_type", "value": "neg" },
+                "data_source": {
+                  "resource": "compute.networkEndpointGroups",
+                  "params": { "project_id": { "from_field": "project_id" }, "region": { "from_field": "neg_region" } },
+                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "neg_region",
+                "label": "Network endpoint group region",
+                "type": "select",
+                "depends_on": { "field": "target_type", "value": "neg" },
+                "data_source": {
+                  "resource": "compute.regions",
+                  "params": { "project_id": { "from_field": "project_id" } },
+                  "display": { "value_key": "name", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
                 "id": "cloud_run_service",
                 "label": "Cloud Run service",
                 "description": "The load balancer builds the serverless network endpoint group for this service itself.",
@@ -254,7 +282,7 @@
                   "cache_ttl": 300
                 }
               },
-              { "id": "enable_health_check", "label": "Enable health check", "type": "boolean", "default": false, "depends_on": { "field": "target_type", "value": ["umig", "mig"], "operator": "in" } },
+              { "id": "enable_health_check", "label": "Enable health check", "type": "boolean", "default": false, "depends_on": { "field": "target_type", "value": ["cloud_run"], "operator": "not_in" } },
               { "id": "health_check_port", "label": "Health check port", "type": "number", "default": 80, "validation": { "min": 1, "max": 65535 }, "depends_on": { "field": "enable_health_check", "value": true } },
               { "id": "enable_cdn", "label": "Enable Cloud CDN", "type": "boolean", "default": false },
               {
