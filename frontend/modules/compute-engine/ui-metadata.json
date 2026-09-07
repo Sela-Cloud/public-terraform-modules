@@ -366,9 +366,10 @@
           {
             "id": "metadata_startup_script",
             "label": "Startup script",
-            "description": "Startup script provided as a string.",
+            "description": "Script run on the instance at boot. Shell scripts start with a #! line.",
             "type": "text",
-            "required": false
+            "required": false,
+            "multiline": true
           },
           {
             "id": "can_ip_forward",
