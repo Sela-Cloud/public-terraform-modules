@@ -66,6 +66,7 @@ KNOWN_DATA_SOURCES = {
     "compute.disks",
     "compute.globalAddresses",
     "compute.healthChecks",
+    "compute.instanceTemplates",
     "compute.machineTypes",
     "compute.machine_types",
     "compute.managedInstanceGroups",

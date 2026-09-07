@@ -57,7 +57,8 @@
               },
               "display": {
                 "value_key": "name",
-                "label_key": "name"
+                "label_key": "name",
+                "description_key": "description"
               },
               "allow_custom": true,
               "cache_ttl": 300
@@ -65,11 +66,24 @@
           },
           {
             "id": "instance_template",
-            "label": "Instance template self-link",
-            "description": "Full self-link of the instance template the group creates VMs from. Take it from the Instance Template resource's self-link output; because Compute Engine generates the template's name, this cannot be picked from a list.",
-            "type": "text",
+            "label": "Instance template",
+            "description": "The instance template this group creates VMs from. Newest first; the stored value is the template's self-link. Leave the list and paste a self-link if the template does not exist yet.",
+            "type": "select",
             "required": true,
-            "placeholder": "https://www.googleapis.com/compute/v1/projects/PROJECT/global/instanceTemplates/web-tpl-20240101000000000000"
+            "placeholder": "https://www.googleapis.com/compute/v1/projects/PROJECT/global/instanceTemplates/web-tpl-20240101000000000000",
+            "data_source": {
+              "resource": "compute.instanceTemplates",
+              "params": {
+                "project_id": { "from_field": "project_id" }
+              },
+              "display": {
+                "value_key": "selfLink",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 60
+            }
           },
           {
             "id": "mig_name",

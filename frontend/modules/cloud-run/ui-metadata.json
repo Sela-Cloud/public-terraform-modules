@@ -70,7 +70,8 @@
               },
               "display": {
                 "value_key": "name",
-                "label_key": "name"
+                "label_key": "name",
+                "description_key": "description"
               },
               "allow_custom": true
             }
