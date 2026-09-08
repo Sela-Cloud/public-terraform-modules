@@ -1,0 +1,398 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "ec2-instance",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS EC2 Instance",
+    "icon": "ec2",
+    "description": "Provision scalable Amazon EC2 virtual machines with storage, networking, and security configurations",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "ec2_instance",
+    "key_field": "name",
+    "key_label": "Instance Name",
+    "key_description": "Unique name and identifier for the EC2 instance, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core instance settings including compute size, AMI, and placement.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Instance Name",
+            "description": "Name applied to the instance as a tag and identifier.",
+            "type": "text",
+            "required": true,
+            "default": "ec2-instance",
+            "placeholder": "my-web-server"
+          },
+          {
+            "id": "instance_type",
+            "label": "Instance Type",
+            "description": "EC2 instance size and family (e.g. t3.micro, m5.large, c6i.xlarge).",
+            "type": "text",
+            "required": true,
+            "default": "t3.micro",
+            "placeholder": "t3.micro"
+          },
+          {
+            "id": "ami",
+            "label": "AMI ID",
+            "description": "Amazon Machine Image ID. Leave empty to automatically use latest Amazon Linux 2023.",
+            "type": "text",
+            "required": false,
+            "placeholder": "ami-0c55b159cbfafe1f0"
+          },
+          {
+            "id": "key_name",
+            "label": "Key Pair Name",
+            "description": "Name of the EC2 Key Pair for SSH/RDP access.",
+            "type": "text",
+            "required": false,
+            "placeholder": "my-keypair"
+          },
+          {
+            "id": "availability_zone",
+            "label": "Availability Zone",
+            "description": "Specific AZ to launch the instance into (e.g. us-east-1a). Optional.",
+            "type": "text",
+            "required": false,
+            "placeholder": "us-east-1a"
+          },
+          {
+            "id": "tenancy",
+            "label": "Tenancy",
+            "description": "Hardware tenancy of the instance.",
+            "type": "select",
+            "required": false,
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Shared (Default)" },
+              { "value": "dedicated", "label": "Dedicated Instance" },
+              { "value": "host", "label": "Dedicated Host" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "network",
+        "label": "Network & Interfaces",
+        "description": "VPC subnet, security groups, and IP address allocation.",
+        "fields": [
+          {
+            "id": "subnet_id",
+            "label": "Subnet ID",
+            "description": "VPC Subnet ID where the instance primary interface will reside.",
+            "type": "text",
+            "required": false,
+            "placeholder": "subnet-0123456789abcdef0"
+          },
+          {
+            "id": "vpc_security_group_ids",
+            "label": "Security Group IDs",
+            "description": "List of VPC Security Group IDs to associate with the instance.",
+            "type": "list",
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "associate_public_ip_address",
+            "label": "Auto-assign Public IP",
+            "description": "Whether to request a public IPv4 address from the subnet pool.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "private_ip",
+            "label": "Static Private IP",
+            "description": "Specific private IPv4 address to assign within the subnet.",
+            "type": "text",
+            "required": false,
+            "placeholder": "10.0.1.50"
+          },
+          {
+            "id": "secondary_private_ips",
+            "label": "Secondary Private IPs",
+            "description": "Additional private IPv4 addresses to associate with the primary interface.",
+            "type": "list",
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "enable_eip",
+            "label": "Allocate Elastic IP (EIP)",
+            "description": "Allocate and associate a dedicated static Elastic IP to this instance.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "source_dest_check",
+            "label": "Source / Destination Check",
+            "description": "Enable source/destination IP checking. Disable for NAT gateways or firewall appliances.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "label": "Storage Configuration",
+        "description": "Root volume parameters and additional EBS volume attachments.",
+        "fields": [
+          {
+            "id": "root_block_device",
+            "label": "Root Block Device",
+            "description": "Parameters for the primary root EBS volume.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "volume_type",
+                "label": "Volume Type",
+                "type": "select",
+                "default": "gp3",
+                "options": [
+                  { "value": "gp3", "label": "General Purpose SSD (gp3)" },
+                  { "value": "gp2", "label": "General Purpose SSD (gp2)" },
+                  { "value": "io1", "label": "Provisioned IOPS SSD (io1)" },
+                  { "value": "io2", "label": "Provisioned IOPS SSD (io2)" },
+                  { "value": "standard", "label": "Magnetic (standard)" }
+                ]
+              },
+              {
+                "id": "volume_size",
+                "label": "Volume Size (GB)",
+                "type": "number",
+                "default": 30
+              },
+              {
+                "id": "delete_on_termination",
+                "label": "Delete on Termination",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "encrypted",
+                "label": "Encrypted",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "kms_key_id",
+                "label": "KMS Key ID / ARN",
+                "description": "Custom KMS key for encryption. Leave blank for default AWS managed key.",
+                "type": "text",
+                "required": false
+              }
+            ]
+          },
+          {
+            "id": "ebs_block_device",
+            "label": "Additional EBS Volumes",
+            "description": "List of secondary EBS disks to attach to the instance.",
+            "type": "repeatable",
+            "required": false,
+            "fields": [
+              {
+                "id": "device_name",
+                "label": "Device Name",
+                "description": "Block device name (e.g. /dev/sdf, /dev/xvdf).",
+                "type": "text",
+                "required": true,
+                "placeholder": "/dev/sdf"
+              },
+              {
+                "id": "volume_type",
+                "label": "Volume Type",
+                "type": "select",
+                "default": "gp3",
+                "options": [
+                  { "value": "gp3", "label": "gp3" },
+                  { "value": "gp2", "label": "gp2" },
+                  { "value": "io1", "label": "io1" },
+                  { "value": "io2", "label": "io2" }
+                ]
+              },
+              {
+                "id": "volume_size",
+                "label": "Volume Size (GB)",
+                "type": "number",
+                "default": 20
+              },
+              {
+                "id": "encrypted",
+                "label": "Encrypted",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "delete_on_termination",
+                "label": "Delete on Termination",
+                "type": "boolean",
+                "default": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Security & IAM",
+        "description": "IAM instance role and Instance Metadata Service (IMDSv2) hardening.",
+        "fields": [
+          {
+            "id": "iam_instance_profile",
+            "label": "IAM Instance Profile",
+            "description": "IAM Instance Profile name or ARN to grant AWS API permissions to the VM.",
+            "type": "text",
+            "required": false,
+            "placeholder": "EC2SSMInstanceProfile"
+          },
+          {
+            "id": "metadata_options",
+            "label": "Metadata Options (IMDSv2)",
+            "description": "Configure IMDSv2 tokens and security hop limit.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "http_endpoint",
+                "label": "HTTP Endpoint",
+                "type": "select",
+                "default": "enabled",
+                "options": [
+                  { "value": "enabled", "label": "Enabled" },
+                  { "value": "disabled", "label": "Disabled" }
+                ]
+              },
+              {
+                "id": "http_tokens",
+                "label": "IMDSv2 Tokens",
+                "description": "Required enforces IMDSv2 token usage for enhanced security.",
+                "type": "select",
+                "default": "required",
+                "options": [
+                  { "value": "required", "label": "Required (IMDSv2 Enforced)" },
+                  { "value": "optional", "label": "Optional (IMDSv1 Allowed)" }
+                ]
+              },
+              {
+                "id": "http_put_response_hop_limit",
+                "label": "Hop Limit",
+                "type": "number",
+                "default": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "management",
+        "label": "Protection & Management",
+        "description": "Lifecycle protection, monitoring, CPU credits, and bootstrap scripts.",
+        "fields": [
+          {
+            "id": "disable_api_termination",
+            "label": "Termination Protection",
+            "description": "Protect the instance from accidental termination.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "disable_api_stop",
+            "label": "Stop Protection",
+            "description": "Protect the instance from accidental stop requests.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "monitoring",
+            "label": "Detailed Monitoring",
+            "description": "Enable detailed 1-minute CloudWatch metric collection (extra AWS charges apply).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "ebs_optimized",
+            "label": "EBS Optimized",
+            "description": "Dedicated throughput between Amazon EC2 and Amazon EBS.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "cpu_credits",
+            "label": "T-series CPU Credits",
+            "description": "Credit option for burstable instance families.",
+            "type": "select",
+            "required": false,
+            "default": "standard",
+            "options": [
+              { "value": "standard", "label": "Standard" },
+              { "value": "unlimited", "label": "Unlimited" }
+            ]
+          },
+          {
+            "id": "user_data",
+            "label": "User Data Script",
+            "description": "Shell script or cloud-init directives executed at first boot.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "placeholder": "#!/bin/bash\nyum update -y"
+          },
+          {
+            "id": "user_data_replace_on_change",
+            "label": "Recreate on User Data Change",
+            "description": "Force instance destroy and recreate if user data changes.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource and EBS volume tagging.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Instance Tags",
+            "description": "Key-value tags applied to the EC2 instance.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          },
+          {
+            "id": "volume_tags",
+            "label": "Volume Tags",
+            "description": "Key-value tags applied to all attached EBS storage volumes.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
