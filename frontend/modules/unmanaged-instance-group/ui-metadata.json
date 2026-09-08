@@ -1,0 +1,154 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "unmanaged-instance-group",
+  "version": "1.0.0",
+  "display": {
+    "label": "Unmanaged Instance Group",
+    "icon": "unmanaged-instance-group",
+    "description": "A zonal group of existing VMs you manage yourself, usable as a load balancer backend",
+    "category": "regional"
+  },
+
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the instance group will be created.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+
+  "resource": {
+    "variable": "unmanaged_instance_group",
+    "key_field": "name",
+    "key_label": "Instance group name",
+    "key_description": "Name of the instance group. A load balancer backend refers to the group by this name.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Identity and location of the group.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Instance group name",
+            "type": "text",
+            "required": true,
+            "placeholder": "web-servers",
+            "validation": {
+              "max": 63,
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter and contain only lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "zone",
+            "label": "Zone",
+            "description": "An instance group is zonal, and can only contain instances from its own zone.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "compute.zones",
+              "params": {
+                "project_id": { "from_field": "project_id" }
+              },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "network",
+            "label": "Network",
+            "description": "Leave unset to let Compute Engine infer the network from the member instances.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": {
+                "project_id": { "from_field": "project_id" }
+              },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+
+      {
+        "id": "members",
+        "label": "Instances",
+        "description": "The VMs that make up the group. They must already exist in the zone above.",
+        "fields": [
+          {
+            "id": "instances",
+            "label": "Instances",
+            "description": "Existing VMs to place in the group, by name. A group may also start empty and be filled later.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "compute.instances",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "zone": { "from_field": "zone" }
+              },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 60
+            }
+          }
+        ]
+      },
+
+      {
+        "id": "named-ports",
+        "label": "Named Ports",
+        "description": "Port names a load balancer backend service can refer to.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "named_ports",
+            "label": "Named ports",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Port name",
+                "type": "text",
+                "required": true,
+                "placeholder": "http"
+              },
+              {
+                "id": "port",
+                "label": "Port number",
+                "type": "number",
+                "required": true,
+                "default": 80,
+                "validation": { "min": 1, "max": 65535 }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "provides": [
+    { "data_source": "compute.unmanagedInstanceGroups", "value_field": "name" }
+  ]
+}
