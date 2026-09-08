@@ -87,7 +87,10 @@ variable "backend_services" {
     port_name = optional(string, "http")
 
     enable_health_check = optional(bool, false)
+    health_check_type   = optional(string, "tcp")
     health_check_port   = optional(number, 80)
+    # HTTP only; ignored by a TCP check.
+    health_check_request_path = optional(string, "/")
 
     enable_cdn = optional(bool, false)
     cdn_policy = optional(object({
@@ -139,6 +142,13 @@ variable "backend_services" {
       svc.target_type != "cloud_run" || (try(trimspace(svc.cloud_run_service), "") != "" && try(trimspace(svc.cloud_run_region), "") != "")
     ])
     error_message = "backend_services with target_type 'cloud_run' require cloud_run_service and cloud_run_region."
+  }
+
+  validation {
+    condition = alltrue([
+      for svc in values(var.backend_services) : contains(["tcp", "http"], svc.health_check_type)
+    ])
+    error_message = "backend_services health_check_type must be 'tcp' or 'http'."
   }
 
   validation {

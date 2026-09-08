@@ -1,5 +1,5 @@
 module "iam_custom_role" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/custom-role?ref=v0.6.24"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/custom-role?ref=v0.6.25"
   for_each = var.iam_custom_role
 
   project     = var.project_id

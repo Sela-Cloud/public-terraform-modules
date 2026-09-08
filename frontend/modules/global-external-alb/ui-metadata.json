@@ -283,7 +283,12 @@
                 }
               },
               { "id": "enable_health_check", "label": "Enable health check", "type": "boolean", "default": false, "depends_on": { "field": "target_type", "value": ["cloud_run"], "operator": "not_in" } },
+              { "id": "health_check_type", "label": "Health check protocol", "type": "select", "default": "tcp", "depends_on": { "field": "enable_health_check", "value": true }, "options": [
+                { "value": "tcp", "label": "TCP (connection succeeds)" },
+                { "value": "http", "label": "HTTP (path returns 200)" }
+              ] },
               { "id": "health_check_port", "label": "Health check port", "type": "number", "default": 80, "validation": { "min": 1, "max": 65535 }, "depends_on": { "field": "enable_health_check", "value": true } },
+              { "id": "health_check_request_path", "label": "Health check path", "description": "Path the HTTP check requests; it must return 200.", "type": "text", "default": "/", "placeholder": "/healthz", "depends_on": { "field": "health_check_type", "value": "http" } },
               { "id": "enable_cdn", "label": "Enable Cloud CDN", "type": "boolean", "default": false },
               {
                 "id": "cdn_policy",

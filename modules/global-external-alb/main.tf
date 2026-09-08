@@ -76,8 +76,21 @@ resource "google_compute_health_check" "this" {
   project = local.backend_project_id
   name    = "${each.value.service_name}-hc"
 
-  tcp_health_check {
-    port = each.value.health_check_port
+  # One block or the other, never both: google_compute_health_check accepts exactly one
+  # protocol block, so these are mutually exclusive by construction rather than by validation.
+  dynamic "tcp_health_check" {
+    for_each = each.value.health_check_type == "tcp" ? [1] : []
+    content {
+      port = each.value.health_check_port
+    }
+  }
+
+  dynamic "http_health_check" {
+    for_each = each.value.health_check_type == "http" ? [1] : []
+    content {
+      port         = each.value.health_check_port
+      request_path = each.value.health_check_request_path
+    }
   }
 }
 

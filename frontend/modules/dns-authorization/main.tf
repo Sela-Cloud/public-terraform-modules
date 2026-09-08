@@ -1,5 +1,5 @@
 module "dns_authorization" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/dns-authorization?ref=v0.6.24"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/dns-authorization?ref=v0.6.25"
   for_each = var.dns_authorization
 
   project_id  = var.project_id

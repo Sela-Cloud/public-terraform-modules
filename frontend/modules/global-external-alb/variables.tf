@@ -34,20 +34,22 @@ variable "global_external_alb" {
       }))
     })), [])
     backend_services = optional(list(object({
-      service_name        = string
-      target_type         = string
-      umig_name           = optional(string)
-      umig_zone           = optional(string)
-      neg_name            = optional(string)
-      neg_region          = optional(string)
-      cloud_run_service   = optional(string)
-      cloud_run_region    = optional(string)
-      mig_name            = optional(string)
-      mig_region          = optional(string)
-      port_name           = optional(string, "http")
-      enable_health_check = optional(bool, false)
-      health_check_port   = optional(number, 80)
-      enable_cdn          = optional(bool, false)
+      service_name              = string
+      target_type               = string
+      umig_name                 = optional(string)
+      umig_zone                 = optional(string)
+      neg_name                  = optional(string)
+      neg_region                = optional(string)
+      cloud_run_service         = optional(string)
+      cloud_run_region          = optional(string)
+      mig_name                  = optional(string)
+      mig_region                = optional(string)
+      port_name                 = optional(string, "http")
+      enable_health_check       = optional(bool, false)
+      health_check_type         = optional(string, "tcp")
+      health_check_port         = optional(number, 80)
+      health_check_request_path = optional(string, "/")
+      enable_cdn                = optional(bool, false)
       cdn_policy = optional(object({
         cache_mode        = optional(string, "CACHE_ALL_STATIC")
         default_ttl       = optional(number)

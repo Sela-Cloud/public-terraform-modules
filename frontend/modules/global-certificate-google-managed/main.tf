@@ -1,5 +1,5 @@
 module "global_certificate_google_managed" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/global-certificate-google-managed?ref=v0.6.24"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/global-certificate-google-managed?ref=v0.6.25"
   for_each = var.global_certificate_google_managed
 
   project_id              = var.project_id
