@@ -13,6 +13,10 @@ variable "iam_configs" {
     project_level_roles = optional(list(string), [])
     # User principal to receive project_level_roles. Do not set when using a service account principal.
     user_email_address = optional(string, null)
+    # Workload Identity / federated principal to receive project_level_roles, for example
+    # iam.googleapis.com/projects/<num>/locations/global/workloadIdentityPools/<pool>/subject/<sub>.
+    # The principal:// scheme is added by the module, so it is optional here.
+    principal_set_address = optional(string, null)
 
     # Custom role ID and permissions. No custom role is created when custom_role_id is null.
     custom_role_id          = optional(string, null)
@@ -38,11 +42,14 @@ variable "iam_configs" {
   validation {
     condition = alltrue([
       for config in var.iam_configs :
-      length(config.project_level_roles) == 0 || (
-        (config.service_account_name != "" || config.existing_service_account_email != "") !=
-        (config.user_email_address != null)
-      )
+      length(config.project_level_roles) == 0 || length([
+        for present in [
+          config.service_account_name != "" || config.existing_service_account_email != "",
+          config.user_email_address != null,
+          config.principal_set_address != null,
+        ] : true if present
+      ]) == 1
     ])
-    error_message = "Each configuration with project_level_roles must specify exactly one principal: a service account or user_email_address."
+    error_message = "Each configuration with project_level_roles must specify exactly one principal: a service account, user_email_address, or principal_set_address."
   }
 }

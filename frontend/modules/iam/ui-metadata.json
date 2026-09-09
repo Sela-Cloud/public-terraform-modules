@@ -71,10 +71,18 @@
           },
           {
             "id": "user_email_address",
-            "label": "User / Group Principal Email",
+            "label": "User principal email",
             "type": "text",
-            "placeholder": "user:admin@example.com",
-            "description": "Direct principal email (e.g., user:john@example.com or group:devs@example.com). Only set when NOT using a Service Account.",
+            "placeholder": "admin@example.com",
+            "description": "Email address only \u2014 the user: prefix is added for you. Set this or a service account or a federated principal, never more than one.",
+            "nullable": true
+          },
+          {
+            "id": "principal_set_address",
+            "label": "Federated principal",
+            "type": "text",
+            "placeholder": "iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/my-project.svc.id.goog/subject/ns/my-ns/sa/my-ksa",
+            "description": "A Workload Identity or other federated principal. The principal:// scheme is added for you, so pasting it with or without the scheme both work. Use this instead of the user field: a federated principal is not a user, and granting it as one is rejected by Google.",
             "nullable": true
           }
         ]

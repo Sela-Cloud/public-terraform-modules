@@ -16,6 +16,15 @@ output "user_email_addresses" {
   ]
 }
 
+output "principal_set_addresses" {
+  description = "A list of federated principals receiving project-level IAM roles."
+  value = [
+    for config in local.project_role_configs :
+    config.principal_set_address
+    if config.principal_set_address != null
+  ]
+}
+
 output "custom_roles" {
   description = "A list of the created Custom role IDs"
   value       = [for role in module.custom_roles : role.custom_role_id]

@@ -17,7 +17,7 @@ locals {
 
 module "custom_roles" {
   for_each    = local.custom_role_configs
-  source      = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/custom-role?ref=v0.6.25"
+  source      = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/custom-role?ref=v0.7.0"
   project     = var.project_id
   role_id     = each.value.custom_role_id
   permissions = each.value.custom_role_permissions
@@ -26,7 +26,7 @@ module "custom_roles" {
 module "service_accounts" {
   for_each = local.service_account_configs
 
-  source                         = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/service-account?ref=v0.6.25"
+  source                         = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/service-account?ref=v0.7.0"
   project_id                     = var.project_id
   service_account_name           = each.value.service_account_name
   iam_members                    = each.value.iam_members
@@ -36,11 +36,21 @@ module "service_accounts" {
 module "member_roles" {
   for_each = local.project_role_configs
 
-  source  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/member-iam?ref=v0.6.25"
+  source  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/iam/member-iam?ref=v0.7.0"
   project = var.project_id
 
   service_account_address = try(module.service_accounts[each.key].email, null)
   user_email_address      = each.value.user_email_address
-  project_roles           = each.value.project_level_roles
-  depends_on              = [module.custom_roles, module.service_accounts]
+
+  # A federated principal is neither a user nor a service account. Routed through
+  # user_email_address it came out as "user:principal://...", which the API rejects.
+  # trimprefix so an address pasted with the scheme already on it does not double it up.
+  principal_set_address = (
+    each.value.principal_set_address == null
+    ? null
+    : trimprefix(each.value.principal_set_address, "principal://")
+  )
+
+  project_roles = each.value.project_level_roles
+  depends_on    = [module.custom_roles, module.service_accounts]
 }
