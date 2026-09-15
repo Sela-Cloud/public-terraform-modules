@@ -1,0 +1,127 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "service-connection-policy",
+  "version": "1.0.0",
+  "display": {
+    "label": "Service Connection Policy",
+    "icon": "vpc-network",
+    "description": "Authorizes a producer service (e.g. Memorystore for Redis Cluster) to create Private Service Connect connections into a VPC network and region.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "import": {
+    "module": "service_connection_policy",
+    "target": "google_network_connectivity_service_connection_policy.this",
+    "id_template": "projects/{project_id}/locations/{location}/serviceConnectionPolicies/{name}",
+    "identity_fields": ["project_id", "location", "name"],
+    "requires_review": false
+  },
+  "resource": {
+    "variable": "service_connection_policy",
+    "key_field": "name",
+    "key_label": "Policy name",
+    "key_description": "Unique name for the service connection policy.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Name your policy",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Policy name",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-scp"
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text"
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "network",
+        "label": "Network and location",
+        "fields": [
+          {
+            "id": "location",
+            "label": "Region",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "network",
+            "label": "VPC network",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnetworks",
+            "label": "Authorized subnetworks",
+            "description": "Subnetworks the producer service may create Private Service Connect endpoints in.",
+            "type": "list",
+            "required": true,
+            "data_source": {
+              "resource": "compute.subnetworks",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "location" },
+                "network": { "from_field": "network" }
+              },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "ipCidrRange" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "producer",
+        "label": "Producer service",
+        "fields": [
+          {
+            "id": "service_class",
+            "label": "Service class",
+            "description": "The producer service authorized to create connections under this policy. Use 'gcp-memorystore-redis' for Memorystore for Redis Cluster or Valkey.",
+            "type": "text",
+            "default": "gcp-memorystore-redis"
+          },
+          {
+            "id": "psc_connection_limit",
+            "label": "Max PSC connections",
+            "description": "Optional cap on the number of PSC connections this policy allows.",
+            "type": "number"
+          }
+        ]
+      }
+    ]
+  }
+}

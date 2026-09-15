@@ -136,7 +136,7 @@
           {
             "id": "network",
             "label": "Network",
-            "description": "The VPC network your applications will connect from.",
+            "description": "The VPC network your applications will connect from. Requires an existing Service Connection Policy for this network and region beforehand.",
             "type": "select",
             "required": true,
             "data_source": {
