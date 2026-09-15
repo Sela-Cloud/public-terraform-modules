@@ -1,0 +1,31 @@
+module "redis_instance" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/redis-instance?ref=v0.7.4"
+  for_each = var.redis_instance
+
+  project_id              = var.project_id
+  name                    = each.value.name
+  display_name            = each.value.display_name
+  region                  = each.value.region
+  labels                  = each.value.labels
+  tier                    = each.value.tier
+  memory_size_gb          = each.value.memory_size_gb
+  location_id             = each.value.location_id
+  enable_read_replicas    = each.value.enable_read_replicas
+  replica_count           = each.value.replica_count
+  secondary_ip_range      = each.value.secondary_ip_range
+  network                 = each.value.network
+  connect_mode            = each.value.connect_mode
+  reserved_ip_range       = each.value.reserved_ip_range
+  auth_enabled            = each.value.auth_enabled
+  transit_encryption_mode = each.value.transit_encryption_mode
+  customer_managed_key    = each.value.customer_managed_key
+  deletion_protection     = each.value.deletion_protection
+  redis_version           = each.value.redis_version
+  persistence_mode        = each.value.persistence_mode
+  rdb_snapshot_period     = each.value.rdb_snapshot_period
+  rdb_snapshot_start_time = each.value.rdb_snapshot_start_time
+  set_maintenance_window  = each.value.set_maintenance_window
+  maintenance_day         = each.value.maintenance_day
+  maintenance_start_hour  = each.value.maintenance_start_hour
+  redis_configs           = each.value.redis_configs
+}

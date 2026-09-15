@@ -1,0 +1,320 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "redis-instance",
+  "version": "1.0.0",
+  "display": {
+    "label": "Redis Instance",
+    "icon": "redis",
+    "description": "A fully-managed Memorystore for Redis instance.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "import": {
+    "module": "redis_instance",
+    "target": "google_redis_instance.this",
+    "id_template": "projects/{project_id}/locations/{region}/instances/{name}",
+    "identity_fields": ["project_id", "region", "name"],
+    "requires_review": false
+  },
+  "resource": {
+    "variable": "redis_instance",
+    "key_field": "name",
+    "key_label": "Instance ID",
+    "key_description": "Permanent, unique identifier for this instance.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Name your instance",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Instance ID",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-redis-instance",
+            "validation": { "min": 1, "max": 40, "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens. Start with a letter." }
+          },
+          {
+            "id": "display_name",
+            "label": "Display name",
+            "description": "Optional, for display purposes only.",
+            "type": "text"
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "tier",
+        "label": "Tier Selection",
+        "description": "Determines availability, cost, and performance.",
+        "fields": [
+          {
+            "id": "tier",
+            "label": "Tier",
+            "type": "select",
+            "default": "BASIC",
+            "options": [
+              { "value": "BASIC", "label": "Basic", "description": "Lower cost. Does not provide high availability." },
+              { "value": "STANDARD_HA", "label": "Standard", "description": "Automatic failover for high availability, and up to 5 read replicas for scaling reads." }
+            ]
+          },
+          {
+            "id": "memory_size_gb",
+            "label": "Capacity (GB)",
+            "description": "Provision up to 300 GB of memory.",
+            "type": "number",
+            "required": true,
+            "default": 16,
+            "validation": { "min": 1, "max": 300 }
+          }
+        ]
+      },
+      {
+        "id": "topology",
+        "label": "Region and Zonal Availability",
+        "fields": [
+          {
+            "id": "region",
+            "label": "Region",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "location_id",
+            "label": "Zone",
+            "description": "Only selectable for Basic tier.",
+            "type": "select",
+            "depends_on": { "field": "tier", "value": "BASIC" },
+            "data_source": {
+              "resource": "compute.zones",
+              "params": { "project_id": { "from_field": "project_id" }, "region": { "from_field": "region" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "replicas",
+        "label": "Read Replicas",
+        "description": "Standard tier only.",
+        "fields": [
+          {
+            "id": "enable_read_replicas",
+            "label": "Configure read replicas",
+            "type": "boolean",
+            "default": false,
+            "depends_on": { "field": "tier", "value": "STANDARD_HA" }
+          },
+          {
+            "id": "replica_count",
+            "label": "Number of read replicas",
+            "type": "number",
+            "default": 2,
+            "validation": { "min": 1, "max": 5 },
+            "depends_on": { "field": "enable_read_replicas", "value": true }
+          },
+          {
+            "id": "secondary_ip_range",
+            "label": "Secondary IP range",
+            "description": "A /28 CIDR for DIRECT_PEERING, or the name of an allocated PSC range for PRIVATE_SERVICE_ACCESS. Use 'auto' to let the service choose.",
+            "type": "text",
+            "placeholder": "auto",
+            "depends_on": { "field": "enable_read_replicas", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "connection",
+        "label": "Connection",
+        "fields": [
+          {
+            "id": "network",
+            "label": "Network",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "connect_mode",
+            "label": "Connection mode",
+            "description": "How Memorystore manages your IP range and network connection. Permanent once set.",
+            "type": "select",
+            "default": "DIRECT_PEERING",
+            "options": [
+              { "value": "DIRECT_PEERING", "label": "Direct peering" },
+              { "value": "PRIVATE_SERVICE_ACCESS", "label": "Private service access" }
+            ]
+          },
+          {
+            "id": "reserved_ip_range",
+            "label": "Reserved IP range",
+            "description": "CIDR range reserved for this instance. Leave blank to let the service choose.",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Security",
+        "fields": [
+          {
+            "id": "auth_enabled",
+            "label": "Enable AUTH",
+            "description": "Requires an AUTH string (auto-generated) to connect. Not intended to protect against malicious actors.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "transit_encryption_mode",
+            "label": "In-transit encryption",
+            "description": "Encrypts connections using TLS. Impacts performance and can't be changed later.",
+            "type": "select",
+            "default": "DISABLED",
+            "options": [
+              { "value": "DISABLED", "label": "Disabled" },
+              { "value": "SERVER_AUTHENTICATION", "label": "Enabled (server authentication)" }
+            ]
+          },
+          {
+            "id": "customer_managed_key",
+            "label": "Cloud KMS key",
+            "description": "Customer-managed encryption key. Leave blank to use a Google-managed key.",
+            "type": "select",
+            "data_source": {
+              "resource": "kms.cryptoKeys",
+              "params": { "project_id": { "from_field": "project_id" }, "location": { "from_field": "region" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "deletion_protection",
+            "label": "Prevent deletion",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "maintenance",
+        "label": "Maintenance",
+        "fields": [
+          {
+            "id": "set_maintenance_window",
+            "label": "Preferred maintenance window",
+            "description": "Choose the best day and time for this instance to undergo maintenance.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "maintenance_day",
+            "label": "Day",
+            "type": "select",
+            "depends_on": { "field": "set_maintenance_window", "value": true },
+            "options": [
+              { "value": "MONDAY", "label": "Monday" },
+              { "value": "TUESDAY", "label": "Tuesday" },
+              { "value": "WEDNESDAY", "label": "Wednesday" },
+              { "value": "THURSDAY", "label": "Thursday" },
+              { "value": "FRIDAY", "label": "Friday" },
+              { "value": "SATURDAY", "label": "Saturday" },
+              { "value": "SUNDAY", "label": "Sunday" }
+            ]
+          },
+          {
+            "id": "maintenance_start_hour",
+            "label": "Time (hour, UTC)",
+            "type": "number",
+            "validation": { "min": 0, "max": 23 },
+            "depends_on": { "field": "set_maintenance_window", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "configuration",
+        "label": "Configuration",
+        "fields": [
+          {
+            "id": "redis_version",
+            "label": "Version",
+            "description": "Must be 5.0 or higher when read replicas are enabled.",
+            "type": "select",
+            "default": "REDIS_7_2",
+            "options": [
+              { "value": "REDIS_7_2", "label": "7.2 (Recommended)" },
+              { "value": "REDIS_7_0", "label": "7.0" },
+              { "value": "REDIS_6_X", "label": "6.x" },
+              { "value": "REDIS_5_0", "label": "5.0" },
+              { "value": "REDIS_4_0", "label": "4.0" },
+              { "value": "REDIS_3_2", "label": "3.2" }
+            ]
+          },
+          {
+            "id": "persistence_mode",
+            "label": "Snapshots",
+            "type": "select",
+            "default": "DISABLED",
+            "options": [
+              { "value": "DISABLED", "label": "No snapshots" },
+              { "value": "RDB", "label": "Schedule Redis Database (RDB) snapshot" }
+            ]
+          },
+          {
+            "id": "rdb_snapshot_period",
+            "label": "Snapshot period",
+            "type": "select",
+            "depends_on": { "field": "persistence_mode", "value": "RDB" },
+            "options": [
+              { "value": "ONE_HOUR", "label": "Every 1 hour" },
+              { "value": "SIX_HOURS", "label": "Every 6 hours" },
+              { "value": "TWELVE_HOURS", "label": "Every 12 hours" },
+              { "value": "TWENTY_FOUR_HOURS", "label": "Every 24 hours" }
+            ]
+          },
+          {
+            "id": "rdb_snapshot_start_time",
+            "label": "First snapshot time",
+            "description": "RFC3339 UTC timestamp future snapshots are aligned to.",
+            "type": "text",
+            "placeholder": "2027-01-01T00:00:00Z",
+            "depends_on": { "field": "persistence_mode", "value": "RDB" }
+          },
+          {
+            "id": "redis_configs",
+            "label": "Redis configuration parameters",
+            "description": "Native Redis parameters, e.g. maxmemory-policy.",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}
