@@ -7,7 +7,7 @@ locals {
 }
 
 module "certificate_map" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/certificate-map?ref=v0.7.4"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/certificate-map?ref=v0.7.5"
   for_each = local.certificate_maps
 
   project_id  = var.project_id
