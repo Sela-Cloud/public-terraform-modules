@@ -1,0 +1,197 @@
+{
+  "$schema": "../ui-metadata.schema.json",
+  "module": "managed-kafka",
+  "version": "1.0.0",
+  "display": {
+    "label": "Managed Service for Apache Kafka",
+    "icon": "managed-kafka",
+    "description": "A managed Apache Kafka cluster with its topics, reachable privately from a VPC subnet",
+    "category": "regional"
+  },
+
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "description": "GCP Project ID in which the Kafka cluster will be created.",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+
+  "resource": {
+    "variable": "managed_kafka",
+    "key_field": "cluster_id",
+    "key_label": "Cluster name",
+    "key_description": "Name of the Kafka cluster. Clients and topics refer to the cluster by this id.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Identity and region of the cluster.",
+        "fields": [
+          {
+            "id": "cluster_id",
+            "label": "Cluster name",
+            "type": "text",
+            "required": true,
+            "placeholder": "events",
+            "locked_after_create": true,
+            "validation": {
+              "max": 63,
+              "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+              "pattern_error": "Must start with a lowercase letter and contain only lowercase letters, numbers and hyphens."
+            }
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "description": "The cluster and all of its topics live in this region.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "description": "Labels applied to the cluster, provided as a map.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      },
+
+      {
+        "id": "capacity",
+        "label": "Capacity",
+        "description": "Compute and memory allocated to the cluster. Both can be raised later.",
+        "fields": [
+          {
+            "id": "vcpu_count",
+            "label": "vCPU count",
+            "description": "Minimum 3 vCPUs.",
+            "type": "number",
+            "required": true,
+            "default": 3,
+            "validation": { "min": 3 }
+          },
+          {
+            "id": "memory_size_gib",
+            "label": "Memory (GiB)",
+            "description": "Google requires between 1 GiB and 8 GiB per vCPU, so 3 vCPUs allow 3 to 24 GiB.",
+            "type": "number",
+            "required": true,
+            "default": 12,
+            "validation": { "min": 3 }
+          },
+          {
+            "id": "rebalance_config",
+            "label": "Rebalance behaviour",
+            "description": "Whether partitions are redistributed automatically when the cluster scales up.",
+            "type": "select",
+            "required": false,
+            "default": "AUTO_REBALANCE_ON_SCALE_UP",
+            "options": [
+              { "value": "AUTO_REBALANCE_ON_SCALE_UP", "label": "Rebalance automatically on scale up" },
+              { "value": "NO_REBALANCE", "label": "Never rebalance automatically" }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "networking",
+        "label": "Networking",
+        "description": "The cluster is reachable privately, through a subnet in the chosen region.",
+        "fields": [
+          {
+            "id": "host_project_id",
+            "label": "Host project ID",
+            "description": "Only for Shared VPC, when the subnet belongs to a host project. Leave blank to use the project above.",
+            "type": "text",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "subnet_name",
+            "label": "Subnet",
+            "description": "Subnet the cluster's private endpoint is placed in. It must be in the cluster's region.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "compute.subnetworks",
+              "params": {
+                "project_id": { "from_field": "project_id" },
+                "region": { "from_field": "region" }
+              },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "ipCidrRange" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+
+      {
+        "id": "topics",
+        "label": "Topics",
+        "description": "Topics created on the cluster. More can be added later without disturbing the cluster.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "kafka_topics",
+            "label": "Topics",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "topic_id",
+                "label": "Topic name",
+                "type": "text",
+                "required": true,
+                "placeholder": "orders"
+              },
+              {
+                "id": "partition_count",
+                "label": "Partitions",
+                "description": "Can be increased later, never decreased.",
+                "type": "number",
+                "required": true,
+                "default": 3,
+                "validation": { "min": 1 }
+              },
+              {
+                "id": "replication_factor",
+                "label": "Replication factor",
+                "description": "Must not exceed the number of brokers. 3 is the usual choice for production.",
+                "type": "number",
+                "required": true,
+                "default": 3,
+                "validation": { "min": 1 }
+              },
+              {
+                "id": "configs",
+                "label": "Topic configuration",
+                "description": "Kafka topic settings as a map, for example cleanup.policy or retention.ms.",
+                "type": "map",
+                "required": false,
+                "default": {}
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
