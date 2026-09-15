@@ -1,0 +1,30 @@
+module "redis_cluster" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/redis-cluster?ref=v0.7.0"
+  for_each = var.redis_cluster
+
+  project_id                    = var.project_id
+  name                          = each.value.name
+  region                        = each.value.region
+  labels                        = each.value.labels
+  shard_count                   = each.value.shard_count
+  replica_count                 = each.value.replica_count
+  node_type                     = each.value.node_type
+  zone_distribution_config_mode = each.value.zone_distribution_config_mode
+  zone_distribution_config_zone = each.value.zone_distribution_config_zone
+  network                       = each.value.network
+  authorization_mode            = each.value.authorization_mode
+  transit_encryption_mode       = each.value.transit_encryption_mode
+  kms_key                       = each.value.kms_key
+  deletion_protection_enabled   = each.value.deletion_protection_enabled
+  persistence_mode              = each.value.persistence_mode
+  rdb_snapshot_period           = each.value.rdb_snapshot_period
+  rdb_snapshot_start_time       = each.value.rdb_snapshot_start_time
+  aof_append_fsync              = each.value.aof_append_fsync
+  enable_automated_backups      = each.value.enable_automated_backups
+  automated_backup_retention    = each.value.automated_backup_retention
+  automated_backup_start_hour   = each.value.automated_backup_start_hour
+  set_maintenance_window        = each.value.set_maintenance_window
+  maintenance_day               = each.value.maintenance_day
+  maintenance_start_hour        = each.value.maintenance_start_hour
+  redis_configs                 = each.value.redis_configs
+}

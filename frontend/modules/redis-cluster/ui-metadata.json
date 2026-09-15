@@ -1,0 +1,325 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "redis-cluster",
+  "version": "1.0.0",
+  "display": {
+    "label": "Redis Cluster",
+    "icon": "redis",
+    "description": "A fully-managed Memorystore for Redis Cluster instance.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "import": {
+    "module": "redis_cluster",
+    "target": "google_redis_cluster.this",
+    "id_template": "projects/{project_id}/locations/{region}/clusters/{name}",
+    "identity_fields": ["project_id", "region", "name"],
+    "requires_review": false
+  },
+  "resource": {
+    "variable": "redis_cluster",
+    "key_field": "name",
+    "key_label": "Cluster ID",
+    "key_description": "Permanent, unique identifier for this cluster.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Basic Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Cluster ID",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-redis-cluster",
+            "validation": { "min": 1, "max": 63, "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Only lowercase letters, numbers, and hyphens allowed; must start with a letter." }
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "topology",
+        "label": "Zonal Availability",
+        "description": "Region and zone selections are permanent.",
+        "fields": [
+          {
+            "id": "zone_distribution_config_mode",
+            "label": "Zonal availability",
+            "type": "select",
+            "default": "MULTI_ZONE",
+            "options": [
+              { "value": "MULTI_ZONE", "label": "Multi-zone", "description": "Shards and replicas are distributed across three zones in the region." },
+              { "value": "SINGLE_ZONE", "label": "Single zone", "description": "Lower networking cost; no failover on zonal failure." }
+            ]
+          },
+          {
+            "id": "zone_distribution_config_zone",
+            "label": "Zone",
+            "type": "select",
+            "depends_on": { "field": "zone_distribution_config_mode", "value": "SINGLE_ZONE" },
+            "data_source": {
+              "resource": "compute.zones",
+              "params": { "project_id": { "from_field": "project_id" }, "region": { "from_field": "region" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "sizing",
+        "label": "Cache Size and Performance",
+        "fields": [
+          {
+            "id": "node_type",
+            "label": "Node size",
+            "type": "select",
+            "default": "REDIS_HIGHMEM_MEDIUM",
+            "options": [
+              { "value": "REDIS_SHARED_CORE_NANO", "label": "Shared Core Nano" },
+              { "value": "REDIS_HIGHMEM_MEDIUM", "label": "Highmem Medium (2 vCPU, 13 GB)" },
+              { "value": "REDIS_HIGHCPU_MEDIUM", "label": "Highcpu Medium" },
+              { "value": "REDIS_STANDARD_SMALL", "label": "Standard Small" },
+              { "value": "REDIS_STANDARD_LARGE", "label": "Standard Large" },
+              { "value": "REDIS_HIGHMEM_XLARGE", "label": "Highmem XLarge" },
+              { "value": "REDIS_HIGHMEM_2XLARGE", "label": "Highmem 2XLarge" }
+            ]
+          },
+          {
+            "id": "shard_count",
+            "label": "Number of shards",
+            "description": "Each shard provides additional throughput and memory. 1-125.",
+            "type": "number",
+            "required": true,
+            "default": 3,
+            "validation": { "min": 1, "max": 125 }
+          },
+          {
+            "id": "replica_count",
+            "label": "Replicas per shard",
+            "description": "Each replica provides high availability and read scaling.",
+            "type": "number",
+            "default": 1
+          }
+        ]
+      },
+      {
+        "id": "connection",
+        "label": "Connection",
+        "fields": [
+          {
+            "id": "network",
+            "label": "Network",
+            "description": "The VPC network your applications will connect from.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": { "project_id": { "from_field": "project_id" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Security",
+        "fields": [
+          {
+            "id": "authorization_mode",
+            "label": "Auth mode",
+            "type": "select",
+            "default": "AUTH_MODE_DISABLED",
+            "options": [
+              { "value": "AUTH_MODE_DISABLED", "label": "Disabled" },
+              { "value": "AUTH_MODE_IAM_AUTH", "label": "IAM Auth" }
+            ]
+          },
+          {
+            "id": "transit_encryption_mode",
+            "label": "In-transit encryption",
+            "description": "Encrypts connections to the cluster using TLS. Impacts performance.",
+            "type": "select",
+            "default": "TRANSIT_ENCRYPTION_MODE_DISABLED",
+            "options": [
+              { "value": "TRANSIT_ENCRYPTION_MODE_DISABLED", "label": "Disabled" },
+              { "value": "TRANSIT_ENCRYPTION_MODE_SERVER_AUTHENTICATION", "label": "Enabled (server authentication)" }
+            ]
+          },
+          {
+            "id": "kms_key",
+            "label": "Cloud KMS key",
+            "description": "Customer-managed encryption key. Leave blank to use a Google-managed key.",
+            "type": "select",
+            "data_source": {
+              "resource": "kms.cryptoKeys",
+              "params": { "project_id": { "from_field": "project_id" }, "location": { "from_field": "region" } },
+              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "deletion_protection_enabled",
+            "label": "Prevent deletion",
+            "type": "boolean",
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "persistence",
+        "label": "Data Persistence",
+        "description": "Enable persistence for restoring data during node failures.",
+        "fields": [
+          {
+            "id": "persistence_mode",
+            "label": "Persistence",
+            "type": "select",
+            "default": "DISABLED",
+            "options": [
+              { "value": "DISABLED", "label": "No persistence" },
+              { "value": "AOF", "label": "Append Only File (AOF)" },
+              { "value": "RDB", "label": "Redis Database (RDB)" }
+            ]
+          },
+          {
+            "id": "aof_append_fsync",
+            "label": "AOF fsync mode",
+            "type": "select",
+            "depends_on": { "field": "persistence_mode", "value": "AOF" },
+            "options": [
+              { "value": "NO", "label": "No (rely on OS defaults)" },
+              { "value": "EVERYSEC", "label": "Every second" },
+              { "value": "ALWAYS", "label": "Always (every write)" }
+            ]
+          },
+          {
+            "id": "rdb_snapshot_period",
+            "label": "RDB snapshot period",
+            "type": "select",
+            "depends_on": { "field": "persistence_mode", "value": "RDB" },
+            "options": [
+              { "value": "ONE_HOUR", "label": "Every 1 hour" },
+              { "value": "SIX_HOURS", "label": "Every 6 hours" },
+              { "value": "TWELVE_HOURS", "label": "Every 12 hours" },
+              { "value": "TWENTY_FOUR_HOURS", "label": "Every 24 hours" }
+            ]
+          },
+          {
+            "id": "rdb_snapshot_start_time",
+            "label": "First snapshot time",
+            "description": "RFC3339 UTC timestamp future snapshots are aligned to.",
+            "type": "text",
+            "placeholder": "2027-01-01T00:00:00Z",
+            "depends_on": { "field": "persistence_mode", "value": "RDB" }
+          }
+        ]
+      },
+      {
+        "id": "backups",
+        "label": "Automated Backups",
+        "fields": [
+          {
+            "id": "enable_automated_backups",
+            "label": "Automated daily backups",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "automated_backup_retention",
+            "label": "Backup retention",
+            "description": "Duration to keep backups, e.g. 259200s for 3 days.",
+            "type": "text",
+            "placeholder": "259200s",
+            "depends_on": { "field": "enable_automated_backups", "value": true }
+          },
+          {
+            "id": "automated_backup_start_hour",
+            "label": "Backup window start hour",
+            "description": "Hour of day (0-23, UTC) the daily backup window starts.",
+            "type": "number",
+            "validation": { "min": 0, "max": 23 },
+            "depends_on": { "field": "enable_automated_backups", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "maintenance",
+        "label": "Maintenance",
+        "fields": [
+          {
+            "id": "set_maintenance_window",
+            "label": "Set maintenance window",
+            "description": "Choose the best day and time for this cluster to undergo maintenance, instead of allowing updates any day.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "maintenance_day",
+            "label": "Maintenance day",
+            "type": "select",
+            "depends_on": { "field": "set_maintenance_window", "value": true },
+            "options": [
+              { "value": "MONDAY", "label": "Monday" },
+              { "value": "TUESDAY", "label": "Tuesday" },
+              { "value": "WEDNESDAY", "label": "Wednesday" },
+              { "value": "THURSDAY", "label": "Thursday" },
+              { "value": "FRIDAY", "label": "Friday" },
+              { "value": "SATURDAY", "label": "Saturday" },
+              { "value": "SUNDAY", "label": "Sunday" }
+            ]
+          },
+          {
+            "id": "maintenance_start_hour",
+            "label": "Maintenance window start hour",
+            "description": "Hour of day (0-23, UTC) the maintenance window starts.",
+            "type": "number",
+            "validation": { "min": 0, "max": 23 },
+            "depends_on": { "field": "set_maintenance_window", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced",
+        "fields": [
+          {
+            "id": "redis_configs",
+            "label": "Redis configuration parameters",
+            "description": "Native Redis parameters, e.g. maxmemory-policy.",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}
