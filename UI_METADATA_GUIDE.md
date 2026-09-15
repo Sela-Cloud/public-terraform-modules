@@ -17,7 +17,7 @@ Sela Craft provides a dynamic UI for deploying cloud infrastructure modules. The
 [ User Fills Form ] ────► [ API Payload: values dict ]
                                  │
                                  ▼
-                    [ Backend (terraform_runner.py) ]
+                    [ Backend (selacraft_shared.tfvars) ]
                                  │ (Converts values to HCL)
                                  ▼
                     [ terraform.tfvars ] ──► [ Terraform Plan / Apply ]
@@ -273,7 +273,7 @@ This block exists because two facts cannot be inferred from outside the module:
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `module` | `string` | **Yes** | Label of the `module` block in `main.tf` that this import targets. **Always set it explicitly; there is no default.** It coincides with `resource.variable` often enough to look defaultable, but differs in 6 of 25 catalog modules — `cloud-run` declares `module "cloud_run_v2"` for variable `cloud_run`, `gke-autopilot-cluster` declares `module "gke_autopilot"` for variable `gke_autopilot_cluster`, and `gke-node-pool` declares `module "gke_standard_node_pool"` for variable `gke_node_pool`. A silent default would resolve to an address that does not exist. Read it out of `main.tf`. |
+| `module` | `string` | **Yes** | Label of the `module` block in `main.tf` that this import targets. **Always set it explicitly; there is no default.** It coincides with `resource.variable` often enough to look defaultable, but differs in 3 of the 29 modules that declare an import block — `cloud-run` declares `module "cloud_run_v2"` for variable `cloud_run`, `gke-autopilot-cluster` declares `module "gke_autopilot"` for variable `gke_autopilot_cluster`, and `gke-node-pool` declares `module "gke_standard_node_pool"` for variable `gke_node_pool`. A silent default would resolve to an address that does not exist. Read it out of `main.tf`. |
 | `target` | `string` | **Yes** | Resource address **inside** the wrapped remote module, e.g. `google_storage_bucket.bucket`. Sela Craft prefixes it with `module.<import.module>["<key>"]`. Do **not** include that prefix. |
 | `id_template` | `string` | **Yes** | The provider's import ID format, with `{field_id}` placeholders resolved from `identity_fields`. Take it from the provider's import documentation for `target`'s type. |
 | `identity_fields` | `string[]` | **Yes** | The fields needed to build `id_template` uniquely. Every other value is discovered from the live resource. List `project_id` here if the ID needs it — but note it is **resolved from the environment, not asked of the user** (see below). |
@@ -292,7 +292,7 @@ This block exists because two facts cannot be inferred from outside the module:
   three, and in `gke-cluster` *which* one applies depends on a field value, so a single static
   `target` cannot express it. Omit the `import` block for these.
 - `target` names a resource inside the remote module **at the `?ref=` pinned in `main.tf`** (the
-  catalog is uniformly on `v0.5.4`). A ref bump can rename inner resources, so re-verify `target`
+  catalog is uniformly pinned, `v0.7.5` at the time of writing). A ref bump can rename inner resources, so re-verify `target`
   when it moves.
 - Some remote modules build a **set** of resources from one input — `cloud-run` also creates a
   service account, `compute-engine` also creates disks and addresses. A single `target` cannot
@@ -301,7 +301,7 @@ This block exists because two facts cannot be inferred from outside the module:
 - `identity_fields` must be a subset of `globals` and section field ids, and must include
   `resource.key_field` — the key decides the tfvars map entry.
 - **Never assume the block label equals `resource.variable`.** Copy it from the `module "..."` line
-  in that module's own `main.tf`. Six of 25 modules differ, including two of the newest ones.
+  in that module's own `main.tf`. Three modules differ today: `cloud-run`, `gke-autopilot-cluster` and `gke-node-pool`.
 - **`project_id` is injected from the environment, never entered by the user.** Sela Craft takes
   it from the environment record, so a user cannot import from a project they have no environment
   for. Keep it in `identity_fields` when `id_template` needs it; it simply will not be rendered as
@@ -505,6 +505,7 @@ Supported `type` values:
 | `nullable` | `boolean` | Allows setting value to `null` (renders 'None' option). |
 | `locked_after_create` | `boolean` | Disables the field while editing a resource already managed by Terraform; use it for create-time-only values. |
 | `ui_only` | `boolean` | Marks a control that does not map to any Terraform attribute or global. See [`ui_only` Controls](#4-ui_only-controls). |
+| `sensitive` | `boolean` | The value is a secret in its own right, not a reference to one. Keeps it out of logs, makes an exported archive secret-bearing, and stops the AI builder asking for it in chat. Do **not** set it on a field that merely names a Secret Manager secret or version — those carry no secret material. |
 | `multiline` | `boolean` | Renders a `text` control as a multi-line editor. See [Multi-line text](#4-multi-line-text). |
 | `options` | `array` | Options array for `select` type: `[{"value": "...", "label": "...", "description": "..."}]`. |
 | `validation` | `object` | Client validation rules (`min`, `max`, `pattern`, `pattern_error`). |
@@ -571,11 +572,19 @@ not invent one. `project` and `project_id` are interchangeable everywhere, as ar
 | `compute.networks` | `compute.vpc`, `vpc.networks` | VPC networks | `project_id` | `name`, `selfLink`, `autoCreateSubnetworks` |
 | `compute.subnetworks` | `compute.subnets`, `subnet.subnetworks` | Subnets, optionally filtered by VPC | `project_id`, `region`, `vpc`/`network` | `name`, `ipCidrRange`, `region`, `network`, `selfLink` |
 | `compute.zones` | — | Zones, optionally filtered by region | `project_id`, `region` | `name`, `region`, `status` |
-| `compute.regions` | — | Regions with status `UP` | `project_id` | `name`, `status` |
+| `compute.regions` | — | Regions with status `UP`; `description` carries the location (`asia-south1` → `Mumbai`) | `project_id` | `name`, `status` |
 | `compute.disks` | `compute.additionalDisks`, `compute.additional_disks` | Persistent disks | `project_id`, `zone`, `region` | `name`, `sizeGb`, `type`, `zone`, `region`, `selfLink` |
 | `compute.machineTypes` | `compute.machine_types` | Machine types in a zone | `project_id`, `zone` | `name`, `guestCpus`, `memoryMb` |
 | `compute.routers` | — | Cloud Routers in a region | `project_id`, `region` | `name`, `network` |
 | `compute.healthChecks` | — | Health checks, for DNS routing policies | `project_id` | `name`, `selfLink` |
+| `compute.instances` | — | VM instances in one zone | `project_id`, `zone` | `name` |
+| `compute.instanceTemplates` | — | Global instance templates, newest first | `project_id` | `name`, `selfLink`, `creationTimestamp` |
+| `compute.managedInstanceGroups` | — | Regional MIGs, for load balancer backends | `project_id`, `region` | `name` |
+| `compute.unmanagedInstanceGroups` | — | Zonal unmanaged instance groups | `project_id`, `zone` | `name` |
+| `compute.networkEndpointGroups` | — | Regional NEGs | `project_id`, `region` | `name` |
+| `compute.addresses` | — | Reserved regional IP addresses | `project_id`, `region` | `name` |
+| `compute.globalAddresses` | — | Reserved global IP addresses | `project_id` | `name` |
+| `compute.targetVpnGateways` | — | Classic target VPN gateways in a region | `project_id`, `region` | `name` |
 | `iam.serviceAccounts` | `iam.service_accounts`, `iam.sa` | Service accounts | `project_id` | `email`, `displayName`, `uniqueId` |
 | `iam.roles` | `iam.custom_roles`, `iam.customRoles` | Predefined and/or custom roles | `project_id`, `scope` (`predefined`\|`custom`\|`all`, default `all`) | `name`, `title`, `type` |
 | `cloudsql.instances` | `cloudsql.sqlInstances` | Cloud SQL instances; read replicas excluded | `project_id`, `region` | `name`, `databaseVersion`, `region`, `state` |
@@ -591,6 +600,11 @@ not invent one. `project` and `project_id` are interchangeable everywhere, as ar
 | `dns.peeringNetworks` | — | Target VPCs for a peering zone | `project_id` | `project_id` |
 | `kms.cryptoKeys` | — | CryptoKeys; never reads key material | `project_id`, `location` | `name` |
 | `servicenetworking.psa` | `servicenetworking.connections`, `compute.psa` | PSA connections and reserved ranges | `project_id`, `vpc`/`network`, `region` | `name`, `peering`, `address`, `prefixLength` |
+| `run.services` | — | Cloud Run services in one region | `project_id`, `region` | `name` |
+| `storage.buckets` | — | Cloud Storage buckets | `project_id` | `name` |
+| `certificatemanager.certificateMaps` | — | Certificate Manager maps | `project_id` | `name` |
+| `certificatemanager.certificates` | — | Certificates; `description` says Google- or self-managed | `project_id` | `name` |
+| `certificatemanager.dnsAuthorizations` | — | DNS authorizations | `project_id` | `name` |
 
 Note the two parent pickers, `cloudsql.instances` and `container.clusters`: they exist so a
 standalone child resource (a database, a user, a node pool) can select its parent rather than have
@@ -612,11 +626,22 @@ genuinely documents rather than identifiers — a startup script, cloud-init, an
 }
 ```
 
-This changes the **input control only**. The value is an ordinary string throughout: the tfvars
-writer emits it as a quoted string with escaped newlines (`"#!/bin/bash\nset -eux\n"`), which is
-byte-for-byte the same value Terraform would read from a `<<-EOT` heredoc. A multi-line script is
-therefore already correct today without this flag; the flag exists so the operator gets a text area
-instead of typing a script into a one-line box.
+This changes the **input control only** — the value is an ordinary string throughout, and the flag
+exists so the operator gets a text area instead of typing a script into a one-line box.
+
+How such a value reaches Terraform is handled for you by the tfvars writer, and is worth knowing
+when you read a generated `terraform.tfvars`:
+
+- A multi-line value ending in a newline is written as a `<<-EOT` heredoc, indented to its position
+  in the file. That is the readable form, and the one you will normally see.
+- If **every** line is indented, plain `<<EOT` is used instead: `<<-` strips the common indent and
+  would otherwise eat the value's own.
+- A multi-line value **not** ending in a newline stays a quoted string with escaped newlines. A
+  heredoc always yields a trailing newline, so it cannot represent that value exactly.
+- `${` and `%{` are escaped to `$${` and `%%{`. Quoted strings *and* heredocs are HCL templates, so
+  an unescaped `${IMAGE}` in a startup script is parsed as an interpolation and fails the run. The
+  escapes evaluate back to the original two characters, so the script the VM receives is unchanged.
+  `$(` is not a template sequence and is left alone.
 
 Only meaningful on `text`. It has no effect on `select`, `number`, `map`, `list`, `object` or
 `repeatable`.
