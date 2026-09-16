@@ -1,0 +1,206 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "subnet",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Subnet",
+    "icon": "subnet",
+    "description": "Provision Amazon VPC Subnets with IPv4/IPv6 CIDR blocks, availability zone placement, and public IP mapping",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "subnet",
+    "key_field": "name",
+    "key_label": "Subnet Name",
+    "key_description": "Unique name and identifier for the subnet, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core subnet settings including name, parent VPC ID, primary IPv4 CIDR block, and availability zone.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Subnet Name",
+            "description": "Unique name for the subnet, applied as the 'Name' tag and map key.",
+            "type": "text",
+            "required": true,
+            "default": "subnet-default",
+            "placeholder": "public-subnet-1a",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Subnet name must only contain alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC ID",
+            "description": "The ID of the VPC in which the subnet will be created.",
+            "type": "text",
+            "required": true,
+            "placeholder": "vpc-0123456789abcdef0"
+          },
+          {
+            "id": "cidr_block",
+            "label": "IPv4 CIDR Block",
+            "description": "The IPv4 network range for the subnet in CIDR notation (e.g. 10.0.1.0/24).",
+            "type": "text",
+            "required": false,
+            "default": "10.0.1.0/24",
+            "placeholder": "10.0.1.0/24",
+            "validation": {
+              "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}\\/([0-9]|[1-2][0-9]|3[0-2])$",
+              "pattern_error": "Must be a valid IPv4 CIDR block (e.g., 10.0.1.0/24)."
+            }
+          },
+          {
+            "id": "availability_zone",
+            "label": "Availability Zone",
+            "description": "Availability zone for the subnet (e.g. us-east-1a).",
+            "type": "text",
+            "required": false,
+            "placeholder": "us-east-1a"
+          }
+        ]
+      },
+      {
+        "id": "ip_addressing",
+        "label": "IP Addressing & Allocation",
+        "description": "Configure public IPv4 auto-assignment and IPv6 CIDR settings.",
+        "fields": [
+          {
+            "id": "map_public_ip_on_launch",
+            "label": "Auto-assign Public IPv4",
+            "description": "Specify true to indicate that instances launched into the subnet should be assigned a public IP address.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "assign_ipv6_address_on_creation",
+            "label": "Assign IPv6 Address on Creation",
+            "description": "Specify true to indicate that network interfaces created in the subnet should be assigned an IPv6 address.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "ipv6_cidr_block",
+            "label": "IPv6 CIDR Block",
+            "description": "The IPv6 network range for the subnet in CIDR notation (/64 prefix length).",
+            "type": "text",
+            "required": false,
+            "placeholder": "2600:1f18:859:1700::/64"
+          },
+          {
+            "id": "ipv6_native",
+            "label": "IPv6-only Subnet",
+            "description": "Indicates whether to create an IPv6-only subnet.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "dns",
+        "label": "DNS & Hostname Settings",
+        "description": "Configure DNS queries, record generation, and hostname types for EC2 instances.",
+        "fields": [
+          {
+            "id": "enable_dns64",
+            "label": "Enable DNS64",
+            "description": "Indicates whether DNS queries to Amazon-provided DNS Resolver in this subnet return synthetic IPv6 addresses for IPv4 destinations.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "enable_resource_name_dns_a_record_on_launch",
+            "label": "DNS A Record on Launch",
+            "description": "Indicates whether to respond to DNS queries for instance hostnames with DNS A records.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "enable_resource_name_dns_aaaa_record_on_launch",
+            "label": "DNS AAAA Record on Launch",
+            "description": "Indicates whether to respond to DNS queries for instance hostnames with DNS AAAA records.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "private_dns_hostname_type_on_launch",
+            "label": "Private DNS Hostname Type",
+            "description": "The type of hostnames to assign to instances in the subnet at launch.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "options": [
+              {
+                "value": "ip-name",
+                "label": "IP Name (e.g., ip-10-0-1-50)"
+              },
+              {
+                "value": "resource-name",
+                "label": "Resource Name"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced Settings",
+        "description": "Availability zone identifier and local network interface indexing.",
+        "fields": [
+          {
+            "id": "availability_zone_id",
+            "label": "Availability Zone ID",
+            "description": "AZ ID of the subnet (e.g., use1-az1).",
+            "type": "text",
+            "required": false,
+            "placeholder": "use1-az1"
+          },
+          {
+            "id": "enable_lni_at_device_index",
+            "label": "Local Network Interface Device Index",
+            "description": "Indicates the device position for local network interfaces in this subnet (e.g., 1 for eth1).",
+            "type": "number",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for organizational, tracking, and cost allocation purposes.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Subnet Tags",
+            "description": "Key-value tags assigned to the subnet.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
