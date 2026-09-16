@@ -26,11 +26,32 @@ variable "cloud_dns_record" {
   }))
   default = {}
 
+  # Cloud DNS stores one record set per name and type, so two entries sharing both cannot exist.
+  # The message names the offending pair and the keys holding it: a catalogue of a hundred-odd
+  # records is not something to eyeball, and the clash is usually between the record just edited
+  # and one added long ago. A validation block may only reference its own variable, which is why
+  # the grouping is written out inline rather than via a local.
   validation {
     condition = length(distinct([
       for record in values(var.cloud_dns_record) : "${lower(trimsuffix(record.name, "."))}|${upper(record.type)}"
     ])) == length(var.cloud_dns_record)
-    error_message = "Each Cloud DNS record must have a unique name and type combination."
+    error_message = format(
+      "Each Cloud DNS record must have a unique name and type combination. Conflicting: %s.",
+      join("; ", [
+        for pair in distinct([
+          for record in values(var.cloud_dns_record) :
+          "${lower(trimsuffix(record.name, "."))}|${upper(record.type)}"
+        ]) :
+        format("%s %s held by [%s]", split("|", pair)[0], split("|", pair)[1], join(", ", [
+          for key, record in var.cloud_dns_record : key
+          if "${lower(trimsuffix(record.name, "."))}|${upper(record.type)}" == pair
+        ]))
+        if length([
+          for record in values(var.cloud_dns_record) : record
+          if "${lower(trimsuffix(record.name, "."))}|${upper(record.type)}" == pair
+        ]) > 1
+      ])
+    )
   }
 
   validation {
