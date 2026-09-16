@@ -71,14 +71,6 @@ resource "aws_instance" "this" {
       kms_key_id            = root_block_device.value.kms_key_id
       iops                  = root_block_device.value.iops
       throughput            = root_block_device.value.throughput
-      tags = merge(
-        var.tags,
-        var.volume_tags,
-        root_block_device.value.tags,
-        {
-          Name = "${var.name}-root"
-        }
-      )
     }
   }
 

@@ -1,34 +1,39 @@
 output "bucket_id" {
-  description = "ID (name) of the S3 bucket."
+  description = "The name of the bucket."
   value       = aws_s3_bucket.this.id
 }
 
 output "bucket_arn" {
-  description = "ARN of the S3 bucket."
+  description = "The ARN of the bucket. Will be of form arn:aws:s3:::bucketname."
   value       = aws_s3_bucket.this.arn
 }
 
+output "bucket_domain_name" {
+  description = "The bucket domain name. Will be of format bucketname.s3.amazonaws.com."
+  value       = aws_s3_bucket.this.bucket_domain_name
+}
+
 output "bucket_regional_domain_name" {
-  description = "Regional domain name of the S3 bucket."
+  description = "The bucket region-specific domain name."
   value       = aws_s3_bucket.this.bucket_regional_domain_name
 }
 
-output "object_key" {
-  description = "Key of the created S3 object."
-  value       = aws_s3_object.this.key
+output "object_id" {
+  description = "The key of the created S3 object."
+  value       = aws_s3_object.this.id
 }
 
 output "object_version_id" {
-  description = "Version ID of the created S3 object."
+  description = "The unique version ID of the created object, if versioning is enabled."
   value       = aws_s3_object.this.version_id
 }
 
-output "object_ownership" {
-  description = "Object ownership configuration of the S3 bucket."
-  value       = aws_s3_bucket_ownership_controls.this.rule[0].object_ownership
+output "website_endpoint" {
+  description = "The website endpoint URL if website hosting is enabled."
+  value       = try(aws_s3_bucket_website_configuration.this[0].website_endpoint, null)
 }
 
-output "public_access_block_enabled" {
-  description = "Whether public access blocking is configured for the S3 bucket."
-  value       = true
+output "website_domain" {
+  description = "The domain of the website endpoint if website hosting is enabled."
+  value       = try(aws_s3_bucket_website_configuration.this[0].website_domain, null)
 }
