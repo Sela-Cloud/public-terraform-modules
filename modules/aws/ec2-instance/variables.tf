@@ -2,6 +2,12 @@
 # General / Core Configuration
 ################################################################################
 
+variable "region" {
+  description = "The AWS region where resources will be provisioned."
+  type        = string
+  default     = "ap-south-1"
+}
+
 variable "name" {
   description = "Name to be used on all resources as identifier, applied as the 'Name' tag."
   type        = string

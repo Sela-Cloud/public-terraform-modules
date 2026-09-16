@@ -1,0 +1,77 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "security-group",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Security Group",
+    "icon": "shield",
+    "description": "Provision Amazon Virtual Private Cloud (VPC) Security Groups and network access control rules",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "security_group",
+    "key_field": "name",
+    "key_label": "Security Group Name",
+    "key_description": "Unique name for the Security Group, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Security Group attributes including name, description, and target VPC.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Security Group Name",
+            "description": "Unique name for the Security Group, applied as the 'Name' tag and map key.",
+            "type": "text",
+            "required": true,
+            "default": "security-group-default",
+            "placeholder": "web-sg",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Name must only contain alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "description": "Description for the security group.",
+            "type": "text",
+            "required": false,
+            "default": "Managed by Terraform",
+            "placeholder": "Security group for web instances"
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC ID",
+            "description": "The VPC ID in which to create the security group.",
+            "type": "text",
+            "required": true,
+            "placeholder": "vpc-0123456789abcdef0"
+          },
+          {
+            "id": "revoke_rules_on_delete",
+            "label": "Revoke Rules On Delete",
+            "description": "Instruct Terraform to revoke all security group rules before deleting the group.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      }
+    ]
+  }
+}

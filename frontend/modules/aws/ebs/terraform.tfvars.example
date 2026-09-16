@@ -1,0 +1,18 @@
+region = "us-east-1"
+
+ebs = {
+  "prod-data-vol" = {
+    name                 = "prod-data-vol"
+    availability_zone    = "us-east-1a"
+    size                 = 100
+    type                 = "gp3"
+    iops                 = 3000
+    throughput           = 125
+    encrypted            = true
+    multi_attach_enabled = false
+    tags = {
+      Environment = "production"
+      Owner       = "devops"
+    }
+  }
+}
