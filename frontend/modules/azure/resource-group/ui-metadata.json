@@ -1,0 +1,95 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "resource-group",
+  "version": "1.0.0",
+  "display": {
+    "label": "Resource Group",
+    "icon": "resource-group",
+    "description": "Azure Resource Group for organizing and managing related cloud resources",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "resource_group",
+    "key_field": "name",
+    "key_label": "Resource Group Name",
+    "key_description": "The unique name for the Azure Resource Group within the subscription. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Resource Group settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Resource Group Name",
+            "description": "Name of the Azure Resource Group. Must be 1-90 characters using alphanumeric, underscores, hyphens, parentheses, and periods (cannot end in a period).",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 90,
+              "pattern": "^[-\\w\\._\\(\\)]+[^\\.]$",
+              "pattern_error": "Resource Group name must be 1-90 characters (alphanumerics, underscores, parentheses, hyphens, periods) and cannot end in a period."
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Resource Group should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          },
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Resource Group for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          },
+          {
+            "id": "managed_by",
+            "label": "Managed By",
+            "description": "The ID of the resource or application that manages this Resource Group.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../resourceGroups/..."
+          }
+        ]
+      }
+    ]
+  }
+}
