@@ -41,3 +41,7 @@ bridge-application/--header
 bridge-application/__pycache__/
 bridge-application/env/
 __pycache__/
+# Environment files
+*.env
+*.env.*
+.env
