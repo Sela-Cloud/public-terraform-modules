@@ -1,0 +1,226 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "virtual-network",
+  "version": "1.0.0",
+  "display": {
+    "label": "Virtual Network",
+    "icon": "virtual-network",
+    "description": "Azure Virtual Network (VNet) for private network isolation and secure connectivity",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "virtual_network",
+    "key_field": "name",
+    "key_label": "Virtual Network Name",
+    "key_description": "The unique name for the Azure Virtual Network. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Virtual Network settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Virtual Network Name",
+            "description": "Name of the Azure Virtual Network. Must be 2-64 characters using alphanumeric, underscores, hyphens, and periods.",
+            "type": "text",
+            "required": true,
+            "default": "vnet-default",
+            "placeholder": "vnet-my-workload",
+            "validation": {
+              "min": 2,
+              "max": 64,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "Virtual Network name must be 2-64 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Virtual Network.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Virtual Network should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ip_addressing",
+        "label": "IP Addressing & DNS",
+        "description": "Virtual Network IP address space and DNS configurations.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "address_space",
+            "label": "Address Space (CIDR)",
+            "description": "List of IPv4 or IPv6 address prefixes for the Virtual Network in CIDR notation.",
+            "type": "list",
+            "required": true,
+            "default": [
+              "10.0.0.0/16"
+            ],
+            "placeholder": "10.0.0.0/16"
+          },
+          {
+            "id": "dns_servers",
+            "label": "DNS Servers",
+            "description": "List of custom DNS server IP addresses. Leave empty to use Azure-provided DNS.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "placeholder": "10.0.0.4"
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced Settings",
+        "description": "Optional and advanced networking, encryption, flow timeout, and security settings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "flow_timeout_in_minutes",
+            "label": "Flow Timeout (Minutes)",
+            "description": "Connection tracking flow timeout for intra-VM flows (between 4 and 30 minutes).",
+            "type": "number",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "4-30",
+            "validation": {
+              "min": 4,
+              "max": 30
+            }
+          },
+          {
+            "id": "bgp_community",
+            "label": "BGP Community",
+            "description": "The BGP community attribute in format <12076>:<community-value>.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "12076:20001"
+          },
+          {
+            "id": "edge_zone",
+            "label": "Edge Zone",
+            "description": "Specifies the Edge Zone within the Azure Region where this Virtual Network should exist.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "microsoftlosangeles"
+          },
+          {
+            "id": "private_endpoint_vnet_policies",
+            "label": "Private Endpoint VNet Policies",
+            "description": "Private Endpoint VNet Policies for the Virtual Network.",
+            "type": "select",
+            "required": false,
+            "default": "Disabled",
+            "options": [
+              { "value": "Disabled", "label": "Disabled" },
+              { "value": "Basic", "label": "Basic" }
+            ]
+          },
+          {
+            "id": "ddos_protection_plan",
+            "label": "DDoS Protection Plan",
+            "description": "DDoS Protection Plan association settings.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "id",
+                "label": "DDoS Protection Plan Resource ID",
+                "description": "The resource ID of the DDoS Protection Plan.",
+                "type": "text",
+                "required": true,
+                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/ddosProtectionPlans/..."
+              },
+              {
+                "id": "enable",
+                "label": "Enable DDoS Protection",
+                "description": "Enable DDoS Protection Plan on this Virtual Network.",
+                "type": "boolean",
+                "required": false,
+                "default": true
+              }
+            ]
+          },
+          {
+            "id": "encryption",
+            "label": "Virtual Network Encryption",
+            "description": "Virtual Network encryption configuration.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "enforcement",
+                "label": "Encryption Enforcement",
+                "description": "Specifies if the encrypted Virtual Network allows VMs that do not support encryption.",
+                "type": "select",
+                "required": true,
+                "default": "AllowUnencrypted",
+                "options": [
+                  { "value": "AllowUnencrypted", "label": "Allow Unencrypted" },
+                  { "value": "DropUnencrypted", "label": "Drop Unencrypted" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Virtual Network for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
