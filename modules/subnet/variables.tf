@@ -1,0 +1,20 @@
+variable "project_id" { type = string }
+variable "name" { type = string }
+variable "region" { type = string }
+variable "network" { type = string }
+variable "ip_cidr_range" { type = string }
+variable "description" { type = string }
+variable "purpose" { type = string }
+variable "role" { type = string }
+variable "private_ip_google_access" { type = bool }
+variable "private_ipv6_google_access" { type = string }
+variable "stack_type" { type = string }
+variable "ipv6_access_type" { type = string }
+variable "reserved_internal_range" { type = string }
+variable "flow_logs" { type = bool }
+variable "flow_logs_aggregation_interval" { type = string }
+variable "flow_logs_sampling" { type = number }
+variable "flow_logs_metadata" { type = string }
+variable "flow_logs_metadata_fields" { type = list(string) }
+variable "flow_logs_filter_expr" { type = string }
+variable "secondary_ip_ranges" { type = list(object({ range_name = string, ip_cidr_range = optional(string) })) }
