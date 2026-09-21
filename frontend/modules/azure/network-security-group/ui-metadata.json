@@ -1,0 +1,294 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "network-security-group",
+  "version": "1.0.0",
+  "display": {
+    "label": "Network Security Group",
+    "icon": "network-security-group",
+    "description": "Azure Network Security Group (NSG) for filtering network traffic to and from Azure resources",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "network_security_group",
+    "key_field": "name",
+    "key_label": "Network Security Group Name",
+    "key_description": "The unique name for the Azure Network Security Group. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Network Security Group settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Network Security Group Name",
+            "description": "Name of the Azure Network Security Group. Must be 1-80 characters using alphanumeric, underscores, hyphens, and periods.",
+            "type": "text",
+            "required": true,
+            "default": "nsg-default",
+            "placeholder": "nsg-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "Network Security Group name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Network Security Group.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Network Security Group should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rules",
+        "label": "Security Rules",
+        "description": "Inbound and outbound security rules to allow or deny network traffic.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "security_rules",
+            "label": "Security Rules",
+            "description": "List of network security rules for traffic filtering.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Rule Name",
+                "description": "The name of the security rule.",
+                "type": "text",
+                "required": true,
+                "default": "allow-traffic",
+                "placeholder": "allow-ssh",
+                "validation": {
+                  "min": 1,
+                  "max": 80
+                }
+              },
+              {
+                "id": "description",
+                "label": "Description",
+                "description": "Optional description for this security rule (up to 140 characters).",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "Allow SSH traffic from office",
+                "validation": {
+                  "max": 140
+                }
+              },
+              {
+                "id": "priority",
+                "label": "Priority",
+                "description": "Rule priority between 100 and 4096. Lower numbers have higher priority.",
+                "type": "number",
+                "required": true,
+                "default": 100,
+                "validation": {
+                  "min": 100,
+                  "max": 4096
+                }
+              },
+              {
+                "id": "direction",
+                "label": "Direction",
+                "description": "Whether rule applies to incoming or outgoing traffic.",
+                "type": "select",
+                "required": true,
+                "default": "Inbound",
+                "options": [
+                  { "value": "Inbound", "label": "Inbound" },
+                  { "value": "Outbound", "label": "Outbound" }
+                ]
+              },
+              {
+                "id": "access",
+                "label": "Access",
+                "description": "Specifies whether network traffic is allowed or denied.",
+                "type": "select",
+                "required": true,
+                "default": "Allow",
+                "options": [
+                  { "value": "Allow", "label": "Allow" },
+                  { "value": "Deny", "label": "Deny" }
+                ]
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "description": "Network protocol this rule applies to.",
+                "type": "select",
+                "required": true,
+                "default": "*",
+                "options": [
+                  { "value": "*", "label": "Any (*)" },
+                  { "value": "Tcp", "label": "TCP" },
+                  { "value": "Udp", "label": "UDP" },
+                  { "value": "Icmp", "label": "ICMP" },
+                  { "value": "Esp", "label": "ESP" },
+                  { "value": "Ah", "label": "AH" }
+                ]
+              },
+              {
+                "id": "source_port_range",
+                "label": "Source Port Range",
+                "description": "Source port or range (0-65535 or *). Ignored if Source Port Ranges is specified.",
+                "type": "text",
+                "required": false,
+                "default": "*",
+                "placeholder": "* or 80 or 8080-8085"
+              },
+              {
+                "id": "source_port_ranges",
+                "label": "Source Port Ranges",
+                "description": "List of source ports or port ranges. Overrides Source Port Range.",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "80"
+              },
+              {
+                "id": "destination_port_range",
+                "label": "Destination Port Range",
+                "description": "Destination port or range (0-65535 or *). Ignored if Destination Port Ranges is specified.",
+                "type": "text",
+                "required": false,
+                "default": "*",
+                "placeholder": "* or 443 or 80-85"
+              },
+              {
+                "id": "destination_port_ranges",
+                "label": "Destination Port Ranges",
+                "description": "List of destination ports or port ranges. Overrides Destination Port Range.",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "443"
+              },
+              {
+                "id": "source_address_prefix",
+                "label": "Source Address Prefix",
+                "description": "CIDR, IP range, *, or service tag (e.g. 'VirtualNetwork', 'Internet'). Ignored if Source Address Prefixes is specified.",
+                "type": "text",
+                "required": false,
+                "default": "*",
+                "placeholder": "* or 10.0.0.0/24 or VirtualNetwork"
+              },
+              {
+                "id": "source_address_prefixes",
+                "label": "Source Address Prefixes",
+                "description": "List of source address prefixes (CIDR or IP ranges). Overrides Source Address Prefix.",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "10.0.0.0/24"
+              },
+              {
+                "id": "source_application_security_group_ids",
+                "label": "Source Application Security Group IDs",
+                "description": "List of source Application Security Group IDs.",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../applicationSecurityGroups/..."
+              },
+              {
+                "id": "destination_address_prefix",
+                "label": "Destination Address Prefix",
+                "description": "CIDR, IP range, *, or service tag (e.g. 'VirtualNetwork', 'Internet'). Ignored if Destination Address Prefixes is specified.",
+                "type": "text",
+                "required": false,
+                "default": "*",
+                "placeholder": "* or 10.0.0.0/24 or VirtualNetwork"
+              },
+              {
+                "id": "destination_address_prefixes",
+                "label": "Destination Address Prefixes",
+                "description": "List of destination address prefixes (CIDR or IP ranges). Overrides Destination Address Prefix.",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "10.0.0.0/24"
+              },
+              {
+                "id": "destination_application_security_group_ids",
+                "label": "Destination Application Security Group IDs",
+                "description": "List of destination Application Security Group IDs.",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../applicationSecurityGroups/..."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tags",
+        "description": "Resource tagging for organization, governance, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Network Security Group for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
