@@ -1,0 +1,792 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "virtual-machine-scale-set",
+  "version": "1.0.0",
+  "display": {
+    "label": "Virtual Machine Scale Set",
+    "icon": "azure-virtual-machine-scale-set",
+    "description": "Azure Virtual Machine Scale Sets to deploy and manage a group of load-balanced VMs",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "virtual_machine_scale_set",
+    "key_field": "name",
+    "key_label": "Scale Set Name",
+    "key_description": "The unique name for the Azure Virtual Machine Scale Set. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Virtual Machine Scale Set identity, regional placement, and instance sizing.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Scale Set Name",
+            "description": "Name of the Azure Virtual Machine Scale Set. Must be 1-64 characters using alphanumeric, underscores, hyphens, and periods.",
+            "type": "text",
+            "required": true,
+            "default": "vmss-default",
+            "placeholder": "vmss-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 64,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "Scale Set name must be 1-64 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Virtual Machine Scale Set.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Virtual Machine Scale Set should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (Sydney)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo)" },
+              { "value": "centralindia", "label": "Central India (Pune)" }
+            ]
+          },
+          {
+            "id": "sku",
+            "label": "SKU & Sizing",
+            "description": "Virtual machine instance size and capacity.",
+            "type": "object",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "VM Size / SKU",
+                "description": "Specifies the size of virtual machines in the scale set (e.g. Standard_B2s, Standard_D2s_v5).",
+                "type": "text",
+                "required": true,
+                "default": "Standard_B2s",
+                "placeholder": "Standard_B2s"
+              },
+              {
+                "id": "tier",
+                "label": "SKU Tier",
+                "description": "Tier of virtual machines in the scale set.",
+                "type": "select",
+                "required": false,
+                "default": "Standard",
+                "options": [
+                  { "value": "Standard", "label": "Standard" },
+                  { "value": "Basic", "label": "Basic" }
+                ]
+              },
+              {
+                "id": "capacity",
+                "label": "Instance Count (Capacity)",
+                "description": "Number of virtual machine instances to maintain in the scale set.",
+                "type": "number",
+                "required": true,
+                "default": 2,
+                "validation": {
+                  "min": 0,
+                  "max": 1000
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "upgrade_policy",
+        "label": "Upgrade Policy",
+        "description": "Upgrade policy mode and rolling update configurations.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "upgrade_policy_mode",
+            "label": "Upgrade Policy Mode",
+            "description": "Specifies how updates are applied to virtual machines in the scale set.",
+            "type": "select",
+            "required": false,
+            "default": "Manual",
+            "options": [
+              { "value": "Manual", "label": "Manual" },
+              { "value": "Rolling", "label": "Rolling" },
+              { "value": "Automatic", "label": "Automatic" }
+            ]
+          },
+          {
+            "id": "automatic_os_upgrade",
+            "label": "Automatic OS Upgrades",
+            "description": "Whether automatic OS patches should be applied by Azure to your scale set.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "health_probe_id",
+            "label": "Health Probe ID",
+            "description": "Identifier for the Load Balancer health probe. Required when upgrade policy mode is Rolling.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../loadBalancers/.../probes/..."
+          },
+          {
+            "id": "rolling_upgrade_policy",
+            "label": "Rolling Upgrade Policy",
+            "description": "Batch thresholds and wait times for rolling updates.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "max_batch_instance_percent",
+                "label": "Max Batch Instance Percent",
+                "description": "Maximum percentage of instances upgraded simultaneously in one batch.",
+                "type": "number",
+                "required": false,
+                "default": 20,
+                "validation": { "min": 5, "max": 100 }
+              },
+              {
+                "id": "max_unhealthy_instance_percent",
+                "label": "Max Unhealthy Instance Percent",
+                "description": "Maximum percentage of instances that can be simultaneously unhealthy.",
+                "type": "number",
+                "required": false,
+                "default": 20,
+                "validation": { "min": 5, "max": 100 }
+              },
+              {
+                "id": "max_unhealthy_upgraded_instance_percent",
+                "label": "Max Unhealthy Upgraded Instance Percent",
+                "description": "Maximum percentage of upgraded instances that can be unhealthy before aborting.",
+                "type": "number",
+                "required": false,
+                "default": 20,
+                "validation": { "min": 0, "max": 100 }
+              },
+              {
+                "id": "pause_time_between_batches",
+                "label": "Pause Time Between Batches",
+                "description": "Wait time between completing updates in one batch and starting the next (ISO 8601 format, e.g. PT0S, PT1M).",
+                "type": "text",
+                "required": false,
+                "default": "PT0S",
+                "placeholder": "PT0S"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "os_profile",
+        "label": "Operating System & Credentials",
+        "description": "Admin credentials, computer name prefix, and SSH keys.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "os_profile",
+            "label": "OS Profile",
+            "description": "Operating system administrator credentials and computer name prefix.",
+            "type": "object",
+            "required": true,
+            "fields": [
+              {
+                "id": "computer_name_prefix",
+                "label": "Computer Name Prefix",
+                "description": "Prefix used for virtual machine computer names (1-58 chars for Linux, 1-9 for Windows).",
+                "type": "text",
+                "required": true,
+                "default": "vmss",
+                "placeholder": "vmss"
+              },
+              {
+                "id": "admin_username",
+                "label": "Admin Username",
+                "description": "Administrator account username for virtual machines in the scale set.",
+                "type": "text",
+                "required": true,
+                "default": "azureuser",
+                "placeholder": "azureuser"
+              },
+              {
+                "id": "admin_password",
+                "label": "Admin Password",
+                "description": "Administrator account password. Required for Windows or when password authentication is enabled.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "sensitive": true,
+                "placeholder": "P@ssw0rd1234!"
+              },
+              {
+                "id": "custom_data",
+                "label": "Custom Data / Cloud-Init Script",
+                "description": "Custom cloud-init script or startup data supplied to instances.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "multiline": true
+              }
+            ]
+          },
+          {
+            "id": "os_profile_linux_config",
+            "label": "Linux Configuration",
+            "description": "Linux authentication and SSH key configuration.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "disable_password_authentication",
+                "label": "Disable Password Authentication",
+                "description": "Whether password authentication should be disabled in favor of SSH keys.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "ssh_keys",
+                "label": "SSH Public Keys",
+                "description": "List of SSH public keys for authentication.",
+                "type": "repeatable",
+                "required": false,
+                "default": [],
+                "fields": [
+                  {
+                    "id": "path",
+                    "label": "Authorized Keys Path",
+                    "description": "Path on destination VM (must be /home/<username>/.ssh/authorized_keys).",
+                    "type": "text",
+                    "required": true,
+                    "default": "/home/azureuser/.ssh/authorized_keys"
+                  },
+                  {
+                    "id": "key_data",
+                    "label": "SSH Public Key Data",
+                    "description": "The public SSH key string (e.g. ssh-rsa AAAAB3...).",
+                    "type": "text",
+                    "required": false,
+                    "default": null,
+                    "nullable": true,
+                    "multiline": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "os_profile_windows_config",
+            "label": "Windows Configuration",
+            "description": "Windows-specific scale set settings.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "provision_vm_agent",
+                "label": "Provision VM Agent",
+                "description": "Indicates whether the VM Agent is provisioned on instances.",
+                "type": "boolean",
+                "required": false,
+                "default": true
+              },
+              {
+                "id": "enable_automatic_upgrades",
+                "label": "Enable Automatic Updates",
+                "description": "Indicates whether automatic Windows Updates are enabled.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "label": "Storage & Disks",
+        "description": "OS disk, image reference, and optional data disks.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "storage_profile_os_disk",
+            "label": "OS Disk Profile",
+            "description": "OS disk caching, managed disk type, and sizing.",
+            "type": "object",
+            "required": true,
+            "fields": [
+              {
+                "id": "caching",
+                "label": "Caching",
+                "description": "Disk caching behavior.",
+                "type": "select",
+                "required": false,
+                "default": "ReadWrite",
+                "options": [
+                  { "value": "ReadWrite", "label": "ReadWrite" },
+                  { "value": "ReadOnly", "label": "ReadOnly" },
+                  { "value": "None", "label": "None" }
+                ]
+              },
+              {
+                "id": "managed_disk_type",
+                "label": "Managed Disk Type",
+                "description": "Storage type for the OS disk.",
+                "type": "select",
+                "required": false,
+                "default": "Standard_LRS",
+                "options": [
+                  { "value": "Standard_LRS", "label": "Standard HDD (Standard_LRS)" },
+                  { "value": "StandardSSD_LRS", "label": "Standard SSD (StandardSSD_LRS)" },
+                  { "value": "Premium_LRS", "label": "Premium SSD (Premium_LRS)" }
+                ]
+              },
+              {
+                "id": "create_option",
+                "label": "Create Option",
+                "description": "Specifies how the OS disk is created.",
+                "type": "select",
+                "required": false,
+                "default": "FromImage",
+                "options": [
+                  { "value": "FromImage", "label": "FromImage" }
+                ]
+              },
+              {
+                "id": "disk_size_gb",
+                "label": "Disk Size (GB)",
+                "description": "Custom OS disk size in GB (optional override).",
+                "type": "number",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "30"
+              }
+            ]
+          },
+          {
+            "id": "storage_profile_image_reference",
+            "label": "Image Reference",
+            "description": "Platform marketplace image or custom image reference.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "publisher",
+                "label": "Publisher",
+                "description": "Image publisher (e.g. Canonical, MicrosoftWindowsServer).",
+                "type": "text",
+                "required": false,
+                "default": "Canonical",
+                "placeholder": "Canonical"
+              },
+              {
+                "id": "offer",
+                "label": "Offer",
+                "description": "Image offer (e.g. 0001-com-ubuntu-server-jammy, WindowsServer).",
+                "type": "text",
+                "required": false,
+                "default": "0001-com-ubuntu-server-jammy",
+                "placeholder": "0001-com-ubuntu-server-jammy"
+              },
+              {
+                "id": "sku",
+                "label": "Image SKU",
+                "description": "Image SKU (e.g. 22_04-lts, 2022-datacenter-azure-edition).",
+                "type": "text",
+                "required": false,
+                "default": "22_04-lts",
+                "placeholder": "22_04-lts"
+              },
+              {
+                "id": "version",
+                "label": "Image Version",
+                "description": "Image version or latest.",
+                "type": "text",
+                "required": false,
+                "default": "latest",
+                "placeholder": "latest"
+              },
+              {
+                "id": "id",
+                "label": "Custom Image ID",
+                "description": "Resource ID of a custom gallery image (mutually exclusive with publisher/offer/sku).",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../galleries/.../images/..."
+              }
+            ]
+          },
+          {
+            "id": "storage_profile_data_disks",
+            "label": "Data Disks",
+            "description": "Additional data disks attached to instances.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "lun",
+                "label": "LUN",
+                "description": "Logical Unit Number of the disk.",
+                "type": "number",
+                "required": true,
+                "default": 0
+              },
+              {
+                "id": "disk_size_gb",
+                "label": "Disk Size (GB)",
+                "description": "Size of the data disk in GB.",
+                "type": "number",
+                "required": true,
+                "default": 30
+              },
+              {
+                "id": "managed_disk_type",
+                "label": "Managed Disk Type",
+                "description": "Storage tier of the data disk.",
+                "type": "select",
+                "required": false,
+                "default": "Standard_LRS",
+                "options": [
+                  { "value": "Standard_LRS", "label": "Standard HDD" },
+                  { "value": "StandardSSD_LRS", "label": "Standard SSD" },
+                  { "value": "Premium_LRS", "label": "Premium SSD" }
+                ]
+              },
+              {
+                "id": "caching",
+                "label": "Caching",
+                "description": "Caching requirements.",
+                "type": "select",
+                "required": false,
+                "default": "ReadWrite",
+                "options": [
+                  { "value": "ReadWrite", "label": "ReadWrite" },
+                  { "value": "ReadOnly", "label": "ReadOnly" },
+                  { "value": "None", "label": "None" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Networking",
+        "description": "Network profiles, subnet associations, and load balancer backend pool attachments.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "network_profiles",
+            "label": "Network Profiles",
+            "description": "Network interface configurations for scale set instances.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Network Profile Name",
+                "description": "Name of the network interface configuration.",
+                "type": "text",
+                "required": true,
+                "default": "nic-profile"
+              },
+              {
+                "id": "primary",
+                "label": "Primary Network Profile",
+                "description": "Whether this is the primary NIC of the instances.",
+                "type": "boolean",
+                "required": true,
+                "default": true
+              },
+              {
+                "id": "accelerated_networking",
+                "label": "Accelerated Networking",
+                "description": "Enables Single Root I/O Virtualization (SR-IOV) for low latency.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "ip_forwarding",
+                "label": "IP Forwarding",
+                "description": "Whether IP forwarding is enabled on this NIC.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "network_security_group_id",
+                "label": "Network Security Group ID",
+                "description": "Identifier for the Network Security Group to attach to this NIC profile.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../networkSecurityGroups/..."
+              },
+              {
+                "id": "ip_configurations",
+                "label": "IP Configurations",
+                "description": "Subnet and load balancer backend pool attachments.",
+                "type": "repeatable",
+                "required": true,
+                "fields": [
+                  {
+                    "id": "name",
+                    "label": "IP Config Name",
+                    "description": "Name of the IP configuration.",
+                    "type": "text",
+                    "required": true,
+                    "default": "ipconfig1"
+                  },
+                  {
+                    "id": "primary",
+                    "label": "Primary IP Configuration",
+                    "description": "Whether this is the primary IP configuration.",
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
+                  },
+                  {
+                    "id": "subnet_id",
+                    "label": "Subnet Resource ID",
+                    "description": "ID of the Subnet where instances are deployed.",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "/subscriptions/.../virtualNetworks/.../subnets/..."
+                  },
+                  {
+                    "id": "load_balancer_backend_address_pool_ids",
+                    "label": "Load Balancer Backend Pool IDs",
+                    "description": "List of Backend Address Pool IDs of Load Balancers.",
+                    "type": "list",
+                    "required": false,
+                    "default": []
+                  },
+                  {
+                    "id": "load_balancer_inbound_nat_rules_ids",
+                    "label": "Load Balancer Inbound NAT Pool IDs",
+                    "description": "List of Inbound NAT Pool IDs for port forwarding.",
+                    "type": "list",
+                    "required": false,
+                    "default": []
+                  },
+                  {
+                    "id": "application_gateway_backend_address_pool_ids",
+                    "label": "App Gateway Backend Pool IDs",
+                    "description": "List of Application Gateway backend pool IDs.",
+                    "type": "list",
+                    "required": false,
+                    "default": []
+                  },
+                  {
+                    "id": "application_security_group_ids",
+                    "label": "Application Security Group IDs",
+                    "description": "List of Application Security Group IDs.",
+                    "type": "list",
+                    "required": false,
+                    "default": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "placement_and_scaling",
+        "label": "Placement & Resilience",
+        "description": "Availability zones, priority, overprovisioning, and placement group settings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "priority",
+            "label": "Instance Priority",
+            "description": "Priority for instances in the scale set (Regular or Low for Spot instances).",
+            "type": "select",
+            "required": false,
+            "default": "Regular",
+            "options": [
+              { "value": "Regular", "label": "Regular" },
+              { "value": "Low", "label": "Low (Spot / Cost Optimized)" }
+            ]
+          },
+          {
+            "id": "eviction_policy",
+            "label": "Eviction Policy",
+            "description": "Eviction policy when priority is Low.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "Deallocate", "label": "Deallocate" },
+              { "value": "Delete", "label": "Delete" }
+            ],
+            "depends_on": {
+              "field": "priority",
+              "operator": "eq",
+              "value": "Low"
+            }
+          },
+          {
+            "id": "zones",
+            "label": "Availability Zones",
+            "description": "List of availability zones to distribute instances across (e.g. ['1', '2', '3']).",
+            "type": "list",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "1"
+          },
+          {
+            "id": "single_placement_group",
+            "label": "Single Placement Group",
+            "description": "Whether the scale set is limited to a single placement group (max 100 VMs). Set to false for up to 1000 VMs.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "overprovision",
+            "label": "Overprovisioning",
+            "description": "Whether Azure launches extra VMs during scaling up to ensure requested capacity is reached quickly.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "proximity_placement_group_id",
+            "label": "Proximity Placement Group ID",
+            "description": "ID of Proximity Placement Group to colocate VMs physically close together.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../proximityPlacementGroups/..."
+          }
+        ]
+      },
+      {
+        "id": "identity_and_diagnostics",
+        "label": "Identity & Diagnostics",
+        "description": "Managed Service Identity and Boot Diagnostics configurations.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "identity",
+            "label": "Managed Service Identity",
+            "description": "Azure Managed Service Identity configuration.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "type",
+                "label": "Identity Type",
+                "description": "Type of managed identity to assign.",
+                "type": "select",
+                "required": false,
+                "default": "SystemAssigned",
+                "options": [
+                  { "value": "SystemAssigned", "label": "SystemAssigned" },
+                  { "value": "UserAssigned", "label": "UserAssigned" }
+                ]
+              },
+              {
+                "id": "identity_ids",
+                "label": "User Assigned Identity IDs",
+                "description": "List of user-assigned managed identity IDs.",
+                "type": "list",
+                "required": false,
+                "default": []
+              }
+            ]
+          },
+          {
+            "id": "boot_diagnostics",
+            "label": "Boot Diagnostics",
+            "description": "Captures console logs and screenshots for debugging boot failures.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "enabled",
+                "label": "Enable Boot Diagnostics",
+                "description": "Whether to enable boot diagnostics.",
+                "type": "boolean",
+                "required": false,
+                "default": true
+              },
+              {
+                "id": "storage_uri",
+                "label": "Storage Account Endpoint",
+                "description": "Primary blob endpoint URI of storage account for diagnostic data.",
+                "type": "text",
+                "required": true,
+                "placeholder": "https://mystorageaccount.blob.core.windows.net/"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tagging",
+        "description": "Resource tags for governance, categorization, and cost allocation.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to assign to the scale set.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
