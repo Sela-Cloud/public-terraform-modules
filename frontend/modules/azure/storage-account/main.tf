@@ -1,0 +1,29 @@
+module "storage_account" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/storage-account?ref=v0.7.6"
+  for_each = var.storage_account
+
+  name                              = each.value.name
+  resource_group_name               = each.value.resource_group_name
+  location                          = each.value.location
+  account_tier                      = each.value.account_tier
+  account_replication_type          = each.value.account_replication_type
+  account_kind                      = each.value.account_kind
+  access_tier                       = each.value.access_tier
+  edge_zone                         = each.value.edge_zone
+  https_traffic_only_enabled        = each.value.https_traffic_only_enabled
+  min_tls_version                   = each.value.min_tls_version
+  allow_nested_items_to_be_public   = each.value.allow_nested_items_to_be_public
+  shared_access_key_enabled         = each.value.shared_access_key_enabled
+  public_network_access_enabled     = each.value.public_network_access_enabled
+  default_to_oauth_authentication   = each.value.default_to_oauth_authentication
+  is_hns_enabled                    = each.value.is_hns_enabled
+  nfsv3_enabled                     = each.value.nfsv3_enabled
+  large_file_share_enabled          = each.value.large_file_share_enabled
+  cross_tenant_replication_enabled  = each.value.cross_tenant_replication_enabled
+  infrastructure_encryption_enabled = each.value.infrastructure_encryption_enabled
+  sftp_enabled                      = each.value.sftp_enabled
+  network_rules                     = each.value.network_rules
+  blob_properties                   = each.value.blob_properties
+  identity                          = each.value.identity
+  tags                              = each.value.tags
+}
