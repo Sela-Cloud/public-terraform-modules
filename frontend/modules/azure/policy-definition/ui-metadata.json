@@ -1,0 +1,191 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "policy-definition",
+  "version": "1.0.0",
+  "display": {
+    "label": "Policy Definition",
+    "icon": "azure-policy",
+    "description": "Azure Policy Definition for enforcing governance rules and compliance standards across Azure resources",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "policy_definition",
+    "key_field": "name",
+    "key_label": "Policy Definition Name",
+    "key_description": "The unique name for the Azure Policy Definition. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Policy Definition settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Policy Definition Name",
+            "description": "The unique name of the Policy Definition. Must be 1-128 characters using letters, numbers, hyphens, periods, or underscores.",
+            "type": "text",
+            "required": true,
+            "placeholder": "audit-vm-sizes",
+            "validation": {
+              "min": 1,
+              "max": 128,
+              "pattern": "^[a-zA-Z0-9_.-]{1,128}$",
+              "pattern_error": "Policy Definition name must be 1-128 characters containing only letters, numbers, hyphens, periods, and underscores."
+            }
+          },
+          {
+            "id": "display_name",
+            "label": "Display Name",
+            "description": "The display name of the Policy Definition shown in the Azure Portal.",
+            "type": "text",
+            "required": true,
+            "placeholder": "Audit Virtual Machine SKUs"
+          },
+          {
+            "id": "policy_type",
+            "label": "Policy Type",
+            "description": "The type of policy definition. Typically 'Custom' for user-created definitions.",
+            "type": "select",
+            "required": false,
+            "default": "Custom",
+            "options": [
+              {
+                "value": "Custom",
+                "label": "Custom"
+              },
+              {
+                "value": "BuiltIn",
+                "label": "BuiltIn"
+              },
+              {
+                "value": "NotSpecified",
+                "label": "NotSpecified"
+              },
+              {
+                "value": "Static",
+                "label": "Static"
+              }
+            ]
+          },
+          {
+            "id": "mode",
+            "label": "Mode",
+            "description": "The policy resource manager mode that determines which resource types will be evaluated.",
+            "type": "select",
+            "required": false,
+            "default": "All",
+            "options": [
+              {
+                "value": "All",
+                "label": "All (Resource Manager and Resource Groups)"
+              },
+              {
+                "value": "Indexed",
+                "label": "Indexed (Only resources supporting tags and location)"
+              },
+              {
+                "value": "NotSpecified",
+                "label": "NotSpecified"
+              },
+              {
+                "value": "Microsoft.CustomerLockbox.Data",
+                "label": "Microsoft.CustomerLockbox.Data"
+              },
+              {
+                "value": "Microsoft.DataCatalog.Data",
+                "label": "Microsoft.DataCatalog.Data"
+              },
+              {
+                "value": "Microsoft.KeyVault.Data",
+                "label": "Microsoft.KeyVault.Data"
+              },
+              {
+                "value": "Microsoft.Kubernetes.Data",
+                "label": "Microsoft.Kubernetes.Data"
+              },
+              {
+                "value": "Microsoft.MachineLearningServices.Data",
+                "label": "Microsoft.MachineLearningServices.Data"
+              },
+              {
+                "value": "Microsoft.Network.Data",
+                "label": "Microsoft.Network.Data"
+              },
+              {
+                "value": "Microsoft.Synapse.Data",
+                "label": "Microsoft.Synapse.Data"
+              }
+            ]
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "description": "A description of what the Policy Definition does.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "Audits virtual machines for compliance with approved SKUs."
+          }
+        ]
+      },
+      {
+        "id": "scope",
+        "label": "Scope Configuration",
+        "description": "Optional management group scoping.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "management_group_id",
+            "label": "Management Group ID",
+            "description": "The ID of the Management Group where this policy definition should be created. If not provided, it will be created at the subscription level.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/providers/Microsoft.Management/managementGroups/my-management-group"
+          }
+        ]
+      },
+      {
+        "id": "definition",
+        "label": "Policy Rule & Metadata",
+        "description": "JSON formatted rule logic, parameter schema, and policy metadata.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "policy_rule",
+            "label": "Policy Rule (JSON)",
+            "description": "The JSON formatted policy rule that defines the condition ('if') and action/effect ('then').",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "{\"if\": {\"field\": \"type\", \"equals\": \"Microsoft.Compute/virtualMachines\"}, \"then\": {\"effect\": \"audit\"}}"
+          },
+          {
+            "id": "parameters",
+            "label": "Parameters (JSON)",
+            "description": "The JSON formatted string that defines parameters used by the policy definition.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "{\"allowedLocations\": {\"type\": \"Array\", \"metadata\": {\"displayName\": \"Allowed Locations\"}}}"
+          },
+          {
+            "id": "metadata",
+            "label": "Metadata (JSON)",
+            "description": "The JSON formatted string that contains metadata such as category or version.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "{\"category\": \"General\", \"version\": \"1.0.0\"}"
+          }
+        ]
+      }
+    ]
+  }
+}
