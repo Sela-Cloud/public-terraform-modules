@@ -1,0 +1,312 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "firewall",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Firewall",
+    "icon": "azure-firewall",
+    "description": "Cloud-native intelligent network firewall security service providing threat protection for Azure workloads",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "firewall",
+    "key_field": "name",
+    "key_label": "Firewall Name",
+    "key_description": "The unique name for the Azure Firewall. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Azure Firewall identification and SKU settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Firewall Name",
+            "description": "Specifies the name of the Azure Firewall. Must be 1-80 characters using alphanumerics, hyphens, periods, or underscores.",
+            "type": "text",
+            "required": true,
+            "placeholder": "afw-hub-prod",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,78}[a-zA-Z0-9_]$",
+              "pattern_error": "Firewall name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which the Azure Firewall should exist.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-networking-prod"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Firewall should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" }
+            ]
+          },
+          {
+            "id": "sku_name",
+            "label": "SKU Name",
+            "description": "SKU name of the Firewall. AZFW_VNet for Virtual Networks, AZFW_Hub for Secured Virtual Hubs.",
+            "type": "select",
+            "required": true,
+            "default": "AZFW_VNet",
+            "options": [
+              {
+                "value": "AZFW_VNet",
+                "label": "Virtual Network (AZFW_VNet)"
+              },
+              {
+                "value": "AZFW_Hub",
+                "label": "Virtual WAN Secured Hub (AZFW_Hub)"
+              }
+            ]
+          },
+          {
+            "id": "sku_tier",
+            "label": "SKU Tier",
+            "description": "SKU tier of the Firewall (Basic, Standard, or Premium).",
+            "type": "select",
+            "required": true,
+            "default": "Standard",
+            "options": [
+              {
+                "value": "Basic",
+                "label": "Basic"
+              },
+              {
+                "value": "Standard",
+                "label": "Standard"
+              },
+              {
+                "value": "Premium",
+                "label": "Premium"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "vnet_ip_configuration",
+        "label": "VNet IP Configuration",
+        "description": "IP configuration for Virtual Network-based firewalls (AZFW_VNet).",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "ip_configuration",
+            "label": "IP Configurations",
+            "description": "List of IP configuration blocks. The primary configuration must reference AzureFirewallSubnet.",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Configuration Name",
+                "description": "The name of the IP configuration.",
+                "type": "text",
+                "required": true,
+                "placeholder": "configuration"
+              },
+              {
+                "id": "subnet_id",
+                "label": "Subnet ID",
+                "description": "The resource ID of AzureFirewallSubnet. Required for the primary IP configuration.",
+                "type": "text",
+                "nullable": true,
+                "placeholder": "/subscriptions/.../subnets/AzureFirewallSubnet"
+              },
+              {
+                "id": "public_ip_address_id",
+                "label": "Public IP Address ID",
+                "description": "The resource ID of the associated Public IP address (Standard SKU).",
+                "type": "text",
+                "nullable": true,
+                "placeholder": "/subscriptions/.../publicIPAddresses/pip-afw"
+              }
+            ]
+          },
+          {
+            "id": "management_ip_configuration",
+            "label": "Management IP Configuration",
+            "description": "Management IP configuration required for Basic SKU or forced tunneling.",
+            "type": "object",
+            "nullable": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Management Config Name",
+                "description": "The name of the management IP configuration.",
+                "type": "text",
+                "required": true,
+                "placeholder": "mgmt-config"
+              },
+              {
+                "id": "subnet_id",
+                "label": "Management Subnet ID",
+                "description": "The resource ID of AzureFirewallManagementSubnet.",
+                "type": "text",
+                "required": true,
+                "placeholder": "/subscriptions/.../subnets/AzureFirewallManagementSubnet"
+              },
+              {
+                "id": "public_ip_address_id",
+                "label": "Management Public IP ID",
+                "description": "The resource ID of the management Public IP address.",
+                "type": "text",
+                "required": true,
+                "placeholder": "/subscriptions/.../publicIPAddresses/pip-afw-mgmt"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "virtual_hub",
+        "label": "Virtual WAN Hub Configuration",
+        "description": "Virtual Hub configuration used when SKU Name is AZFW_Hub.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "virtual_hub",
+            "label": "Virtual Hub Settings",
+            "description": "Deploy inside an Azure Virtual WAN Virtual Hub.",
+            "type": "object",
+            "nullable": true,
+            "fields": [
+              {
+                "id": "virtual_hub_id",
+                "label": "Virtual Hub ID",
+                "description": "The resource ID of the Virtual Hub.",
+                "type": "text",
+                "required": true,
+                "placeholder": "/subscriptions/.../virtualHubs/my-hub"
+              },
+              {
+                "id": "public_ip_count",
+                "label": "Public IP Count",
+                "description": "The number of public IPs assigned to the firewall in the hub.",
+                "type": "number",
+                "default": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "policy_and_security",
+        "label": "Policy & Security Settings",
+        "description": "Firewall policy, threat intelligence, availability zones, and SNAT settings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "firewall_policy_id",
+            "label": "Firewall Policy ID",
+            "description": "The resource ID of the Azure Firewall Policy to associate.",
+            "type": "text",
+            "nullable": true,
+            "placeholder": "/subscriptions/.../firewallPolicies/my-policy"
+          },
+          {
+            "id": "threat_intel_mode",
+            "label": "Threat Intelligence Mode",
+            "description": "Operation mode for threat intelligence filtering.",
+            "type": "select",
+            "default": "Alert",
+            "options": [
+              {
+                "value": "Off",
+                "label": "Off"
+              },
+              {
+                "value": "Alert",
+                "label": "Alert"
+              },
+              {
+                "value": "Deny",
+                "label": "Deny"
+              }
+            ]
+          },
+          {
+            "id": "zones",
+            "label": "Availability Zones",
+            "description": "List of Availability Zones in which this Firewall should be deployed (e.g. ['1', '2', '3']).",
+            "type": "list",
+            "default": []
+          },
+          {
+            "id": "private_ip_ranges",
+            "label": "Private IP Ranges (SNAT)",
+            "description": "List of SNAT private CIDR IP ranges or ['IANAPrivateRanges'].",
+            "type": "list",
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "dns",
+        "label": "DNS Settings",
+        "description": "DNS resolution and DNS proxy settings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "dns_servers",
+            "label": "Custom DNS Servers",
+            "description": "List of DNS server IP addresses used by the Azure Firewall.",
+            "type": "list",
+            "default": []
+          },
+          {
+            "id": "dns_proxy_enabled",
+            "label": "Enable DNS Proxy",
+            "description": "Whether DNS proxy is enabled on the Azure Firewall.",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tags",
+        "description": "Key-value pairs to categorize and organize Azure Firewall resources.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "A mapping of tags to assign to the Azure Firewall.",
+            "type": "map",
+            "required": false
+          }
+        ]
+      }
+    ]
+  }
+}
