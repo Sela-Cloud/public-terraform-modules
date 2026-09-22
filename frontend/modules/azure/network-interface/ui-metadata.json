@@ -1,0 +1,288 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "network-interface",
+  "version": "1.0.0",
+  "display": {
+    "label": "Network Interface",
+    "icon": "network-interface",
+    "description": "Azure Network Interface (NIC) for connecting virtual machines to virtual networks and the internet",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "network_interface",
+    "key_field": "name",
+    "key_label": "Network Interface Name",
+    "key_description": "The unique name for the Azure Network Interface. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Network Interface settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Network Interface Name",
+            "description": "Name of the Azure Network Interface. Must be 1-80 characters using alphanumeric, underscores, hyphens, and periods.",
+            "type": "text",
+            "required": true,
+            "placeholder": "nic-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "Network Interface name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Network Interface.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Network Interface should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ip_configuration",
+        "label": "IP Configuration",
+        "description": "IP configuration settings for private and public IP allocations.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "ip_configurations",
+            "label": "IP Configurations",
+            "description": "List of IP configuration blocks for this Network Interface.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Configuration Name",
+                "description": "The name of the IP configuration.",
+                "type": "text",
+                "required": true,
+                "default": "internal",
+                "placeholder": "internal"
+              },
+              {
+                "id": "subnet_id",
+                "label": "Subnet ID",
+                "description": "The ID of the Subnet where this Network Interface should be located.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../subnets/..."
+              },
+              {
+                "id": "private_ip_address_allocation",
+                "label": "Private IP Allocation",
+                "description": "The allocation method used for the Private IP Address.",
+                "type": "select",
+                "required": true,
+                "default": "Dynamic",
+                "options": [
+                  { "value": "Dynamic", "label": "Dynamic" },
+                  { "value": "Static", "label": "Static" }
+                ]
+              },
+              {
+                "id": "private_ip_address",
+                "label": "Static Private IP Address",
+                "description": "Static IP address (required when allocation is Static).",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "10.0.1.4"
+              },
+              {
+                "id": "private_ip_address_version",
+                "label": "IP Version",
+                "description": "IP address version (IPv4 or IPv6).",
+                "type": "select",
+                "required": true,
+                "default": "IPv4",
+                "options": [
+                  { "value": "IPv4", "label": "IPv4" },
+                  { "value": "IPv6", "label": "IPv6" }
+                ]
+              },
+              {
+                "id": "public_ip_address_id",
+                "label": "Public IP Address ID",
+                "description": "Reference to an Azure Public IP Address resource.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../publicIPAddresses/..."
+              },
+              {
+                "id": "primary",
+                "label": "Primary Configuration",
+                "description": "Whether this is the primary IP configuration on the interface.",
+                "type": "boolean",
+                "required": true,
+                "default": true
+              },
+              {
+                "id": "gateway_load_balancer_frontend_ip_configuration_id",
+                "label": "Gateway Load Balancer Frontend IP ID",
+                "description": "The Frontend IP Configuration ID of a Gateway Load Balancer.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../frontendIPConfigurations/..."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "features",
+        "label": "Network Features & Security",
+        "description": "Configure accelerated networking, IP forwarding, DNS, and security group association.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "enable_accelerated_networking",
+            "label": "Enable Accelerated Networking",
+            "description": "Enables Azure Accelerated Networking (SR-IOV) for lower latency and jitter.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "enable_ip_forwarding",
+            "label": "Enable IP Forwarding",
+            "description": "Enables IP forwarding to allow NIC to route traffic (e.g. for firewall/NVA).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "network_security_group_id",
+            "label": "Network Security Group ID",
+            "description": "The ID of a Network Security Group to associate with this Network Interface.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../networkSecurityGroups/..."
+          },
+          {
+            "id": "dns_servers",
+            "label": "Custom DNS Servers",
+            "description": "List of IP addresses of custom DNS servers for this Network Interface.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "placeholder": "168.63.129.16"
+          },
+          {
+            "id": "internal_dns_name_label",
+            "label": "Internal DNS Name Label",
+            "description": "Relative DNS name for internal communication between VMs in the same VNet.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "my-internal-vm"
+          },
+          {
+            "id": "edge_zone",
+            "label": "Edge Zone",
+            "description": "Specifies the Edge Zone within the Azure Region where this NIC should exist.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true
+          },
+          {
+            "id": "auxiliary_mode",
+            "label": "Auxiliary Mode",
+            "description": "Auxiliary mode used to enable network features on the NIC.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "None", "label": "None" },
+              { "value": "AcceleratedConnections", "label": "AcceleratedConnections" },
+              { "value": "Floating", "label": "Floating" }
+            ]
+          },
+          {
+            "id": "auxiliary_sku",
+            "label": "Auxiliary SKU",
+            "description": "Auxiliary sku used to enable network features on the NIC.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "None", "label": "None" },
+              { "value": "A8", "label": "A8" },
+              { "value": "A4", "label": "A4" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tags",
+        "description": "Resource tagging for organization, governance, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Network Interface for governance and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
