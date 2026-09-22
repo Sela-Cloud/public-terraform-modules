@@ -29,8 +29,8 @@ This module manages Azure Policy Definitions at the subscription or management g
 |------|-------------|------|---------|:--------:|
 | name | The name of the Policy Definition. Changing this forces a new resource to be created. | `string` | n/a | yes |
 | display_name | The display name of the Policy Definition. | `string` | n/a | yes |
-| policy_type | The policy type. Possible values are `BuiltIn`, `Custom`, `NotSpecified`, and `Static`. | `string` | `"Custom"` | no |
-| mode | The policy resource manager mode that determines which resource types will be evaluated. | `string` | `"All"` | no |
+| policy_type | The policy type. Possible values are `BuiltIn`, `Custom`, `NotSpecified`, and `Static`. | `string` | n/a | yes |
+| mode | The policy resource manager mode that determines which resource types will be evaluated. | `string` | n/a | yes |
 | description | The description of the Policy Definition. | `string` | `null` | no |
 | management_group_id | The ID of the Management Group where this policy definition should be defined. | `string` | `null` | no |
 | policy_rule | The policy rule for the policy definition in JSON format. | `string` | `null` | no |

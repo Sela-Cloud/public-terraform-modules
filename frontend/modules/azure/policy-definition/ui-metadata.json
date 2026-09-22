@@ -47,7 +47,7 @@
             "label": "Policy Type",
             "description": "The type of policy definition. Typically 'Custom' for user-created definitions.",
             "type": "select",
-            "required": false,
+            "required": true,
             "default": "Custom",
             "options": [
               {
@@ -73,7 +73,7 @@
             "label": "Mode",
             "description": "The policy resource manager mode that determines which resource types will be evaluated.",
             "type": "select",
-            "required": false,
+            "required": true,
             "default": "All",
             "options": [
               {
