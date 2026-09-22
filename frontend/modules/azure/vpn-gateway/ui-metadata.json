@@ -1,0 +1,168 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "vpn-gateway",
+  "version": "1.0.0",
+  "display": {
+    "label": "VPN Gateway",
+    "icon": "azure-vpn-gateway",
+    "description": "Azure Virtual WAN VPN Gateway for scalable site-to-site VPN connections into an Azure Virtual Hub",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "vpn_gateway",
+    "key_field": "name",
+    "key_label": "VPN Gateway Name",
+    "key_description": "The unique name for the Azure VPN Gateway. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core VPN Gateway settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "VPN Gateway Name",
+            "description": "Name of the Azure VPN Gateway. Must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, underscores, hyphens, or periods.",
+            "type": "text",
+            "required": true,
+            "placeholder": "vwan-vpn-gw-01",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,78}[a-zA-Z0-9_]$",
+              "pattern_error": "VPN Gateway name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, underscores, hyphens, or periods."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the VPN Gateway.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the VPN Gateway should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (Sydney)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo)" },
+              { "value": "centralindia", "label": "Central India (Pune)" }
+            ]
+          },
+          {
+            "id": "virtual_hub_id",
+            "label": "Virtual Hub ID",
+            "description": "The resource ID of the Azure Virtual WAN Virtual Hub in which the VPN Gateway should be created.",
+            "type": "text",
+            "required": true,
+            "placeholder": "/subscriptions/.../virtualHubs/vwan-hub-01"
+          },
+          {
+            "id": "scale_unit",
+            "label": "Scale Unit",
+            "description": "The Scale Unit for this VPN Gateway (between 1 and 100). Each scale unit provides roughly 500 Mbps aggregate throughput.",
+            "type": "number",
+            "required": false,
+            "default": 1,
+            "validation": {
+              "min": 1,
+              "max": 100
+            }
+          }
+        ]
+      },
+      {
+        "id": "bgp_settings",
+        "label": "BGP Routing Settings",
+        "description": "Border Gateway Protocol (BGP) routing configuration for the VPN Gateway.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "bgp_settings",
+            "label": "BGP Configuration",
+            "description": "BGP settings block for dynamic routing.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "asn",
+                "label": "Autonomous System Number (ASN)",
+                "description": "The Autonomous System Number of the BGP Speaker (e.g. 65515).",
+                "type": "number",
+                "required": false,
+                "default": 65515
+              },
+              {
+                "id": "peer_weight",
+                "label": "Peer Weight",
+                "description": "The weight added to routes learned from this BGP Speaker.",
+                "type": "number",
+                "required": false,
+                "default": 0
+              },
+              {
+                "id": "instance_0_custom_ips",
+                "label": "Instance 0 Custom BGP IPs",
+                "description": "List of custom BGP peering APIPA IP addresses (169.254.21.0/24 - 169.254.22.255) for Gateway Instance 0.",
+                "type": "list",
+                "required": false,
+                "default": [],
+                "placeholder": "169.254.21.1"
+              },
+              {
+                "id": "instance_1_custom_ips",
+                "label": "Instance 1 Custom BGP IPs",
+                "description": "List of custom BGP peering APIPA IP addresses (169.254.21.0/24 - 169.254.22.255) for Gateway Instance 1.",
+                "type": "list",
+                "required": false,
+                "default": [],
+                "placeholder": "169.254.21.5"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tagging",
+        "description": "Resource tags for governance and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to assign to the VPN Gateway.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
