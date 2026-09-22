@@ -1,5 +1,5 @@
 module "redis_instance" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/redis-instance?ref=v0.7.6"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/redis-instance?ref=v0.7.7"
   for_each = var.redis_instance
 
   project_id              = var.project_id

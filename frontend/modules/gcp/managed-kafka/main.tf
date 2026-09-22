@@ -3,7 +3,7 @@
  *****************************************/
 
 module "managed_kafka" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/managed-kafka?ref=v0.7.6"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/managed-kafka?ref=v0.7.7"
   for_each = var.managed_kafka
 
   project_id = var.project_id
