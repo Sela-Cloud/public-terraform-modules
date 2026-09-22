@@ -1,0 +1,409 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "storage-account",
+  "version": "1.0.0",
+  "display": {
+    "label": "Storage Account",
+    "icon": "storage-account",
+    "description": "Azure Storage Account providing scalable cloud storage for blobs, files, queues, and tables",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "storage_account",
+    "key_field": "name",
+    "key_label": "Storage Account Name",
+    "key_description": "The globally unique name of the Azure Storage Account. Must be between 3 and 24 lowercase alphanumeric characters. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core storage account settings, location, tier, and replication.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Storage Account Name",
+            "description": "The name of the Azure Storage Account. Must be globally unique across Azure, between 3 and 24 characters, and contain only lowercase letters and numbers.",
+            "type": "text",
+            "required": true,
+            "default": "stdefault001",
+            "placeholder": "mystorageaccount01",
+            "validation": {
+              "min": 3,
+              "max": 24,
+              "pattern": "^[a-z0-9]{3,24}$",
+              "pattern_error": "Storage Account name must be between 3 and 24 characters and contain only lowercase letters and numbers."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Storage Account.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Storage Account should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          },
+          {
+            "id": "account_tier",
+            "label": "Account Tier",
+            "description": "Defines the performance tier to use for this storage account: Standard or Premium.",
+            "type": "select",
+            "required": true,
+            "default": "Standard",
+            "options": [
+              { "value": "Standard", "label": "Standard (HDD/SSD general-purpose)" },
+              { "value": "Premium", "label": "Premium (Solid-state high-performance)" }
+            ]
+          },
+          {
+            "id": "account_replication_type",
+            "label": "Replication Type",
+            "description": "Defines the redundancy/replication strategy for the storage account.",
+            "type": "select",
+            "required": true,
+            "default": "LRS",
+            "options": [
+              { "value": "LRS", "label": "LRS (Locally-redundant storage)" },
+              { "value": "GRS", "label": "GRS (Geo-redundant storage)" },
+              { "value": "RAGRS", "label": "RAGRS (Read-access geo-redundant storage)" },
+              { "value": "ZRS", "label": "ZRS (Zone-redundant storage)" },
+              { "value": "GZRS", "label": "GZRS (Geo-zone-redundant storage)" },
+              { "value": "RAGZRS", "label": "RAGZRS (Read-access geo-zone-redundant storage)" }
+            ]
+          },
+          {
+            "id": "account_kind",
+            "label": "Account Kind",
+            "description": "Defines the type of storage account. StorageV2 is recommended for modern workloads.",
+            "type": "select",
+            "required": false,
+            "default": "StorageV2",
+            "options": [
+              { "value": "StorageV2", "label": "StorageV2 (General Purpose v2 - Recommended)" },
+              { "value": "BlobStorage", "label": "BlobStorage (Blob-only storage)" },
+              { "value": "BlockBlobStorage", "label": "BlockBlobStorage (Premium Block Blobs)" },
+              { "value": "FileStorage", "label": "FileStorage (Premium Azure Files)" },
+              { "value": "Storage", "label": "Storage (General Purpose v1 - Legacy)" }
+            ]
+          },
+          {
+            "id": "access_tier",
+            "label": "Access Tier",
+            "description": "Defines the default access tier for BlobStorage and StorageV2 accounts.",
+            "type": "select",
+            "required": false,
+            "default": "Hot",
+            "options": [
+              { "value": "Hot", "label": "Hot (Frequently accessed data)" },
+              { "value": "Cool", "label": "Cool (Infrequently accessed data)" },
+              { "value": "Cold", "label": "Cold (Rarely accessed data)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "security_and_networking",
+        "label": "Security & Network Access",
+        "description": "Public network access, encryption, TLS, and network rules.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "public_network_access_enabled",
+            "label": "Enable Public Network Access",
+            "description": "Specifies whether public network access is allowed for the storage account.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "min_tls_version",
+            "label": "Minimum TLS Version",
+            "description": "The minimum supported TLS version for incoming requests. TLS 1.2 is required by Azure.",
+            "type": "select",
+            "required": false,
+            "default": "TLS1_2",
+            "options": [
+              { "value": "TLS1_2", "label": "TLS 1.2" }
+            ]
+          },
+          {
+            "id": "https_traffic_only_enabled",
+            "label": "Enforce HTTPS Traffic Only",
+            "description": "Forces all requests to the storage account to be transmitted over HTTPS.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "allow_nested_items_to_be_public",
+            "label": "Allow Public Blob Access",
+            "description": "Permit or deny public read access to containers and blobs within this account.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "shared_access_key_enabled",
+            "label": "Enable Shared Key Access",
+            "description": "Indicates whether requests can be authorized using the account access keys via Shared Key.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "default_to_oauth_authentication",
+            "label": "Default to OAuth Authentication",
+            "description": "Default to Azure Active Directory authorization when accessing the Storage Account in the Azure portal.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "infrastructure_encryption_enabled",
+            "label": "Enable Infrastructure Encryption",
+            "description": "Enables double encryption of data at rest (at both service and infrastructure levels).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "network_rules",
+            "label": "Network Rules",
+            "description": "Network access control rules restricting traffic by IP or Subnet.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "default_action",
+                "label": "Default Action",
+                "description": "Default action when no rule matches: Allow or Deny.",
+                "type": "select",
+                "required": true,
+                "default": "Allow",
+                "options": [
+                  { "value": "Allow", "label": "Allow" },
+                  { "value": "Deny", "label": "Deny" }
+                ]
+              },
+              {
+                "id": "bypass",
+                "label": "Traffic Bypass",
+                "description": "List of services that can bypass network rules (e.g., AzureServices, Logging, Metrics).",
+                "type": "list",
+                "required": false,
+                "default": ["AzureServices"]
+              },
+              {
+                "id": "ip_rules",
+                "label": "Allowed IP Rules",
+                "description": "List of public IP addresses or CIDR blocks allowed access.",
+                "type": "list",
+                "required": false,
+                "default": []
+              },
+              {
+                "id": "virtual_network_subnet_ids",
+                "label": "Allowed Subnet IDs",
+                "description": "List of virtual network subnet resource IDs allowed access.",
+                "type": "list",
+                "required": false,
+                "default": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "features",
+        "label": "Features & Capabilities",
+        "description": "Data lake hierarchical namespace, NFSv3, large file shares, and SFTP.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "is_hns_enabled",
+            "label": "Enable Hierarchical Namespace (ADLS Gen2)",
+            "description": "Enables Azure Data Lake Storage Gen2 hierarchical directory structure.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "nfsv3_enabled",
+            "label": "Enable NFSv3 Protocol",
+            "description": "Enables Network File System v3 protocol support (requires is_hns_enabled).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "large_file_share_enabled",
+            "label": "Enable Large File Shares",
+            "description": "Enables Azure Files shares up to 100 TiB.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "cross_tenant_replication_enabled",
+            "label": "Enable Cross-Tenant Replication",
+            "description": "Allow object replication across different Azure Active Directory tenants.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "sftp_enabled",
+            "label": "Enable SFTP Support",
+            "description": "Enables SSH File Transfer Protocol for blob storage (requires is_hns_enabled).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "edge_zone",
+            "label": "Edge Zone",
+            "description": "Specifies the Edge Zone within the Azure Region where this Storage Account should exist.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "microsoftlosangeles"
+          },
+          {
+            "id": "blob_properties",
+            "label": "Blob Service Properties",
+            "description": "Configure blob service settings like versioning, change feed, and soft delete retention.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "versioning_enabled",
+                "label": "Enable Blob Versioning",
+                "description": "Is blob versioning enabled for point-in-time recovery of blobs.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "change_feed_enabled",
+                "label": "Enable Change Feed",
+                "description": "Is blob change feed event logging enabled.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "delete_retention_policy_days",
+                "label": "Blob Soft Delete Retention (Days)",
+                "description": "Number of days that deleted blobs should be retained (between 1 and 365). Leave empty/null to disable.",
+                "type": "number",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "7"
+              },
+              {
+                "id": "container_delete_retention_policy_days",
+                "label": "Container Soft Delete Retention (Days)",
+                "description": "Number of days that deleted containers should be retained (between 1 and 365). Leave empty/null to disable.",
+                "type": "number",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "7"
+              }
+            ]
+          },
+          {
+            "id": "identity",
+            "label": "Managed Identity",
+            "description": "Managed Service Identity configuration for the storage account.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "type",
+                "label": "Identity Type",
+                "description": "Type of Managed Service Identity: SystemAssigned, UserAssigned, or SystemAssigned, UserAssigned.",
+                "type": "select",
+                "required": true,
+                "default": "SystemAssigned",
+                "options": [
+                  { "value": "SystemAssigned", "label": "SystemAssigned" },
+                  { "value": "UserAssigned", "label": "UserAssigned" },
+                  { "value": "SystemAssigned, UserAssigned", "label": "SystemAssigned, UserAssigned" }
+                ]
+              },
+              {
+                "id": "identity_ids",
+                "label": "User Assigned Identity IDs",
+                "description": "A list of User Assigned Managed Identity IDs to be assigned.",
+                "type": "list",
+                "required": false,
+                "default": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags_section",
+        "label": "Tags",
+        "description": "Resource tags for categorization, governance, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the storage account for organization and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
