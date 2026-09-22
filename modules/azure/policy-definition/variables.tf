@@ -14,9 +14,8 @@ variable "display_name" {
 }
 
 variable "policy_type" {
-  description = "(Optional) The policy type. Possible values are BuiltIn, Custom, NotSpecified and Static. Defaults to Custom. Changing this forces a new resource to be created."
+  description = "(Required) The policy type. Possible values are BuiltIn, Custom, NotSpecified and Static. Changing this forces a new resource to be created."
   type        = string
-  default     = "Custom"
 
   validation {
     condition     = contains(["BuiltIn", "Custom", "NotSpecified", "Static"], var.policy_type)
@@ -25,9 +24,8 @@ variable "policy_type" {
 }
 
 variable "mode" {
-  description = "(Optional) The policy resource manager mode that determines which resource types will be evaluated. Possible values are All, Indexed, NotSpecified, Microsoft.CustomerLockbox.Data, Microsoft.DataCatalog.Data, Microsoft.KeyVault.Data, Microsoft.Kubernetes.Data, Microsoft.MachineLearningServices.Data, Microsoft.Network.Data, Microsoft.Synapse.Data. Defaults to All."
+  description = "(Required) The policy resource manager mode that determines which resource types will be evaluated. Possible values are All, Indexed, NotSpecified, Microsoft.CustomerLockbox.Data, Microsoft.DataCatalog.Data, Microsoft.KeyVault.Data, Microsoft.Kubernetes.Data, Microsoft.MachineLearningServices.Data, Microsoft.Network.Data, Microsoft.Synapse.Data."
   type        = string
-  default     = "All"
 
   validation {
     condition = contains([
