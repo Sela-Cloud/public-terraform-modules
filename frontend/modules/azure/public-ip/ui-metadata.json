@@ -1,0 +1,264 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "public-ip",
+  "version": "1.0.0",
+  "display": {
+    "label": "Public IP",
+    "icon": "public-ip",
+    "description": "Azure Public IP address for inbound and outbound internet connectivity to Azure resources",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "public_ip",
+    "key_field": "name",
+    "key_label": "Public IP Name",
+    "key_description": "The unique name for the Azure Public IP address. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Public IP settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Public IP Name",
+            "description": "Name of the Azure Public IP. Must be between 1 and 80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores.",
+            "type": "text",
+            "required": true,
+            "default": "pip-default",
+            "placeholder": "pip-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9_.-]*[a-zA-Z0-9_])?$",
+              "pattern_error": "Public IP name must be between 1 and 80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Public IP.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Public IP should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ip_configuration",
+        "label": "IP Configuration",
+        "description": "Allocation method, SKU, IP version, idle timeout, and availability zones.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "allocation_method",
+            "label": "Allocation Method",
+            "description": "Defines the allocation method for this IP address. Standard SKU requires Static.",
+            "type": "select",
+            "required": false,
+            "default": "Static",
+            "options": [
+              { "value": "Static", "label": "Static (Standard / Recommended)" },
+              { "value": "Dynamic", "label": "Dynamic (Basic SKU only)" }
+            ]
+          },
+          {
+            "id": "sku",
+            "label": "SKU",
+            "description": "The SKU of the Public IP. Standard is recommended as Basic SKU is deprecated/retiring by Azure.",
+            "type": "select",
+            "required": false,
+            "default": "Standard",
+            "options": [
+              { "value": "Standard", "label": "Standard" },
+              { "value": "Basic", "label": "Basic" }
+            ]
+          },
+          {
+            "id": "sku_tier",
+            "label": "SKU Tier",
+            "description": "The SKU Tier of the Public IP. Regional is standard for resources within an Azure region. Global requires Standard SKU.",
+            "type": "select",
+            "required": false,
+            "default": "Regional",
+            "options": [
+              { "value": "Regional", "label": "Regional" },
+              { "value": "Global", "label": "Global" }
+            ]
+          },
+          {
+            "id": "ip_version",
+            "label": "IP Version",
+            "description": "The IP Version to use: IPv4 or IPv6.",
+            "type": "select",
+            "required": false,
+            "default": "IPv4",
+            "options": [
+              { "value": "IPv4", "label": "IPv4" },
+              { "value": "IPv6", "label": "IPv6" }
+            ]
+          },
+          {
+            "id": "idle_timeout_in_minutes",
+            "label": "TCP Idle Timeout (Minutes)",
+            "description": "The idle timeout in minutes for TCP connections (between 4 and 30 minutes).",
+            "type": "number",
+            "required": false,
+            "default": 4,
+            "placeholder": "4",
+            "validation": {
+              "min": 4,
+              "max": 30
+            }
+          },
+          {
+            "id": "zones",
+            "label": "Availability Zones",
+            "description": "List of Availability Zones to allocate the Public IP in (e.g. ['1', '2', '3'] for zone-redundant, or ['1'] for zonal). Requires Standard SKU.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "placeholder": "1"
+          }
+        ]
+      },
+      {
+        "id": "dns_and_routing",
+        "label": "DNS & Routing",
+        "description": "DNS name label, reverse FQDN, public IP prefix, and IP tags.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "domain_name_label",
+            "label": "DNS Domain Name Label",
+            "description": "Label for the Domain Name used to create the FQDN in Azure DNS (<label>.<location>.cloudapp.azure.com).",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "my-pip-service"
+          },
+          {
+            "id": "reverse_fqdn",
+            "label": "Reverse FQDN",
+            "description": "A fully qualified domain name that resolves to this public IP address for PTR DNS records.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "service.example.com"
+          },
+          {
+            "id": "public_ip_prefix_id",
+            "label": "Public IP Prefix ID",
+            "description": "The resource ID of the Public IP Prefix from which to allocate this Public IP.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/publicIPPrefixes/..."
+          },
+          {
+            "id": "ip_tags",
+            "label": "IP Tags",
+            "description": "Key-value pairs of IP tags (e.g., RoutingPreference = Internet).",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      },
+      {
+        "id": "security_and_tags",
+        "label": "Security & Tags",
+        "description": "DDoS protection, edge zone, and resource tags.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "ddos_protection_mode",
+            "label": "DDoS Protection Mode",
+            "description": "The DDoS protection mode of the public IP.",
+            "type": "select",
+            "required": false,
+            "default": "VirtualNetworkInherited",
+            "options": [
+              { "value": "VirtualNetworkInherited", "label": "Virtual Network Inherited" },
+              { "value": "Enabled", "label": "Enabled" },
+              { "value": "Disabled", "label": "Disabled" }
+            ]
+          },
+          {
+            "id": "ddos_protection_plan_id",
+            "label": "DDoS Protection Plan ID",
+            "description": "The resource ID of the DDoS Protection Plan. Required when DDoS Protection Mode is 'Enabled'.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/ddosProtectionPlans/...",
+            "depends_on": {
+              "field": "ddos_protection_mode",
+              "operator": "eq",
+              "value": "Enabled"
+            }
+          },
+          {
+            "id": "edge_zone",
+            "label": "Edge Zone",
+            "description": "Specifies the Edge Zone within the Azure Region where this Public IP should exist.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "microsoftlosangeles"
+          },
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Public IP for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
