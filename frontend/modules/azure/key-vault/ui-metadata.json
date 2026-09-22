@@ -1,0 +1,324 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "key-vault",
+  "version": "1.0.0",
+  "display": {
+    "label": "Key Vault",
+    "icon": "azure-key-vault",
+    "description": "Azure Key Vault for safeguarding cryptographic keys, secrets, and certificates",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "key_vault",
+    "key_field": "name",
+    "key_label": "Key Vault Name",
+    "key_description": "The unique name for the Azure Key Vault. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Key Vault settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Key Vault Name",
+            "description": "Globally unique name for the Key Vault. Must be 3-24 characters, contain only alphanumeric characters and hyphens, start with a letter, and end with a letter or digit.",
+            "type": "text",
+            "required": true,
+            "placeholder": "kv-my-workload-01",
+            "validation": {
+              "min": 3,
+              "max": 24,
+              "pattern": "^[a-zA-Z][a-zA-Z0-9-]{1,22}[a-zA-Z0-9]$",
+              "pattern_error": "Key Vault name must be 3-24 characters, start with a letter, end with a letter or digit, and contain only alphanumerics and hyphens."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Key Vault.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Key Vault should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (Sydney)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo)" },
+              { "value": "centralindia", "label": "Central India (Pune)" }
+            ]
+          },
+          {
+            "id": "sku_name",
+            "label": "SKU Name",
+            "description": "The SKU tier used for this Key Vault. Standard supports software-protected keys and secrets. Premium adds HSM-protected keys.",
+            "type": "select",
+            "required": true,
+            "default": "standard",
+            "options": [
+              {
+                "value": "standard",
+                "label": "Standard (Software-protected keys and secrets)"
+              },
+              {
+                "value": "premium",
+                "label": "Premium (Includes Hardware Security Module HSM-protected keys)"
+              }
+            ]
+          },
+          {
+            "id": "tenant_id",
+            "label": "Tenant ID",
+            "description": "The Azure Active Directory Tenant ID used for authenticating requests to the Key Vault.",
+            "type": "text",
+            "required": true,
+            "placeholder": "00000000-0000-0000-0000-000000000000"
+          },
+          {
+            "id": "rbac_authorization_enabled",
+            "label": "RBAC Authorization Enabled",
+            "description": "Specifies whether Azure Key Vault uses Role-Based Access Control (Azure RBAC) for authorization of data actions (Recommended). When true, access policies are not used.",
+            "type": "boolean",
+            "required": true,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Security & Recovery Settings",
+        "description": "Integration, recovery, and access settings for the Key Vault.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "enabled_for_deployment",
+            "label": "Enabled for Deployment",
+            "description": "Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the vault.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "enabled_for_disk_encryption",
+            "label": "Enabled for Disk Encryption",
+            "description": "Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "enabled_for_template_deployment",
+            "label": "Enabled for Template Deployment",
+            "description": "Specifies whether Azure Resource Manager is permitted to retrieve secrets from the vault during ARM template deployments.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "purge_protection_enabled",
+            "label": "Purge Protection Enabled",
+            "description": "Prevents the Key Vault and its contents from being permanently deleted until the soft-delete retention period expires. Once enabled, cannot be disabled.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "soft_delete_retention_days",
+            "label": "Soft-Delete Retention Days",
+            "description": "The number of days that items should be retained for once soft-deleted. Must be between 7 and 90 days.",
+            "type": "number",
+            "required": false,
+            "default": 90,
+            "validation": {
+              "min": 7,
+              "max": 90
+            }
+          },
+          {
+            "id": "public_network_access_enabled",
+            "label": "Public Network Access Enabled",
+            "description": "Specifies whether public network traffic is allowed to access the Key Vault.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "network_acls",
+        "label": "Network ACLs",
+        "description": "Network firewall rules restricting access to the Key Vault.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "network_acls",
+            "label": "Network ACLs Configuration",
+            "description": "Firewall configuration for the Key Vault.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "default_action",
+                "label": "Default Action",
+                "description": "The default action when no rule matches from ip_rules or virtual_network_subnet_ids.",
+                "type": "select",
+                "required": false,
+                "default": "Deny",
+                "options": [
+                  { "value": "Allow", "label": "Allow" },
+                  { "value": "Deny", "label": "Deny" }
+                ]
+              },
+              {
+                "id": "bypass",
+                "label": "Bypass",
+                "description": "Specifies which traffic can bypass the network rules.",
+                "type": "select",
+                "required": false,
+                "default": "AzureServices",
+                "options": [
+                  { "value": "AzureServices", "label": "Azure Services (Trusted)" },
+                  { "value": "None", "label": "None" }
+                ]
+              },
+              {
+                "id": "ip_rules",
+                "label": "Allowed IP Rules",
+                "description": "List of IPv4 CIDR blocks allowed to access the Key Vault.",
+                "type": "list",
+                "required": false,
+                "default": [],
+                "placeholder": "203.0.113.0/24"
+              },
+              {
+                "id": "virtual_network_subnet_ids",
+                "label": "Allowed Subnet IDs",
+                "description": "List of virtual network subnet IDs allowed to access the Key Vault.",
+                "type": "list",
+                "required": false,
+                "default": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "access_policies",
+        "label": "Access Policies",
+        "description": "Inline Key Vault access policies when RBAC authorization is disabled.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "access_policies",
+            "label": "Access Policies",
+            "description": "List of access policies for identities accessing the Key Vault.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "tenant_id",
+                "label": "Tenant ID",
+                "description": "The Azure Active Directory Tenant ID.",
+                "type": "text",
+                "required": true,
+                "placeholder": "00000000-0000-0000-0000-000000000000"
+              },
+              {
+                "id": "object_id",
+                "label": "Object ID",
+                "description": "The Azure AD Object ID of the user, service principal, or security group.",
+                "type": "text",
+                "required": true,
+                "placeholder": "11111111-1111-1111-1111-111111111111"
+              },
+              {
+                "id": "application_id",
+                "label": "Application ID",
+                "description": "Optional Application ID for compound identity authorization.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true
+              },
+              {
+                "id": "key_permissions",
+                "label": "Key Permissions",
+                "description": "List of key permissions (e.g. Get, List, Create, Delete, Encrypt, Decrypt).",
+                "type": "list",
+                "required": false,
+                "default": []
+              },
+              {
+                "id": "secret_permissions",
+                "label": "Secret Permissions",
+                "description": "List of secret permissions (e.g. Get, List, Set, Delete).",
+                "type": "list",
+                "required": false,
+                "default": []
+              },
+              {
+                "id": "certificate_permissions",
+                "label": "Certificate Permissions",
+                "description": "List of certificate permissions (e.g. Get, List, Create, Delete).",
+                "type": "list",
+                "required": false,
+                "default": []
+              },
+              {
+                "id": "storage_permissions",
+                "label": "Storage Permissions",
+                "description": "List of storage account permissions.",
+                "type": "list",
+                "required": false,
+                "default": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tagging",
+        "description": "Resource tags for governance and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to assign to the Key Vault.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
