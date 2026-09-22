@@ -1,0 +1,200 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "storage-blob",
+  "version": "1.0.0",
+  "display": {
+    "label": "Storage Blob",
+    "icon": "storage-blob",
+    "description": "Azure Storage Blob for storing files, binary data, or documents within a storage container",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "storage_blob",
+    "key_field": "name",
+    "key_label": "Blob Name",
+    "key_description": "The unique name for the Azure Storage Blob within the storage container. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Storage Blob settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Blob Name",
+            "description": "Name of the storage blob. Must be unique within the storage container.",
+            "type": "text",
+            "required": true,
+            "default": "sample-blob.txt",
+            "placeholder": "sample-blob.txt",
+            "validation": {
+              "min": 1,
+              "max": 1024
+            }
+          },
+          {
+            "id": "storage_container_id",
+            "label": "Storage Container ID",
+            "description": "The Resource ID of the Azure Storage Container in which this blob should be created.",
+            "type": "text",
+            "required": true,
+            "default": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-default/providers/Microsoft.Storage/storageAccounts/storagedefault/blobServices/default/containers/container-default",
+            "placeholder": "/subscriptions/.../containers/container-default"
+          },
+          {
+            "id": "type",
+            "label": "Blob Type",
+            "description": "The type of the storage blob to create. Block blobs are used for documents and media files. Append blobs are optimized for append operations like logging. Page blobs are optimized for random read/write operations.",
+            "type": "select",
+            "required": true,
+            "default": "Block",
+            "options": [
+              { "value": "Block", "label": "Block (Standard files/media)" },
+              { "value": "Append", "label": "Append (Log files/append-only)" },
+              { "value": "Page", "label": "Page (Virtual disks/random I/O)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "content",
+        "label": "Content & Source",
+        "description": "Blob content source, content type, and size.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "content_type",
+            "label": "Content Type",
+            "description": "The MIME content type of the storage blob (e.g., application/json, text/plain, image/png). Cannot be defined if source_uri is defined.",
+            "type": "text",
+            "required": false,
+            "default": "application/octet-stream",
+            "placeholder": "application/json"
+          },
+          {
+            "id": "source_content",
+            "label": "Source Content (Inline)",
+            "description": "Inline text or data content for this blob (Block blobs only). Cannot be specified if source or source_uri is specified.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "Hello, World!"
+          },
+          {
+            "id": "source_file",
+            "label": "Source File Path",
+            "description": "An absolute path to a file on the local system to upload to the blob. Cannot be specified if source_content or source_uri is specified.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/path/to/local/file.txt"
+          },
+          {
+            "id": "source_uri",
+            "label": "Source URI",
+            "description": "The URI of an existing blob or Azure File to copy as the source contents. Cannot be specified if source or source_content is specified.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "https://myaccount.blob.core.windows.net/source-container/source-file.txt"
+          },
+          {
+            "id": "size",
+            "label": "Blob Size (Bytes)",
+            "description": "Used only for Page blobs to specify the size in bytes of the blob. Must be a multiple of 512.",
+            "type": "number",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "1024"
+          }
+        ]
+      },
+      {
+        "id": "tier_and_caching",
+        "label": "Access Tier & Caching",
+        "description": "Storage access tier, cache control headers, and MD5 hash.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "access_tier",
+            "label": "Access Tier",
+            "description": "The access tier of the storage blob. Hot is optimized for frequent access, Cool for infrequent access, Cold for rarely accessed data, Archive for offline data.",
+            "type": "select",
+            "required": false,
+            "default": "Hot",
+            "options": [
+              { "value": "Hot", "label": "Hot (Frequently accessed data)" },
+              { "value": "Cool", "label": "Cool (Infrequently accessed data, 30-day min)" },
+              { "value": "Cold", "label": "Cold (Rarely accessed data, 90-day min)" },
+              { "value": "Archive", "label": "Archive (Long-term retention, 180-day min)" }
+            ]
+          },
+          {
+            "id": "cache_control",
+            "label": "Cache-Control Header",
+            "description": "Controls the Cache-Control HTTP header content of the response when the blob is requested.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "max-age=3600, must-revalidate"
+          },
+          {
+            "id": "content_md5",
+            "label": "Content MD5",
+            "description": "The MD5 sum (base64-encoded) of the blob contents for integrity verification. Cannot be set with source_uri or for Append/Page blobs.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "Q2hlY2sgSW50ZWdyaXR5IQ=="
+          }
+        ]
+      },
+      {
+        "id": "advanced_and_metadata",
+        "label": "Advanced & Metadata",
+        "description": "Encryption scope, concurrent upload parallelism, and custom metadata.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "encryption_scope",
+            "label": "Encryption Scope",
+            "description": "The name of the encryption scope to use for this blob in the storage account.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "my-encryption-scope"
+          },
+          {
+            "id": "parallelism",
+            "label": "Upload Parallelism",
+            "description": "The number of workers per CPU core to run for concurrent uploads. Defaults to 8.",
+            "type": "number",
+            "required": false,
+            "default": 8,
+            "placeholder": "8",
+            "validation": {
+              "min": 1
+            }
+          },
+          {
+            "id": "metadata",
+            "label": "Blob Metadata",
+            "description": "A mapping of custom key-value pairs to assign as metadata to the storage blob.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
