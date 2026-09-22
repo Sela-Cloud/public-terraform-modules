@@ -1,0 +1,31 @@
+module "virtual_machine_scale_set" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/virtual-machine-scale-set?ref=v0.7.6"
+  for_each = var.virtual_machine_scale_set
+
+  name                            = each.value.name
+  resource_group_name             = each.value.resource_group_name
+  location                        = each.value.location
+  sku                             = each.value.sku
+  upgrade_policy_mode             = each.value.upgrade_policy_mode
+  automatic_os_upgrade            = each.value.automatic_os_upgrade
+  health_probe_id                 = each.value.health_probe_id
+  rolling_upgrade_policy          = each.value.rolling_upgrade_policy
+  overprovision                   = each.value.overprovision
+  single_placement_group          = each.value.single_placement_group
+  priority                        = each.value.priority
+  eviction_policy                 = each.value.eviction_policy
+  zones                           = each.value.zones
+  proximity_placement_group_id    = each.value.proximity_placement_group_id
+  license_type                    = each.value.license_type
+  storage_profile_os_disk         = each.value.storage_profile_os_disk
+  storage_profile_image_reference = each.value.storage_profile_image_reference
+  storage_profile_data_disks      = each.value.storage_profile_data_disks
+  os_profile                      = each.value.os_profile
+  os_profile_linux_config         = each.value.os_profile_linux_config
+  os_profile_windows_config       = each.value.os_profile_windows_config
+  network_profiles                = each.value.network_profiles
+  identity                        = each.value.identity
+  boot_diagnostics                = each.value.boot_diagnostics
+  extensions                      = each.value.extensions
+  tags                            = each.value.tags
+}
