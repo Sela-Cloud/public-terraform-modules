@@ -1,0 +1,287 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "private-endpoint",
+  "version": "1.0.0",
+  "display": {
+    "label": "Private Endpoint",
+    "icon": "azure-private-endpoint",
+    "description": "Azure Private Endpoint providing secure private IP connectivity from a VNet subnet to Azure and Private Link services",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "private_endpoint",
+    "key_field": "name",
+    "key_label": "Private Endpoint Name",
+    "key_description": "The unique name for the Azure Private Endpoint. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Private Endpoint identity and network placement settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Private Endpoint Name",
+            "description": "Name of the Azure Private Endpoint. Must be between 1 and 80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores.",
+            "type": "text",
+            "required": true,
+            "default": "pe-default",
+            "placeholder": "pe-my-service",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9_.-]*[a-zA-Z0-9_])?$",
+              "pattern_error": "Private Endpoint name must be between 1 and 80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Private Endpoint.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Private Endpoint should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (Sydney)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo)" },
+              { "value": "centralindia", "label": "Central India (Pune)" }
+            ]
+          },
+          {
+            "id": "subnet_id",
+            "label": "Subnet Resource ID",
+            "description": "The full Azure resource ID of the Subnet from which the private IP will be allocated.",
+            "type": "text",
+            "required": true,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/..."
+          },
+          {
+            "id": "custom_network_interface_name",
+            "label": "Custom Network Interface Name",
+            "description": "Optional custom name for the network interface automatically created by Azure for this Private Endpoint.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "nic-pe-my-service"
+          }
+        ]
+      },
+      {
+        "id": "connection",
+        "label": "Private Service Connection",
+        "description": "Target service configuration for the Azure Private Link connection.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "private_service_connection",
+            "label": "Service Connection Configuration",
+            "description": "Configuration details for the Private Service Connection.",
+            "type": "object",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Connection Name",
+                "description": "Name of the Private Service Connection.",
+                "type": "text",
+                "required": true,
+                "default": "psc-default",
+                "placeholder": "psc-my-service"
+              },
+              {
+                "id": "private_connection_resource_id",
+                "label": "Target Resource ID",
+                "description": "The Azure resource ID of the target resource (e.g. Storage Account, Key Vault, Azure SQL). Specify either this or Service Alias.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Storage/storageAccounts/..."
+              },
+              {
+                "id": "private_connection_resource_alias",
+                "label": "Private Link Service Alias",
+                "description": "The alias of the target Private Link Service. Specify either this or Target Resource ID.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "my-pls.12345678-1234-1234-1234-1234567890ab.centralus.azure.privatelinkservice"
+              },
+              {
+                "id": "subresource_names",
+                "label": "Subresource Names",
+                "description": "A list of subresource names to which the Private Endpoint connects (e.g., ['blob'] for Storage, ['vault'] for Key Vault, ['sqlServer'] for SQL).",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "blob"
+              },
+              {
+                "id": "is_manual_connection",
+                "label": "Manual Approval Connection",
+                "description": "Set to true if this connection requires manual approval from the target resource owner.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "request_message",
+                "label": "Approval Request Message",
+                "description": "Optional message sent with the request when manual connection approval is required.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "Requesting private endpoint connection for application workload",
+                "depends_on": {
+                  "field": "is_manual_connection",
+                  "operator": "eq",
+                  "value": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dns_zone_group",
+        "label": "Private DNS Zone Integration",
+        "description": "Associate Private DNS Zones to automatically resolve the service private IP.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "private_dns_zone_group",
+            "label": "Private DNS Zone Group",
+            "description": "Private DNS Zone Group settings.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "DNS Zone Group Name",
+                "description": "Name of the Private DNS Zone Group.",
+                "type": "text",
+                "required": true,
+                "default": "default"
+              },
+              {
+                "id": "private_dns_zone_ids",
+                "label": "Private DNS Zone IDs",
+                "description": "List of Private DNS Zone resource IDs to associate with this Private Endpoint.",
+                "type": "list",
+                "required": true,
+                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ip_allocations",
+        "label": "Static Private IP Allocations",
+        "description": "Assign specific static private IP addresses from the subnet to the Private Endpoint.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "ip_configurations",
+            "label": "IP Configurations",
+            "description": "List of static IP configuration blocks for the Private Endpoint.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Configuration Name",
+                "description": "Name of this IP configuration entry.",
+                "type": "text",
+                "required": true,
+                "default": "ipconfig1"
+              },
+              {
+                "id": "private_ip_address",
+                "label": "Static Private IP Address",
+                "description": "The static IPv4 address within the subnet to allocate to this Private Endpoint.",
+                "type": "text",
+                "required": true,
+                "placeholder": "10.0.1.10",
+                "validation": {
+                  "pattern": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$",
+                  "pattern_error": "Must be a valid IPv4 address (e.g., 10.0.1.10)."
+                }
+              },
+              {
+                "id": "subresource_name",
+                "label": "Subresource Name",
+                "description": "The subresource name this static IP applies to (e.g. 'blob').",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "blob"
+              },
+              {
+                "id": "member_name",
+                "label": "Member Name",
+                "description": "The member name this static IP applies to (e.g. 'blob').",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "blob"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tagging",
+        "description": "Resource tags for governance, categorization, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to assign to the Private Endpoint.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
