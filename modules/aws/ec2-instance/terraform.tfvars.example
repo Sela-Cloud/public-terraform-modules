@@ -2,7 +2,19 @@ region        = "ap-south-1"
 name          = "my-ec2-instance"
 ami           = null # Automatically uses latest Amazon Linux 2023 AMI if null
 instance_type = "t3.micro"
-key_name      = null
+key_name      = null # Or set create_key_pair = true below
+
+# SSH & Key Pair Configuration
+create_key_pair  = false
+generate_ssh_key = false
+public_key       = null # "ssh-rsa AAAAB3NzaC1yc2E..."
+ssh_user         = "ec2-user"
+
+# Dedicated SSH Security Group
+create_security_group = false
+vpc_id                = null # "vpc-0123456789abcdef0"
+ssh_cidr_blocks       = ["0.0.0.0/0"]
+
 
 associate_public_ip_address = true
 monitoring                  = false

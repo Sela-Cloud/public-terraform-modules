@@ -19,7 +19,74 @@ data "aws_ami" "amazon_linux_2023" {
 }
 
 locals {
-  ami_id = coalesce(var.ami, try(data.aws_ami.amazon_linux_2023[0].id, null))
+  ami_id             = coalesce(var.ami, try(data.aws_ami.amazon_linux_2023[0].id, null))
+  key_name           = try(aws_key_pair.this[0].key_name, var.key_name)
+  security_group_ids = compact(concat(
+    var.vpc_security_group_ids,
+    try([aws_security_group.this[0].id], [])
+  ))
+}
+
+################################################################################
+# SSH Key Pair
+################################################################################
+
+resource "tls_private_key" "this" {
+  count     = var.create_key_pair && var.generate_ssh_key && var.public_key == null ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "this" {
+  count      = var.create_key_pair ? 1 : 0
+  key_name   = coalesce(var.key_pair_name, "${var.name}-key")
+  public_key = coalesce(var.public_key, try(tls_private_key.this[0].public_key_openssh, null))
+
+  tags = merge(
+    var.tags,
+    {
+      Name = coalesce(var.key_pair_name, "${var.name}-key")
+    }
+  )
+}
+
+################################################################################
+# Dedicated Security Group for SSH
+################################################################################
+
+resource "aws_security_group" "this" {
+  count       = var.create_security_group && var.vpc_id != null ? 1 : 0
+  name        = coalesce(var.security_group_name, "${var.name}-sg")
+  description = var.security_group_description
+  vpc_id      = var.vpc_id
+
+  tags = merge(
+    var.tags,
+    var.security_group_tags,
+    {
+      Name = coalesce(var.security_group_name, "${var.name}-sg")
+    }
+  )
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ssh" {
+  for_each = var.create_security_group && var.vpc_id != null ? toset(var.ssh_cidr_blocks) : []
+
+  security_group_id = aws_security_group.this[0].id
+  description       = "Allow inbound SSH access"
+  from_port         = 22
+  to_port           = 22
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.value
+}
+
+resource "aws_vpc_security_group_egress_rule" "all" {
+  count = var.create_security_group && var.vpc_id != null ? 1 : 0
+
+  security_group_id = aws_security_group.this[0].id
+  description       = "Allow all outbound traffic"
+  ip_protocol       = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
 }
 
 ################################################################################
@@ -29,9 +96,9 @@ locals {
 resource "aws_instance" "this" {
   ami                         = local.ami_id
   instance_type               = var.instance_type
-  key_name                    = var.key_name
+  key_name                    = local.key_name
   subnet_id                   = var.subnet_id
-  vpc_security_group_ids      = length(var.vpc_security_group_ids) > 0 ? var.vpc_security_group_ids : null
+  vpc_security_group_ids      = length(local.security_group_ids) > 0 ? local.security_group_ids : null
   associate_public_ip_address = var.associate_public_ip_address
   private_ip                  = var.private_ip
   secondary_private_ips       = length(var.secondary_private_ips) > 0 ? var.secondary_private_ips : null
@@ -96,6 +163,61 @@ resource "aws_instance" "this" {
     for_each = var.auto_recovery != null ? [var.auto_recovery] : []
     content {
       auto_recovery = maintenance_options.value
+    }
+  }
+
+  dynamic "instance_market_options" {
+    for_each = var.instance_market_options != null ? [var.instance_market_options] : []
+    content {
+      market_type = instance_market_options.value.market_type
+      dynamic "spot_options" {
+        for_each = instance_market_options.value.spot_options != null ? [instance_market_options.value.spot_options] : []
+        content {
+          max_price                      = spot_options.value.max_price
+          spot_instance_type             = spot_options.value.spot_instance_type
+          instance_interruption_behavior = spot_options.value.instance_interruption_behavior
+          valid_until                    = spot_options.value.valid_until
+        }
+      }
+    }
+  }
+
+  dynamic "enclave_options" {
+    for_each = var.enable_enclave != null ? [1] : []
+    content {
+      enabled = var.enable_enclave
+    }
+  }
+
+  dynamic "private_dns_name_options" {
+    for_each = var.private_dns_name_options != null ? [var.private_dns_name_options] : []
+    content {
+      hostname_type                        = private_dns_name_options.value.hostname_type
+      enable_resource_name_dns_a_record    = private_dns_name_options.value.enable_resource_name_dns_a_record
+      enable_resource_name_dns_aaaa_record = private_dns_name_options.value.enable_resource_name_dns_aaaa_record
+    }
+  }
+
+  dynamic "capacity_reservation_specification" {
+    for_each = var.capacity_reservation_specification != null ? [var.capacity_reservation_specification] : []
+    content {
+      capacity_reservation_preference = capacity_reservation_specification.value.capacity_reservation_preference
+      dynamic "capacity_reservation_target" {
+        for_each = capacity_reservation_specification.value.capacity_reservation_target != null ? [capacity_reservation_specification.value.capacity_reservation_target] : []
+        content {
+          capacity_reservation_id                 = capacity_reservation_target.value.capacity_reservation_id
+          capacity_reservation_resource_group_arn = capacity_reservation_target.value.capacity_reservation_resource_group_arn
+        }
+      }
+    }
+  }
+
+  dynamic "ephemeral_block_device" {
+    for_each = var.ephemeral_block_device
+    content {
+      device_name  = ephemeral_block_device.value.device_name
+      virtual_name = ephemeral_block_device.value.virtual_name
+      no_device    = ephemeral_block_device.value.no_device
     }
   }
 

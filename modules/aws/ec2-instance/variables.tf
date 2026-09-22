@@ -272,3 +272,134 @@ variable "volume_tags" {
   type        = map(string)
   default     = {}
 }
+
+################################################################################
+# SSH & Key Pair Configuration
+################################################################################
+
+variable "create_key_pair" {
+  description = "Whether to create an AWS Key Pair for SSH access."
+  type        = bool
+  default     = false
+}
+
+variable "key_pair_name" {
+  description = "Name for the created AWS Key Pair. Defaults to '$${var.name}-key' if null."
+  type        = string
+  default     = null
+}
+
+variable "public_key" {
+  description = "The public key material to import into the created key pair. If null and generate_ssh_key is true, a key pair is generated automatically."
+  type        = string
+  default     = null
+}
+
+variable "generate_ssh_key" {
+  description = "Whether to automatically generate a private key using the TLS provider when create_key_pair is true and public_key is null."
+  type        = bool
+  default     = false
+}
+
+variable "ssh_user" {
+  description = "Default SSH user for the instance (e.g., 'ec2-user' for Amazon Linux, 'ubuntu' for Ubuntu)."
+  type        = string
+  default     = "ec2-user"
+}
+
+################################################################################
+# Dedicated Security Group for SSH
+################################################################################
+
+variable "create_security_group" {
+  description = "Whether to create a dedicated security group with inbound SSH (port 22) and outbound access allowed."
+  type        = bool
+  default     = false
+}
+
+variable "vpc_id" {
+  description = "The VPC ID required to create the dedicated security group."
+  type        = string
+  default     = null
+}
+
+variable "security_group_name" {
+  description = "Name of the dedicated security group. Defaults to '$${var.name}-sg' if null."
+  type        = string
+  default     = null
+}
+
+variable "security_group_description" {
+  description = "Description of the dedicated security group."
+  type        = string
+  default     = "Security group for EC2 instance with SSH access"
+}
+
+variable "ssh_cidr_blocks" {
+  description = "List of IPv4 CIDR blocks permitted to connect via SSH on port 22."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "security_group_tags" {
+  description = "Additional tags for the created security group."
+  type        = map(string)
+  default     = {}
+}
+
+################################################################################
+# Advanced EC2 Instance Blocks
+################################################################################
+
+variable "instance_market_options" {
+  description = "Market options for the instance (e.g., spot instances)."
+  type = object({
+    market_type = optional(string, "spot")
+    spot_options = optional(object({
+      max_price                      = optional(string, null)
+      spot_instance_type             = optional(string, "one-time")
+      instance_interruption_behavior = optional(string, "terminate")
+      valid_until                    = optional(string, null)
+    }), null)
+  })
+  default = null
+}
+
+variable "enable_enclave" {
+  description = "Whether to enable Nitro Enclaves on the instance."
+  type        = bool
+  default     = null
+}
+
+variable "private_dns_name_options" {
+  description = "Customizes the private DNS name options for the instance."
+  type = object({
+    hostname_type                        = optional(string, null)
+    enable_resource_name_dns_a_record    = optional(bool, null)
+    enable_resource_name_dns_aaaa_record = optional(bool, null)
+  })
+  default = null
+}
+
+variable "capacity_reservation_specification" {
+  description = "Targeting for EC2 capacity reservations."
+  type = object({
+    capacity_reservation_preference = optional(string, null)
+    capacity_reservation_target = optional(object({
+      capacity_reservation_id                 = optional(string, null)
+      capacity_reservation_resource_group_arn = optional(string, null)
+    }), null)
+  })
+  default = null
+}
+
+variable "ephemeral_block_device" {
+  description = "Customize Ephemeral (Instance Store) volumes on the instance."
+  type = list(object({
+    device_name  = string
+    virtual_name = optional(string, null)
+    no_device    = optional(bool, null)
+  }))
+  default = []
+}
+

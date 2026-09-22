@@ -16,6 +16,13 @@ resource "aws_vpc_peering_connection" "this" {
     }
   }
 
+  dynamic "accepter" {
+    for_each = var.auto_accept && var.allow_remote_vpc_dns_resolution ? [1] : []
+    content {
+      allow_remote_vpc_dns_resolution = true
+    }
+  }
+
   tags = merge(
     var.tags,
     {
