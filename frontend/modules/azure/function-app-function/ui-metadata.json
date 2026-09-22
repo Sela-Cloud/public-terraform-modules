@@ -1,0 +1,153 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "function-app-function",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Function App Function",
+    "icon": "azure-function",
+    "description": "Manages an individual function within an Azure Function App with code files, triggers, and bindings",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "function_app_function",
+    "key_field": "name",
+    "key_label": "Function Name",
+    "key_description": "The unique name for the function within the Function App. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core function identification and runtime settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Function Name",
+            "description": "The name of the function. Changing this forces a new resource to be created.",
+            "type": "text",
+            "required": true,
+            "placeholder": "HelloWorldHttp"
+          },
+          {
+            "id": "function_app_id",
+            "label": "Function App ID",
+            "description": "The ID of the Function App in which this function should reside.",
+            "type": "text",
+            "required": true,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Web/sites/my-func-app"
+          },
+          {
+            "id": "language",
+            "label": "Language",
+            "description": "The language the Function is written in.",
+            "type": "select",
+            "nullable": true,
+            "options": [
+              {
+                "value": "CSharp",
+                "label": "C#"
+              },
+              {
+                "value": "Javascript",
+                "label": "JavaScript"
+              },
+              {
+                "value": "TypeScript",
+                "label": "TypeScript"
+              },
+              {
+                "value": "Python",
+                "label": "Python"
+              },
+              {
+                "value": "Java",
+                "label": "Java"
+              },
+              {
+                "value": "PowerShell",
+                "label": "PowerShell"
+              },
+              {
+                "value": "Custom",
+                "label": "Custom"
+              }
+            ]
+          },
+          {
+            "id": "enabled",
+            "label": "Enabled",
+            "description": "Whether this function is enabled.",
+            "type": "boolean",
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "bindings",
+        "label": "Function Bindings & Triggers",
+        "description": "Define triggers, inputs, and outputs via JSON configuration.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "config_json",
+            "label": "Configuration JSON",
+            "description": "The config for this Function in JSON format (function.json), specifying bindings, triggers, and return directives.",
+            "type": "text",
+            "multiline": true,
+            "required": true,
+            "placeholder": "{\n  \"bindings\": [\n    {\n      \"authLevel\": \"function\",\n      \"direction\": \"in\",\n      \"methods\": [\"get\", \"post\"],\n      \"name\": \"req\",\n      \"type\": \"httpTrigger\"\n    },\n    {\n      \"direction\": \"out\",\n      \"name\": \"$return\",\n      \"type\": \"http\"\n    }\n  ]\n}"
+          }
+        ]
+      },
+      {
+        "id": "code_files",
+        "label": "Source Code Files",
+        "description": "Source code files deployed to the function.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "files",
+            "label": "Source Files",
+            "description": "List of source code files uploaded for this function.",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "name",
+                "label": "File Name",
+                "description": "The filename of the source file (e.g. run.csx, index.js, __init__.py).",
+                "type": "text",
+                "required": true,
+                "placeholder": "index.js"
+              },
+              {
+                "id": "content",
+                "label": "File Content",
+                "description": "The actual source code content of the file.",
+                "type": "text",
+                "multiline": true,
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "testing",
+        "label": "Testing",
+        "description": "Test data and portal execution parameters.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "test_data",
+            "label": "Test Data (JSON)",
+            "description": "Optional test data in JSON format used for testing the function in the Azure portal.",
+            "type": "text",
+            "multiline": true,
+            "nullable": true,
+            "placeholder": "{\n  \"name\": \"Azure\"\n}"
+          }
+        ]
+      }
+    ]
+  }
+}
