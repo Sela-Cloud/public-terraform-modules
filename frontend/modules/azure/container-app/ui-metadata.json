@@ -1,0 +1,467 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "container-app",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Container App",
+    "icon": "azure-container-app",
+    "description": "Azure Container App for running containerized microservices and web applications on a serverless platform",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "container_app",
+    "key_field": "name",
+    "key_label": "Container App Name",
+    "key_description": "The unique name for the Azure Container App. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Container App identification and environment settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Container App Name",
+            "description": "Specifies the name of the Container App. Must be 2-32 characters using lowercase alphanumerics and hyphens.",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-container-app",
+            "validation": {
+              "min": 2,
+              "max": 32,
+              "pattern": "^[a-z0-9][a-z0-9-]{0,30}[a-z0-9]$",
+              "pattern_error": "Container App name must be between 2 and 32 characters, start and end with an alphanumeric character, and contain only lowercase letters, numbers, and hyphens."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "Specifies the name of the Resource Group in which the Container App should exist.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-my-apps"
+          },
+          {
+            "id": "container_app_environment_id",
+            "label": "Container App Environment ID",
+            "description": "The resource ID of the Container App Managed Environment in which this app runs.",
+            "type": "text",
+            "required": true,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.App/managedEnvironments/my-env"
+          },
+          {
+            "id": "revision_mode",
+            "label": "Revision Mode",
+            "description": "The revisions operational mode for the Container App.",
+            "type": "select",
+            "required": true,
+            "default": "Single",
+            "options": [
+              {
+                "value": "Single",
+                "label": "Single Revision"
+              },
+              {
+                "value": "Multiple",
+                "label": "Multiple Revisions"
+              }
+            ]
+          },
+          {
+            "id": "workload_profile_name",
+            "label": "Workload Profile Name",
+            "description": "The name of the Workload Profile where this Container App should be placed (e.g., Consumption or dedicated).",
+            "type": "text",
+            "nullable": true,
+            "placeholder": "Consumption"
+          }
+        ]
+      },
+      {
+        "id": "template",
+        "label": "Container Template & Scaling",
+        "description": "Configuration of container images, compute resources, replicas, and scaling behavior.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "template",
+            "label": "Template Settings",
+            "description": "Template configuration block.",
+            "type": "object",
+            "required": true,
+            "fields": [
+              {
+                "id": "min_replicas",
+                "label": "Minimum Replicas",
+                "description": "The minimum number of replicas for this container app (set to 0 for scale to zero).",
+                "type": "number",
+                "default": 0
+              },
+              {
+                "id": "max_replicas",
+                "label": "Maximum Replicas",
+                "description": "The maximum number of replicas for this container app.",
+                "type": "number",
+                "default": 10
+              },
+              {
+                "id": "revision_suffix",
+                "label": "Revision Suffix",
+                "description": "An optional suffix to append to the generated revision name.",
+                "type": "text",
+                "nullable": true
+              },
+              {
+                "id": "containers",
+                "label": "Containers",
+                "description": "List of container definitions for the container app revision.",
+                "type": "repeatable",
+                "required": true,
+                "fields": [
+                  {
+                    "id": "name",
+                    "label": "Container Name",
+                    "description": "The name of the container.",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "app"
+                  },
+                  {
+                    "id": "image",
+                    "label": "Container Image",
+                    "description": "The container image repository and tag.",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+                  },
+                  {
+                    "id": "cpu",
+                    "label": "CPU Cores",
+                    "description": "The amount of vCPU allocated to the container (e.g. 0.25, 0.5, 1, 2).",
+                    "type": "number",
+                    "required": true,
+                    "default": 0.25
+                  },
+                  {
+                    "id": "memory",
+                    "label": "Memory",
+                    "description": "The amount of memory allocated to the container (e.g. 0.5Gi, 1.0Gi, 2.0Gi).",
+                    "type": "text",
+                    "required": true,
+                    "default": "0.5Gi"
+                  },
+                  {
+                    "id": "command",
+                    "label": "Entrypoint Command",
+                    "description": "Command to run when starting the container.",
+                    "type": "list",
+                    "default": []
+                  },
+                  {
+                    "id": "args",
+                    "label": "Command Arguments",
+                    "description": "Arguments to pass to the container command.",
+                    "type": "list",
+                    "default": []
+                  },
+                  {
+                    "id": "env",
+                    "label": "Environment Variables",
+                    "description": "List of environment variables for the container.",
+                    "type": "repeatable",
+                    "fields": [
+                      {
+                        "id": "name",
+                        "label": "Variable Name",
+                        "description": "The name of the environment variable.",
+                        "type": "text",
+                        "required": true
+                      },
+                      {
+                        "id": "value",
+                        "label": "Variable Value",
+                        "description": "The value of the environment variable.",
+                        "type": "text",
+                        "nullable": true
+                      },
+                      {
+                        "id": "secret_name",
+                        "label": "Secret Name Reference",
+                        "description": "The name of a secret defined in the Container App to use as the value.",
+                        "type": "text",
+                        "nullable": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ingress",
+        "label": "Ingress & Traffic",
+        "description": "Configure HTTP/TCP ingress, external connectivity, and traffic routing.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "ingress",
+            "label": "Ingress Configuration",
+            "description": "Ingress settings for receiving network traffic.",
+            "type": "object",
+            "nullable": true,
+            "fields": [
+              {
+                "id": "target_port",
+                "label": "Target Port",
+                "description": "The target port on the container where traffic is directed.",
+                "type": "number",
+                "required": true,
+                "default": 80
+              },
+              {
+                "id": "external_enabled",
+                "label": "External Access Enabled",
+                "description": "Whether ingress allows traffic from outside the Container App Environment.",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "transport",
+                "label": "Transport",
+                "description": "Transport protocol for the ingress.",
+                "type": "select",
+                "default": "auto",
+                "options": [
+                  {
+                    "value": "auto",
+                    "label": "Auto"
+                  },
+                  {
+                    "value": "http",
+                    "label": "HTTP"
+                  },
+                  {
+                    "value": "http2",
+                    "label": "HTTP/2"
+                  },
+                  {
+                    "value": "tcp",
+                    "label": "TCP"
+                  }
+                ]
+              },
+              {
+                "id": "allow_insecure_connections",
+                "label": "Allow Insecure Connections",
+                "description": "Allow HTTP requests without automatic HTTPS redirection.",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "exposed_port",
+                "label": "Exposed Port",
+                "description": "The exposed port when transport is set to TCP.",
+                "type": "number",
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "identity",
+        "label": "Managed Identity",
+        "description": "Assign System-Assigned or User-Assigned Managed Identities.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "identity",
+            "label": "Identity Configuration",
+            "description": "Managed Identity configuration block.",
+            "type": "object",
+            "nullable": true,
+            "fields": [
+              {
+                "id": "type",
+                "label": "Identity Type",
+                "description": "Type of managed identity to use.",
+                "type": "select",
+                "required": true,
+                "options": [
+                  {
+                    "value": "SystemAssigned",
+                    "label": "System Assigned"
+                  },
+                  {
+                    "value": "UserAssigned",
+                    "label": "User Assigned"
+                  },
+                  {
+                    "value": "SystemAssigned, UserAssigned",
+                    "label": "System Assigned & User Assigned"
+                  }
+                ]
+              },
+              {
+                "id": "identity_ids",
+                "label": "User Assigned Identity IDs",
+                "description": "List of user-assigned identity resource IDs.",
+                "type": "list",
+                "default": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "secrets_and_registries",
+        "label": "Secrets & Registries",
+        "description": "Configure app-level secrets and container registry authentication.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "secrets",
+            "label": "Application Secrets",
+            "description": "List of secrets available to the Container App.",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Secret Name",
+                "description": "The name of the secret.",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "value",
+                "label": "Secret Value",
+                "description": "The sensitive value of the secret.",
+                "type": "text",
+                "sensitive": true,
+                "nullable": true
+              },
+              {
+                "id": "identity",
+                "label": "Key Vault Identity",
+                "description": "User Assigned Identity ID used to fetch secret from Key Vault.",
+                "type": "text",
+                "nullable": true
+              },
+              {
+                "id": "key_vault_secret_id",
+                "label": "Key Vault Secret ID",
+                "description": "Key Vault secret URL/ID.",
+                "type": "text",
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "id": "registries",
+            "label": "Container Registries",
+            "description": "Registry authentication settings for private images.",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "server",
+                "label": "Registry Server",
+                "description": "The login server for the registry (e.g. myacr.azurecr.io).",
+                "type": "text",
+                "required": true,
+                "placeholder": "myregistry.azurecr.io"
+              },
+              {
+                "id": "identity",
+                "label": "Managed Identity ID",
+                "description": "Resource ID of the user-assigned identity to authenticate with ACR.",
+                "type": "text",
+                "nullable": true
+              },
+              {
+                "id": "username",
+                "label": "Username",
+                "description": "Username for registry authentication.",
+                "type": "text",
+                "nullable": true
+              },
+              {
+                "id": "password_secret_name",
+                "label": "Password Secret Name",
+                "description": "The name of the secret containing the registry password.",
+                "type": "text",
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dapr",
+        "label": "Dapr Configuration",
+        "description": "Distributed Application Runtime (Dapr) sidecar configuration.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "dapr",
+            "label": "Dapr Settings",
+            "description": "Configure Dapr sidecar integration.",
+            "type": "object",
+            "nullable": true,
+            "fields": [
+              {
+                "id": "app_id",
+                "label": "Dapr App ID",
+                "description": "The unique Dapr application identifier.",
+                "type": "text",
+                "required": true,
+                "placeholder": "order-processor"
+              },
+              {
+                "id": "app_port",
+                "label": "Dapr App Port",
+                "description": "The port your application is listening on for Dapr.",
+                "type": "number",
+                "nullable": true
+              },
+              {
+                "id": "app_protocol",
+                "label": "Dapr App Protocol",
+                "description": "Protocol used for communicating with Dapr sidecar.",
+                "type": "select",
+                "default": "http",
+                "options": [
+                  {
+                    "value": "http",
+                    "label": "HTTP"
+                  },
+                  {
+                    "value": "grpc",
+                    "label": "gRPC"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tags",
+        "description": "Key-value pairs to categorize and organize Container App resources.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "A mapping of tags to assign to the Container App resource.",
+            "type": "map",
+            "required": false
+          }
+        ]
+      }
+    ]
+  }
+}
