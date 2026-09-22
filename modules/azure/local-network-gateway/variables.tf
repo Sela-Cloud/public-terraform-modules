@@ -18,7 +18,6 @@ variable "resource_group_name" {
 variable "location" {
   description = "The Azure Region where the Local Network Gateway should exist. Changing this forces a new resource to be created."
   type        = string
-  default     = "eastus"
 }
 
 variable "gateway_address" {

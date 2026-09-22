@@ -29,7 +29,7 @@ An Azure Local Network Gateway represents an on-premises VPN device/router in Az
 |------|-------------|------|---------|:--------:|
 | name | The name of the Local Network Gateway. Changing this forces a new resource to be created. | `string` | `"lng-default"` | yes |
 | resource_group_name | The name of the Resource Group in which to create the Local Network Gateway. | `string` | `"rg-default"` | yes |
-| location | The Azure Region where the Local Network Gateway should exist. | `string` | `"eastus"` | yes |
+| location | The Azure Region where the Local Network Gateway should exist. | `string` | n/a | yes |
 | gateway_address | The gateway IP address in IPv4 format to connect with. Specify either `gateway_address` or `gateway_fqdn`. | `string` | `null` | no |
 | gateway_fqdn | The gateway FQDN to connect with. Specify either `gateway_address` or `gateway_fqdn`. | `string` | `null` | no |
 | address_space | The list of string CIDRs representing the address spaces the gateway exposes. | `list(string)` | `[]` | no |

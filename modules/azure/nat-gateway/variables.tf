@@ -1,7 +1,6 @@
 variable "name" {
   description = "The name of the NAT Gateway. Changing this forces a new resource to be created."
   type        = string
-  default     = "ng-default"
 
   validation {
     condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$", var.name)) && length(var.name) >= 1 && length(var.name) <= 80
@@ -12,13 +11,11 @@ variable "name" {
 variable "resource_group_name" {
   description = "The name of the Resource Group in which to create the NAT Gateway. Changing this forces a new resource to be created."
   type        = string
-  default     = "rg-default"
 }
 
 variable "location" {
   description = "The Azure Region where the NAT Gateway should exist. Changing this forces a new resource to be created."
   type        = string
-  default     = "eastus"
 }
 
 variable "sku_name" {
@@ -49,7 +46,7 @@ variable "zones" {
   default     = []
 
   validation {
-    condition     = var.zones == null || length(coalesce(var.zones, [])) <= 1
+    condition     = length(var.zones) <= 1
     error_message = "A Standard NAT Gateway can be deployed to at most one Availability Zone."
   }
 }
