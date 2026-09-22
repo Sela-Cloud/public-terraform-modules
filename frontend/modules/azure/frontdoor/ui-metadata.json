@@ -1,0 +1,527 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "frontdoor",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Front Door (Classic)",
+    "icon": "azure-front-door",
+    "description": "Azure Front Door service providing global layer 7 load balancing, SSL offloading, and dynamic site acceleration",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "frontdoor",
+    "key_field": "name",
+    "key_label": "Front Door Name",
+    "key_description": "The unique name for the Azure Front Door service. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Front Door settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Front Door Name",
+            "description": "Specifies the name of the Front Door service. Must be globally unique, 5-64 characters.",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-global-frontdoor",
+            "validation": {
+              "min": 5,
+              "max": 64,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{3,62}[a-zA-Z0-9]$",
+              "pattern_error": "Front Door name must be between 5 and 64 characters, begin and end with an alphanumeric character, and contain only alphanumerics and hyphens."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "Specifies the name of the Resource Group in which the Front Door service should exist.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-my-frontdoor"
+          },
+          {
+            "id": "friendly_name",
+            "label": "Friendly Name",
+            "description": "A friendly name for the Front Door service.",
+            "type": "text",
+            "nullable": true,
+            "placeholder": "Production Public Front Door"
+          },
+          {
+            "id": "load_balancer_enabled",
+            "label": "Load Balancer Enabled",
+            "description": "Should the Front Door Load Balancer be enabled?",
+            "type": "boolean",
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "frontend_endpoints",
+        "label": "Frontend Endpoints",
+        "description": "Frontend endpoints configuring the hostnames used to access the Front Door.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "frontend_endpoints",
+            "label": "Frontend Endpoints",
+            "description": "List of frontend hostnames configuring access to the Front Door.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Endpoint Name",
+                "description": "The name of the frontend endpoint.",
+                "type": "text",
+                "required": true,
+                "placeholder": "default-frontend-endpoint"
+              },
+              {
+                "id": "host_name",
+                "label": "Host Name",
+                "description": "The host name for the endpoint (e.g. my-app.azurefd.net or a verified custom domain).",
+                "type": "text",
+                "required": true,
+                "placeholder": "my-frontdoor.azurefd.net"
+              },
+              {
+                "id": "session_affinity_enabled",
+                "label": "Session Affinity Enabled",
+                "description": "Whether session affinity (sticky sessions) is enabled for this endpoint.",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "session_affinity_ttl_seconds",
+                "label": "Session Affinity TTL (seconds)",
+                "description": "Session affinity TTL in seconds. Defaults to 0.",
+                "type": "number",
+                "default": 0
+              },
+              {
+                "id": "web_application_firewall_policy_link_id",
+                "label": "WAF Policy Link ID",
+                "description": "The resource ID of the Web Application Firewall policy to associate.",
+                "type": "text",
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "backend_pools",
+        "label": "Backend Pools",
+        "description": "Backend pools that receive traffic from the Front Door.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "backend_pools",
+            "label": "Backend Pools",
+            "description": "List of backend pools that receive traffic from the Front Door.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Backend Pool Name",
+                "description": "The name of the backend pool.",
+                "type": "text",
+                "required": true,
+                "placeholder": "myBackendPool"
+              },
+              {
+                "id": "load_balancing_name",
+                "label": "Load Balancing Settings Name",
+                "description": "The name of the backend_pool_load_balancing settings to use.",
+                "type": "text",
+                "required": true,
+                "default": "defaultLoadBalancingSettings"
+              },
+              {
+                "id": "health_probe_name",
+                "label": "Health Probe Settings Name",
+                "description": "The name of the backend_pool_health_probe settings to use.",
+                "type": "text",
+                "required": true,
+                "default": "defaultHealthProbeSettings"
+              },
+              {
+                "id": "backends",
+                "label": "Backends",
+                "description": "List of backend targets for this pool.",
+                "type": "repeatable",
+                "required": true,
+                "fields": [
+                  {
+                    "id": "enabled",
+                    "label": "Enabled",
+                    "description": "Location to enable or disable traffic to this backend.",
+                    "type": "boolean",
+                    "default": true
+                  },
+                  {
+                    "id": "address",
+                    "label": "Backend Address",
+                    "description": "The IPv4 address or FQDN of the backend target.",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "app.contoso.com"
+                  },
+                  {
+                    "id": "host_header",
+                    "label": "Host Header",
+                    "description": "The value to use as the host header sent to the backend.",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "app.contoso.com"
+                  },
+                  {
+                    "id": "http_port",
+                    "label": "HTTP Port",
+                    "description": "The HTTP TCP port used to access backend.",
+                    "type": "number",
+                    "default": 80
+                  },
+                  {
+                    "id": "https_port",
+                    "label": "HTTPS Port",
+                    "description": "The HTTPS TCP port used to access backend.",
+                    "type": "number",
+                    "default": 443
+                  },
+                  {
+                    "id": "priority",
+                    "label": "Priority",
+                    "description": "Priority to use for load balancing (1-5). Higher priorities are only used if lower priority backends are down.",
+                    "type": "number",
+                    "default": 1
+                  },
+                  {
+                    "id": "weight",
+                    "label": "Weight",
+                    "description": "Weight to use for load balancing (1-1000).",
+                    "type": "number",
+                    "default": 50
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "health_and_load_balancing",
+        "label": "Health Probes & Load Balancing",
+        "description": "Configuration for backend health checks and traffic distribution algorithms.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "backend_pool_load_balancing",
+            "label": "Load Balancing Settings",
+            "description": "List of load balancing configuration blocks.",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Settings Name",
+                "description": "The name of the load balancing settings block.",
+                "type": "text",
+                "required": true,
+                "default": "defaultLoadBalancingSettings"
+              },
+              {
+                "id": "sample_size",
+                "label": "Sample Size",
+                "description": "The number of samples to consider for load balancing decisions.",
+                "type": "number",
+                "default": 4
+              },
+              {
+                "id": "successful_samples_required",
+                "label": "Successful Samples Required",
+                "description": "The number of samples within the sample size that must succeed.",
+                "type": "number",
+                "default": 2
+              },
+              {
+                "id": "additional_latency_enforce_milliseconds",
+                "label": "Additional Latency Sensitivity (ms)",
+                "description": "The additional latency tolerance in milliseconds for routing to acceptable backends.",
+                "type": "number",
+                "default": 0
+              }
+            ]
+          },
+          {
+            "id": "backend_pool_health_probes",
+            "label": "Health Probe Settings",
+            "description": "List of health probe configuration blocks.",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Probe Name",
+                "description": "The name of the health probe settings block.",
+                "type": "text",
+                "required": true,
+                "default": "defaultHealthProbeSettings"
+              },
+              {
+                "id": "enabled",
+                "label": "Probe Enabled",
+                "description": "Whether this health probe is enabled.",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "path",
+                "label": "Probe Path",
+                "description": "The path relative to the host used to probe backend health.",
+                "type": "text",
+                "default": "/"
+              },
+              {
+                "id": "protocol",
+                "label": "Probe Protocol",
+                "description": "The protocol scheme used for the health probe.",
+                "type": "select",
+                "default": "Http",
+                "options": [
+                  { "value": "Http", "label": "HTTP" },
+                  { "value": "Https", "label": "HTTPS" }
+                ]
+              },
+              {
+                "id": "probe_method",
+                "label": "Probe Method",
+                "description": "The HTTP method used for the health probe.",
+                "type": "select",
+                "default": "HEAD",
+                "options": [
+                  { "value": "GET", "label": "GET" },
+                  { "value": "HEAD", "label": "HEAD" }
+                ]
+              },
+              {
+                "id": "interval_in_seconds",
+                "label": "Interval (seconds)",
+                "description": "The number of seconds between health probes.",
+                "type": "number",
+                "default": 120
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "routing_rules",
+        "label": "Routing Rules",
+        "description": "Routing rules connecting frontend endpoints to backend pools or redirecting traffic.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "routing_rules",
+            "label": "Routing Rules",
+            "description": "List of routing rules connecting frontend endpoints to backend pools or redirecting traffic.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Routing Rule Name",
+                "description": "The name of the routing rule.",
+                "type": "text",
+                "required": true,
+                "placeholder": "defaultRoutingRule"
+              },
+              {
+                "id": "accepted_protocols",
+                "label": "Accepted Protocols",
+                "description": "Protocol schemes to accept for this routing rule.",
+                "type": "list",
+                "default": [
+                  "Http",
+                  "Https"
+                ]
+              },
+              {
+                "id": "patterns_to_match",
+                "label": "Patterns to Match",
+                "description": "Route matching path patterns.",
+                "type": "list",
+                "default": [
+                  "/*"
+                ]
+              },
+              {
+                "id": "frontend_endpoints",
+                "label": "Frontend Endpoints",
+                "description": "List of frontend endpoint names to associate with this rule.",
+                "type": "list",
+                "required": true
+              },
+              {
+                "id": "forwarding_configuration",
+                "label": "Forwarding Configuration",
+                "description": "Routing destination backend pool and forwarding settings.",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "backend_pool_name",
+                    "label": "Backend Pool Name",
+                    "description": "The name of the backend pool to forward traffic to.",
+                    "type": "text",
+                    "required": true
+                  },
+                  {
+                    "id": "forwarding_protocol",
+                    "label": "Forwarding Protocol",
+                    "description": "Protocol to use when redirecting traffic to backends.",
+                    "type": "select",
+                    "default": "MatchRequest",
+                    "options": [
+                      { "value": "HttpOnly", "label": "HTTP Only" },
+                      { "value": "HttpsOnly", "label": "HTTPS Only" },
+                      { "value": "MatchRequest", "label": "Match Request" }
+                    ]
+                  },
+                  {
+                    "id": "cache_enabled",
+                    "label": "Enable Caching",
+                    "description": "Whether to enable caching for this route.",
+                    "type": "boolean",
+                    "default": false
+                  },
+                  {
+                    "id": "cache_use_dynamic_compression",
+                    "label": "Dynamic Compression",
+                    "description": "Whether to use dynamic compression for cached content.",
+                    "type": "boolean",
+                    "default": false
+                  },
+                  {
+                    "id": "cache_query_parameter_strip_directive",
+                    "label": "Query Parameter Strip Directive",
+                    "description": "Treatment of URL query strings when generating cache keys.",
+                    "type": "select",
+                    "default": "StripAll",
+                    "options": [
+                      { "value": "StripNone", "label": "Strip None" },
+                      { "value": "StripAll", "label": "Strip All" },
+                      { "value": "StripOnly", "label": "Strip Only" },
+                      { "value": "StripAllExcept", "label": "Strip All Except" }
+                    ]
+                  },
+                  {
+                    "id": "cache_query_parameters",
+                    "label": "Cache Query Parameters",
+                    "description": "Query parameters used for caching according to strip directive.",
+                    "type": "list",
+                    "default": []
+                  },
+                  {
+                    "id": "cache_duration",
+                    "label": "Cache Duration",
+                    "description": "Duration to cache content in ISO 8601 format (e.g. P1DT12H).",
+                    "type": "text",
+                    "nullable": true
+                  },
+                  {
+                    "id": "custom_forwarding_path",
+                    "label": "Custom Forwarding Path",
+                    "description": "Path to rewrite before forwarding to the backend.",
+                    "type": "text",
+                    "nullable": true
+                  }
+                ]
+              },
+              {
+                "id": "redirect_configuration",
+                "label": "Redirect Configuration",
+                "description": "Redirection configuration for this routing rule.",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "custom_host",
+                    "label": "Custom Host",
+                    "description": "Host to redirect to. If not set, the request host is used.",
+                    "type": "text",
+                    "nullable": true
+                  },
+                  {
+                    "id": "redirect_type",
+                    "label": "Redirect Type",
+                    "description": "The redirect type for the rule.",
+                    "type": "select",
+                    "required": true,
+                    "options": [
+                      { "value": "Moved", "label": "Moved (301)" },
+                      { "value": "Found", "label": "Found (302)" },
+                      { "value": "SeeOther", "label": "See Other (303)" },
+                      { "value": "TemporaryRedirect", "label": "Temporary Redirect (307)" }
+                    ]
+                  },
+                  {
+                    "id": "redirect_protocol",
+                    "label": "Redirect Protocol",
+                    "description": "Protocol to use for redirect.",
+                    "type": "select",
+                    "required": true,
+                    "options": [
+                      { "value": "HttpOnly", "label": "HTTP Only" },
+                      { "value": "HttpsOnly", "label": "HTTPS Only" },
+                      { "value": "MatchRequest", "label": "Match Request" }
+                    ]
+                  },
+                  {
+                    "id": "custom_path",
+                    "label": "Custom Path",
+                    "description": "The path to retain or replace for the redirect.",
+                    "type": "text",
+                    "nullable": true
+                  },
+                  {
+                    "id": "custom_fragment",
+                    "label": "Custom Fragment",
+                    "description": "The fragment to add to the redirect URL.",
+                    "type": "text",
+                    "nullable": true
+                  },
+                  {
+                    "id": "custom_query_string",
+                    "label": "Custom Query String",
+                    "description": "The query string to add to the redirect URL.",
+                    "type": "text",
+                    "nullable": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tags",
+        "description": "Key-value pairs to categorize and organize Front Door resources.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "A mapping of tags to assign to the Front Door resource.",
+            "type": "map",
+            "required": false
+          }
+        ]
+      }
+    ]
+  }
+}
