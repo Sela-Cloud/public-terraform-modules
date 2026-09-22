@@ -1,0 +1,601 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "virtual-machine",
+  "version": "1.0.0",
+  "display": {
+    "label": "Virtual Machine",
+    "icon": "virtual-machine",
+    "description": "Azure Virtual Machine for scalable on-demand computing capacity",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "virtual_machine",
+    "key_field": "name",
+    "key_label": "Virtual Machine Name",
+    "key_description": "The unique name for the Azure Virtual Machine. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Virtual Machine settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Virtual Machine Name",
+            "description": "Name of the Azure Virtual Machine. Must be 1-64 characters using alphanumeric, underscores, hyphens, and periods.",
+            "type": "text",
+            "required": true,
+            "placeholder": "vm-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 64,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "Virtual Machine name must be 1-64 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Virtual Machine.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Virtual Machine should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          },
+          {
+            "id": "vm_size",
+            "label": "VM Size",
+            "description": "The size/SKU of the Virtual Machine.",
+            "type": "text",
+            "required": false,
+            "default": "Standard_B2s",
+            "placeholder": "Standard_B2s or Standard_D2s_v3"
+          },
+          {
+            "id": "network_interface_ids",
+            "label": "Network Interface IDs",
+            "description": "List of Network Interface IDs attached to this Virtual Machine.",
+            "type": "list",
+            "required": true,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/networkInterfaces/..."
+          },
+          {
+            "id": "primary_network_interface_id",
+            "label": "Primary Network Interface ID",
+            "description": "The ID of the primary network interface if multiple interfaces are attached.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../networkInterfaces/..."
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "label": "Storage Configuration",
+        "description": "OS disk, image reference, and attached data disks.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "storage_os_disk",
+            "label": "OS Disk",
+            "description": "Configuration settings for the OS Disk.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "name",
+                "label": "OS Disk Name",
+                "description": "Name of the OS Disk. Defaults to <name>-osdisk if omitted.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "vm-osdisk"
+              },
+              {
+                "id": "caching",
+                "label": "Caching",
+                "description": "Type of caching for the OS Disk.",
+                "type": "select",
+                "required": false,
+                "default": "ReadWrite",
+                "options": [
+                  { "value": "None", "label": "None" },
+                  { "value": "ReadOnly", "label": "ReadOnly" },
+                  { "value": "ReadWrite", "label": "ReadWrite" }
+                ]
+              },
+              {
+                "id": "create_option",
+                "label": "Create Option",
+                "description": "Specifies how the OS Disk should be created.",
+                "type": "select",
+                "required": false,
+                "default": "FromImage",
+                "options": [
+                  { "value": "FromImage", "label": "FromImage" },
+                  { "value": "Attach", "label": "Attach" }
+                ]
+              },
+              {
+                "id": "managed_disk_type",
+                "label": "Managed Disk Type",
+                "description": "The type of managed disk to create.",
+                "type": "select",
+                "required": false,
+                "default": "Standard_LRS",
+                "options": [
+                  { "value": "Standard_LRS", "label": "Standard HDD (Standard_LRS)" },
+                  { "value": "StandardSSD_LRS", "label": "Standard SSD (StandardSSD_LRS)" },
+                  { "value": "Premium_LRS", "label": "Premium SSD (Premium_LRS)" },
+                  { "value": "UltraSSD_LRS", "label": "Ultra SSD (UltraSSD_LRS)" }
+                ]
+              },
+              {
+                "id": "disk_size_gb",
+                "label": "Disk Size (GB)",
+                "description": "Size of the OS disk in GB. If omitted, image default size is used.",
+                "type": "number",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "128"
+              },
+              {
+                "id": "os_type",
+                "label": "OS Type",
+                "description": "Operating system type (Linux or Windows). Required when attaching existing disk.",
+                "type": "select",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "options": [
+                  { "value": "Linux", "label": "Linux" },
+                  { "value": "Windows", "label": "Windows" }
+                ]
+              },
+              {
+                "id": "managed_disk_id",
+                "label": "Managed Disk ID",
+                "description": "ID of an existing managed disk to attach as OS disk.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../disks/..."
+              },
+              {
+                "id": "write_accelerator_enabled",
+                "label": "Write Accelerator Enabled",
+                "description": "Enable Write Accelerator for M-series VMs with Premium SSD.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              }
+            ]
+          },
+          {
+            "id": "storage_image_reference",
+            "label": "Image Reference",
+            "description": "Marketplace or custom image specification.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "publisher",
+                "label": "Publisher",
+                "description": "Image publisher.",
+                "type": "text",
+                "required": false,
+                "default": "Canonical",
+                "placeholder": "Canonical"
+              },
+              {
+                "id": "offer",
+                "label": "Offer",
+                "description": "Image offer.",
+                "type": "text",
+                "required": false,
+                "default": "0001-com-ubuntu-server-jammy",
+                "placeholder": "0001-com-ubuntu-server-jammy"
+              },
+              {
+                "id": "sku",
+                "label": "SKU",
+                "description": "Image SKU.",
+                "type": "text",
+                "required": false,
+                "default": "22_04-lts",
+                "placeholder": "22_04-lts"
+              },
+              {
+                "id": "version",
+                "label": "Version",
+                "description": "Image version.",
+                "type": "text",
+                "required": false,
+                "default": "latest",
+                "placeholder": "latest"
+              },
+              {
+                "id": "id",
+                "label": "Custom Image ID",
+                "description": "Resource ID of a custom image or Azure Compute Gallery image.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../galleries/.../images/..."
+              }
+            ]
+          },
+          {
+            "id": "storage_data_disks",
+            "label": "Attached Data Disks",
+            "description": "List of data disks to attach to the Virtual Machine.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Disk Name",
+                "description": "Name of the data disk.",
+                "type": "text",
+                "required": true,
+                "placeholder": "datadisk1"
+              },
+              {
+                "id": "lun",
+                "label": "LUN",
+                "description": "Logical Unit Number (0-63).",
+                "type": "number",
+                "required": true,
+                "default": 0
+              },
+              {
+                "id": "disk_size_gb",
+                "label": "Size (GB)",
+                "description": "Size of the data disk in GB.",
+                "type": "number",
+                "required": true,
+                "default": 100
+              },
+              {
+                "id": "caching",
+                "label": "Caching",
+                "description": "Data disk caching mode.",
+                "type": "select",
+                "required": false,
+                "default": "None",
+                "options": [
+                  { "value": "None", "label": "None" },
+                  { "value": "ReadOnly", "label": "ReadOnly" },
+                  { "value": "ReadWrite", "label": "ReadWrite" }
+                ]
+              },
+              {
+                "id": "create_option",
+                "label": "Create Option",
+                "description": "How the data disk is created.",
+                "type": "select",
+                "required": false,
+                "default": "Empty",
+                "options": [
+                  { "value": "Empty", "label": "Empty" },
+                  { "value": "Attach", "label": "Attach" }
+                ]
+              },
+              {
+                "id": "managed_disk_type",
+                "label": "Managed Disk Type",
+                "description": "Type of managed disk for the data disk.",
+                "type": "select",
+                "required": false,
+                "default": "Standard_LRS",
+                "options": [
+                  { "value": "Standard_LRS", "label": "Standard HDD" },
+                  { "value": "StandardSSD_LRS", "label": "Standard SSD" },
+                  { "value": "Premium_LRS", "label": "Premium SSD" }
+                ]
+              },
+              {
+                "id": "managed_disk_id",
+                "label": "Managed Disk ID",
+                "description": "ID of an existing managed disk to attach.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../disks/..."
+              },
+              {
+                "id": "write_accelerator_enabled",
+                "label": "Write Accelerator Enabled",
+                "description": "Enable Write Accelerator on data disk.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              }
+            ]
+          },
+          {
+            "id": "delete_os_disk_on_termination",
+            "label": "Delete OS Disk on Termination",
+            "description": "Automatically delete the OS disk when the Virtual Machine is destroyed by Terraform.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "delete_data_disks_on_termination",
+            "label": "Delete Data Disks on Termination",
+            "description": "Automatically delete attached data disks when the Virtual Machine is destroyed by Terraform.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "os_profile",
+        "label": "Operating System Profile",
+        "description": "Administrator credentials and OS configuration.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "os_profile",
+            "label": "OS Profile",
+            "description": "Guest OS computer name and administrative credentials.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "computer_name",
+                "label": "Computer Name",
+                "description": "Hostname for the VM. Defaults to the VM name if omitted.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "my-server"
+              },
+              {
+                "id": "admin_username",
+                "label": "Admin Username",
+                "description": "Administrative username.",
+                "type": "text",
+                "required": false,
+                "default": "azureuser",
+                "placeholder": "azureuser"
+              },
+              {
+                "id": "admin_password",
+                "label": "Admin Password",
+                "description": "Administrative password (required for Windows or password-based Linux auth).",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "ComplexPassword123!"
+              },
+              {
+                "id": "custom_data",
+                "label": "Custom Data (cloud-init)",
+                "description": "Base64 encoded cloud-init or bootstrap script.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "id": "os_profile_linux_config",
+            "label": "Linux Configuration",
+            "description": "Linux specific authentication configuration.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "disable_password_authentication",
+                "label": "Disable Password Authentication",
+                "description": "Enforce SSH key authentication only.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              }
+            ]
+          },
+          {
+            "id": "os_profile_windows_config",
+            "label": "Windows Configuration",
+            "description": "Windows specific configuration.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "provision_vm_agent",
+                "label": "Provision VM Agent",
+                "description": "Install Azure Virtual Machine Agent on the Windows VM.",
+                "type": "boolean",
+                "required": false,
+                "default": true
+              },
+              {
+                "id": "enable_automatic_upgrades",
+                "label": "Enable Automatic Upgrades",
+                "description": "Enable Windows Update automatic updates.",
+                "type": "boolean",
+                "required": false,
+                "default": true
+              },
+              {
+                "id": "timezone",
+                "label": "Timezone",
+                "description": "Timezone identifier for the Windows VM (e.g. 'Pacific Standard Time').",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "UTC"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced & Governance",
+        "description": "High availability, identity, diagnostics, and tagging.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "availability_set_id",
+            "label": "Availability Set ID",
+            "description": "Resource ID of the Availability Set.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../availabilitySets/..."
+          },
+          {
+            "id": "zones",
+            "label": "Availability Zone",
+            "description": "Availability Zone to allocate the VM into (e.g. ['1']).",
+            "type": "list",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "1"
+          },
+          {
+            "id": "proximity_placement_group_id",
+            "label": "Proximity Placement Group ID",
+            "description": "ID of Proximity Placement Group.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../proximityPlacementGroups/..."
+          },
+          {
+            "id": "license_type",
+            "label": "License Type",
+            "description": "BYOL License type for Windows ('Windows_Client' or 'Windows_Server').",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "Windows_Server"
+          },
+          {
+            "id": "identity",
+            "label": "Managed Service Identity",
+            "description": "Managed Identity configuration for the Virtual Machine.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "type",
+                "label": "Identity Type",
+                "description": "Type of managed identity.",
+                "type": "select",
+                "required": true,
+                "default": "SystemAssigned",
+                "options": [
+                  { "value": "SystemAssigned", "label": "SystemAssigned" },
+                  { "value": "UserAssigned", "label": "UserAssigned" },
+                  { "value": "SystemAssigned, UserAssigned", "label": "SystemAssigned, UserAssigned" }
+                ]
+              },
+              {
+                "id": "identity_ids",
+                "label": "User Assigned Identity IDs",
+                "description": "List of User Assigned Managed Identity resource IDs.",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../userAssignedIdentities/..."
+              }
+            ]
+          },
+          {
+            "id": "boot_diagnostics",
+            "label": "Boot Diagnostics",
+            "description": "Configure boot diagnostics logging.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "enabled",
+                "label": "Enable Boot Diagnostics",
+                "description": "Whether boot diagnostics should be enabled.",
+                "type": "boolean",
+                "required": true,
+                "default": true
+              },
+              {
+                "id": "storage_uri",
+                "label": "Storage Account URI",
+                "description": "Custom storage account blob endpoint. Leave empty for Azure managed boot diagnostics storage.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "https://mystorage.blob.core.windows.net/"
+              }
+            ]
+          },
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Virtual Machine for governance and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
