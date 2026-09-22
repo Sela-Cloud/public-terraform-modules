@@ -109,12 +109,27 @@ When crafting or generating Terraform code for Sela Craft modules, follow these 
 
 ## 3. `ui-metadata.json` Complete Specification
 
-The `ui-metadata.json` file resides in the root directory of the module and instructs Sela Craft how to build form controls, group fields into collapsible sections, run client-side validations, and query GCP data sources.
+The `ui-metadata.json` file resides in the root directory of the module and instructs Sela Craft how
+to build form controls, group fields into collapsible sections, run client-side validations, and
+query GCP data sources.
+
+The catalog groups modules by cloud, so a module is a pair of directories:
+
+```
+modules/<provider>/<module-id>/            the Terraform a wrapper calls
+frontend/modules/<provider>/<module-id>/   the wrapper + ui-metadata.json
+```
+
+**The module id stays flat.** `artifact-registry` is never `gcp/artifact-registry`: the id is
+written into request documents, inventory rows and directories inside customers' own repositories,
+none of which this platform can migrate. The provider is only where the catalog keeps the module, so
+`module` in the metadata matches the *last* path segment, and a wrapper's `source` points at
+`//modules/<provider>/<module-id>`.
 
 ### JSON Schema Structure Overview
 ```json
 {
-  "$schema": "../ui-metadata.schema.json",
+  "$schema": "../../../ui-metadata.schema.json",
   "module": "<module-id>",
   "version": "1.0.0",
   "display": { ... },
@@ -131,7 +146,7 @@ The `ui-metadata.json` file resides in the root directory of the module and inst
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `$schema` | `string` | No | Path to schema definition (e.g., `"../ui-metadata.schema.json"`). |
+| `$schema` | `string` | No | Path to the schema, relative to this file: `"../../../ui-metadata.schema.json"` from `frontend/modules/<provider>/<module-id>/`. An editor hint only — the validators load the schema directly — so a wrong value fails nothing and goes unnoticed. |
 | `module` | `string` | **Yes** | Unique module identifier, matching folder name (e.g., `"cloud-storage"`, `"compute-engine"`). |
 | `version` | `string` | **Yes** | Semver string (e.g., `"1.0.0"`). |
 | `import` | `object` | No | Enables importing pre-existing resources into this module. Omit it and the module is create-only. See [`import` Block](#import-block). |
@@ -701,7 +716,7 @@ When tasked with generating a module for Sela Craft, follow these steps sequenti
 ### A. `ui-metadata.json`
 ```json
 {
-  "$schema": "../ui-metadata.schema.json",
+  "$schema": "../../../ui-metadata.schema.json",
   "module": "compute-engine",
   "version": "1.0.0",
   "display": {

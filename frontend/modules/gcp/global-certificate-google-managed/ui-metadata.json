@@ -1,5 +1,5 @@
 {
-  "$schema": "../../ui-metadata.schema.json",
+  "$schema": "../../../ui-metadata.schema.json",
   "module": "global-certificate-google-managed",
   "version": "1.0.0",
   "display": {

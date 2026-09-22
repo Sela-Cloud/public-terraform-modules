@@ -575,11 +575,12 @@ def validate_module(root: str, name: str, report: Report) -> dict:
         report.error(name, "metadata", "ui-metadata.json must contain a JSON object")
         return result
 
-    if meta.get("module") != name:
+    module_id = name.rsplit("/", 1)[-1]
+    if meta.get("module") != module_id:
         report.error(
             name,
             "metadata",
-            'module id %r does not match directory name %r' % (meta.get("module"), name),
+            'module id %r does not match directory name %r' % (meta.get("module"), module_id),
         )
 
     main_text = strip_comments(open(main_path, encoding="utf-8").read()) if os.path.exists(main_path) else ""
@@ -1102,6 +1103,38 @@ def check_target_provider(root, name, main_text, module_blocks, imp_module, imp,
 # --------------------------------------------------------------------------------------
 
 
+#: Provider directories, for the catalog layout that groups modules by cloud.
+#:
+#: A module id stays flat: `artifact-registry` is never `gcp/artifact-registry`. The id is written
+#: into request documents, inventory rows and directories inside customers' own repositories, none
+#: of which this platform can migrate; the provider is only where the catalog keeps the module.
+PROVIDER_DIRS = frozenset({"gcp", "aws", "azure"})
+
+
+def discover_modules(base: str) -> list:
+    """Catalog entries under frontend/modules, as paths relative to it.
+
+    Handles `<module-id>` and `<provider>/<module-id>` together, so a catalog part-way through the
+    move still validates as a whole. A directory is descended into only when it names a provider,
+    which keeps `gcp` itself out of the list without needing a marker file -- a module whose
+    ui-metadata.json is missing must still be found, so that it can be reported as missing.
+    """
+    found = []
+    for entry in sorted(os.listdir(base)):
+        path = os.path.join(base, entry)
+        if not os.path.isdir(path) or entry == ".terraform":
+            continue
+        if entry in PROVIDER_DIRS:
+            found.extend(
+                "%s/%s" % (entry, sub)
+                for sub in sorted(os.listdir(path))
+                if os.path.isdir(os.path.join(path, sub)) and sub != ".terraform"
+            )
+        else:
+            found.append(entry)
+    return found
+
+
 def collect_catalog_refs(root: str, modules: list) -> dict:
     """Every distinct ?ref= pin in every .tf of every wrapper module -> where it appears."""
     refs = {}
@@ -1180,14 +1213,26 @@ def main(argv=None):
         print("error: %s is not a directory (wrong --root?)" % base, file=sys.stderr)
         return 2
 
-    modules = sorted(d for d in os.listdir(base) if os.path.isdir(os.path.join(base, d)))
+    modules = discover_modules(base)
     if args.modules:
         wanted = [m.strip() for m in args.modules.split(",") if m.strip()]
-        missing = [m for m in wanted if m not in modules]
+        # A bare id is accepted as well as a provider-qualified path, so `--modules cloud-storage`
+        # keeps working whichever layout the catalog is in.
+        by_leaf = {}
+        for candidate in modules:
+            by_leaf.setdefault(candidate.rsplit("/", 1)[-1], []).append(candidate)
+        selected, missing = [], []
+        for item in wanted:
+            if item in modules:
+                selected.append(item)
+            elif item in by_leaf:
+                selected.extend(by_leaf[item])
+            else:
+                missing.append(item)
         if missing:
             print("error: unknown module(s): %s" % ", ".join(missing), file=sys.stderr)
             return 2
-        modules = wanted
+        modules = selected
 
     report = Report()
     for name in modules:

@@ -81,7 +81,14 @@ jobs:
           while IFS= read -r -d '' module_dir; do
             terraform -chdir="${module_dir}" init -backend=false -input=false
             terraform -chdir="${module_dir}" validate
-          done < <(find frontend/modules -mindepth 1 -maxdepth 1 -type d -print0)
+          done < <(
+            # Keyed off the marker file rather than a fixed depth: a catalog entry may sit at
+            # frontend/modules/<id> or frontend/modules/<provider>/<id>, and a provider directory
+            # is not itself a Terraform module.
+            find frontend/modules \
+              -type d -name .terraform -prune -o \
+              -type f -name ui-metadata.json -printf '%h\0' | sort -z
+          )
 
       - name: Validate publication settings
         shell: bash

@@ -72,7 +72,9 @@ def main() -> int:
     else:
         metadata_files = sorted(
             p
-            for p in modules_dir.glob("*/ui-metadata.json")
+            # rglob, not glob: the catalog may group modules under a provider directory
+            # (frontend/modules/gcp/<id>) or sit flat, and during the move it holds both.
+            for p in modules_dir.rglob("ui-metadata.json")
             if ".terraform" not in p.parts
         )
 
