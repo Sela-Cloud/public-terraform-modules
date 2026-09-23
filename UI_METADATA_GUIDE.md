@@ -619,12 +619,56 @@ From `RESOURCE_HANDLERS` in `applications/api/services/clouds/aws/lookups.py`.
 | Resource Identifier | Aliases | Returns | Parameters | Response Keys |
 | :--- | :--- | :--- | :--- | :--- |
 | `ec2.vpcs` | `ec2.vpc` | VPCs in one region | `region` (or `location`) | `id`, `name`, `cidr`, `isDefault`, `state` |
+| `ec2.regions` | `aws.regions` | Regions this account has enabled | — | `name`, `description`, `endpoint`, `optInStatus` |
 
-**One so far, and that is deliberate.** The GCP list above has thirty-six because forty-one modules
+**Two so far, and that is deliberate.** The GCP list above has thirty-six because forty-one modules
 accumulated them one at a time, each written because a real field needed it. Adding AWS handlers
 speculatively would be writing code for fields nobody has declared. If a module you are writing
-needs a lookup that is not here, ask for it — a handler is small, and `ec2.vpcs` is the worked
-example to copy.
+needs a lookup that is not here, ask for it — a handler is small, and these two are the worked
+examples to copy.
+
+###### `ec2.regions`
+
+Lists only the regions the account can **actually use** — the always-on ones plus any opt-in region
+it has opted into. That is the point of the lookup rather than a hardcoded `options` array:
+offering a region the account has not enabled produces an apply that fails with an authorization
+error naming nothing the user did wrong.
+
+Same shape as GCP's `compute.regions`, so this is the one AWS lookup where habits carry across
+unchanged — `name` is the code, `description` is the location:
+
+```json
+{
+  "id": "region",
+  "label": "Region",
+  "type": "select",
+  "required": true,
+  "data_source": {
+    "resource": "ec2.regions",
+    "display": {
+      "value_key": "name",
+      "label_key": "description",
+      "description_key": "name"
+    }
+  }
+}
+```
+
+That renders **Mumbai** with `ap-south-1` beneath it, and submits `ap-south-1`. Show both: the code
+alone is not a choice anyone can make confidently, and the location alone is not what Terraform
+takes.
+
+`description` comes from a static table in the API, not from AWS — `describe_regions` returns codes
+and endpoints only. A region AWS adds after that table was written falls back to showing its code
+twice, which keeps it selectable rather than making it disappear.
+
+`optInStatus` is `opt-in-not-required` for the always-on regions and `opted-in` for the rest. Both
+are usable; it is there if a form wants to mark the difference, and nothing is filtered on it.
+
+**Takes no parameters.** Do not give it a `region` param — this is the lookup that *produces* the
+region, and a `from_field` pointing at the field it fills is a loop.
+
+###### `ec2.vpcs`
 
 **`id` is the value, `name` is the label.** This is the one real difference from the GCP tables
 above, and getting it backwards produces a form that looks right and generates Terraform that does

@@ -88,6 +88,8 @@ KNOWN_DATA_SOURCES = {
     "dns.peeringNetworks",
     # AWS. Implemented in services/clouds/aws/lookups.py; the Google handlers live in
     # services/clouds/gcp/lookups.py and both are mirrored here.
+    "aws.regions",
+    "ec2.regions",
     "ec2.vpc",
     "ec2.vpcs",
     "gke.clusters",
