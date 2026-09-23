@@ -1,0 +1,162 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "ebs",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS EBS Volume",
+    "icon": "storage",
+    "description": "Provision Amazon Elastic Block Store (EBS) persistent block storage volumes",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "ebs",
+    "key_field": "name",
+    "key_label": "Volume Name",
+    "key_description": "Unique name for the EBS volume, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core volume settings including name, availability zone, and size.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Volume Name",
+            "description": "Unique name for the EBS volume, applied as the 'Name' tag and map key.",
+            "type": "text",
+            "required": true,
+            "default": "ebs-default",
+            "placeholder": "prod-data-vol",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Volume name must only contain alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "availability_zone",
+            "label": "Availability Zone",
+            "description": "The Availability Zone in which to launch the EBS volume.",
+            "type": "text",
+            "required": true,
+            "default": "us-east-1a",
+            "placeholder": "us-east-1a"
+          },
+          {
+            "id": "size",
+            "label": "Volume Size (GiB)",
+            "description": "The size of the volume in GiBs.",
+            "type": "number",
+            "required": true,
+            "default": 20,
+            "validation": {
+              "min": 1,
+              "max": 16384
+            }
+          },
+          {
+            "id": "type",
+            "label": "Volume Type",
+            "description": "The type of EBS volume.",
+            "type": "select",
+            "required": true,
+            "default": "gp3",
+            "options": [
+              { "value": "gp3", "label": "General Purpose SSD (gp3)" },
+              { "value": "gp2", "label": "General Purpose SSD (gp2)" },
+              { "value": "io1", "label": "Provisioned IOPS SSD (io1)" },
+              { "value": "io2", "label": "Provisioned IOPS SSD (io2)" },
+              { "value": "st1", "label": "Throughput Optimized HDD (st1)" },
+              { "value": "sc1", "label": "Cold HDD (sc1)" },
+              { "value": "standard", "label": "Magnetic (standard)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "performance",
+        "label": "Performance Settings",
+        "description": "Configure provisioned IOPS and throughput for performance-tuned volumes.",
+        "fields": [
+          {
+            "id": "iops",
+            "label": "Provisioned IOPS",
+            "description": "Provisioned IOPS. Required for io1/io2, optional for gp3.",
+            "type": "number",
+            "required": false,
+            "default": null,
+            "validation": {
+              "min": 100,
+              "max": 64000
+            }
+          },
+          {
+            "id": "throughput",
+            "label": "Throughput (MiB/s)",
+            "description": "Throughput in MiB/s. Valid only for gp3 volumes (125-1000).",
+            "type": "number",
+            "required": false,
+            "default": null,
+            "validation": {
+              "min": 125,
+              "max": 1000
+            }
+          },
+          {
+            "id": "multi_attach_enabled",
+            "label": "Enable Multi-Attach",
+            "description": "Specifies whether to enable Amazon EBS Multi-Attach (io1/io2 only).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Encryption & Snapshots",
+        "description": "Configure encryption keys and snapshot restoration.",
+        "fields": [
+          {
+            "id": "encrypted",
+            "label": "Enable Encryption",
+            "description": "Whether to encrypt the EBS volume.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "kms_key_id",
+            "label": "KMS Key ARN",
+            "description": "Custom KMS master key ARN used to encrypt the volume.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "placeholder": "arn:aws:kms:us-east-1:123456789012:key/..."
+          },
+          {
+            "id": "snapshot_id",
+            "label": "Snapshot ID",
+            "description": "A snapshot ID from which to restore the volume.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "placeholder": "snap-0123456789abcdef0"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "vpc",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS VPC",
+    "icon": "vpc",
+    "description": "Provision Amazon Virtual Private Cloud (VPC) networks with DNS, IPv6, and tenancy settings",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "vpc",
+    "key_field": "name",
+    "key_label": "VPC Name",
+    "key_description": "Unique name and identifier for the VPC, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core VPC settings including name, primary IPv4 CIDR block, and instance tenancy.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "VPC Name",
+            "description": "Unique name for the VPC, applied as the 'Name' tag and map key.",
+            "type": "text",
+            "required": true,
+            "default": "vpc-default",
+            "placeholder": "production-vpc",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "VPC name must only contain alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "cidr_block",
+            "label": "IPv4 CIDR Block",
+            "description": "The primary IPv4 network range for the VPC in CIDR notation (e.g. 10.0.0.0/16).",
+            "type": "text",
+            "required": true,
+            "default": "10.0.0.0/16",
+            "placeholder": "10.0.0.0/16",
+            "validation": {
+              "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}\\/([0-9]|[1-2][0-9]|3[0-2])$",
+              "pattern_error": "Must be a valid IPv4 CIDR block (e.g., 10.0.0.0/16)."
+            }
+          },
+          {
+            "id": "instance_tenancy",
+            "label": "Instance Tenancy",
+            "description": "Tenancy option for instances launched into the VPC.",
+            "type": "select",
+            "required": false,
+            "default": "default",
+            "options": [
+              {
+                "value": "default",
+                "label": "Shared (Default)"
+              },
+              {
+                "value": "dedicated",
+                "label": "Dedicated (Single-Tenant Hardware)"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dns",
+        "label": "DNS Settings",
+        "description": "Configure Amazon DNS resolution and private/public DNS hostnames for EC2 instances.",
+        "fields": [
+          {
+            "id": "enable_dns_support",
+            "label": "Enable DNS Resolution",
+            "description": "Whether to enable DNS resolution support through the Amazon provided DNS server.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "enable_dns_hostnames",
+            "label": "Enable DNS Hostnames",
+            "description": "Whether instances launched in the VPC get public DNS hostnames (requires DNS resolution enabled).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "ipv6",
+        "label": "IPv6 Settings",
+        "description": "Configure IPv6 address allocation and network border groups.",
+        "fields": [
+          {
+            "id": "assign_generated_ipv6_cidr_block",
+            "label": "Auto-assign Amazon IPv6 CIDR Block",
+            "description": "Requests an Amazon-provided IPv6 CIDR block with a /56 prefix length.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "ipv6_cidr_block_network_border_group",
+            "label": "Network Border Group",
+            "description": "Restrict advertisement of public IPv6 addresses to specific Network Border Groups (e.g., Local Zones).",
+            "type": "text",
+            "required": false,
+            "placeholder": "us-east-1"
+          }
+        ]
+      },
+      {
+        "id": "monitoring",
+        "label": "Metrics & Monitoring",
+        "description": "Configure CloudWatch metrics for network address usage.",
+        "fields": [
+          {
+            "id": "enable_network_address_usage_metrics",
+            "label": "Enable Network Address Usage (NAU) Metrics",
+            "description": "Whether to enable Network Address Usage metrics to monitor IP address capacity in your VPC.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for organizational and cost allocation purposes.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "VPC Tags",
+            "description": "Key-value tags assigned to the VPC.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
