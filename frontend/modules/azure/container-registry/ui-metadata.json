@@ -1,0 +1,369 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "container-registry",
+  "version": "1.0.0",
+  "display": {
+    "label": "Container Registry",
+    "icon": "azure-container-registry",
+    "description": "Azure Container Registry for managing private Docker container images and related artifacts",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "container_registry",
+    "key_field": "name",
+    "key_label": "Registry Name",
+    "key_description": "The unique name for the Azure Container Registry. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Container Registry identification, resource group, location, and SKU tier.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Registry Name",
+            "description": "Globally unique name for the Container Registry. Must be between 5 and 50 alphanumeric characters (letters and numbers only).",
+            "type": "text",
+            "required": true,
+            "default": "crdefault123",
+            "placeholder": "mycontainerregistry",
+            "locked_after_create": true,
+            "validation": {
+              "min": 5,
+              "max": 50,
+              "pattern": "^[a-zA-Z0-9]{5,50}$",
+              "pattern_error": "Container Registry name must be between 5 and 50 alphanumeric characters without hyphens or special symbols."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Container Registry. Changing this forces a new resource to be created.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload",
+            "locked_after_create": true
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Container Registry should be created. Changing this forces a new resource to be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "locked_after_create": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (Sydney)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo)" },
+              { "value": "centralindia", "label": "Central India (Pune)" }
+            ]
+          },
+          {
+            "id": "sku",
+            "label": "SKU Tier",
+            "description": "The SKU tier of the Container Registry. Choose between Basic, Standard, and Premium.",
+            "type": "select",
+            "required": true,
+            "default": "Standard",
+            "options": [
+              { "value": "Basic", "label": "Basic (Cost-optimized for basic developer workloads)" },
+              { "value": "Standard", "label": "Standard (General purpose with higher storage and throughput)" },
+              { "value": "Premium", "label": "Premium (Enterprise features: Geo-replication, Customer-Managed Keys, Private Endpoints, Content Trust)" }
+            ]
+          },
+          {
+            "id": "admin_enabled",
+            "label": "Admin User Enabled",
+            "description": "Specifies whether the admin user credentials (username and passwords) are enabled for basic docker authentication.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "networking_and_security",
+        "label": "Networking & Security",
+        "description": "Public access, network bypass options, managed identity, and firewall rules.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "public_network_access_enabled",
+            "label": "Public Network Access Enabled",
+            "description": "Whether public network access is allowed for the container registry.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "network_rule_bypass_option",
+            "label": "Network Rule Bypass Option",
+            "description": "Whether to allow trusted Azure services to access a network-restricted container registry.",
+            "type": "select",
+            "required": false,
+            "default": "AzureServices",
+            "options": [
+              { "value": "AzureServices", "label": "AzureServices (Allow trusted Microsoft/Azure services)" },
+              { "value": "None", "label": "None (Deny all bypasses)" }
+            ]
+          },
+          {
+            "id": "identity",
+            "label": "Managed Identity",
+            "description": "Managed service identity configuration for the container registry.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "type",
+                "label": "Identity Type",
+                "description": "The type of Managed Service Identity for the container registry.",
+                "type": "select",
+                "required": true,
+                "default": "SystemAssigned",
+                "options": [
+                  { "value": "SystemAssigned", "label": "SystemAssigned" },
+                  { "value": "UserAssigned", "label": "UserAssigned" },
+                  { "value": "SystemAssigned, UserAssigned", "label": "SystemAssigned, UserAssigned" }
+                ]
+              },
+              {
+                "id": "identity_ids",
+                "label": "User Assigned Identity IDs",
+                "description": "List of User Assigned Managed Identity IDs to assign. Required when type is UserAssigned or SystemAssigned, UserAssigned.",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "id": "network_rule_set",
+            "label": "Network Rule Set",
+            "description": "Network rule set configuration to restrict registry access by IP addresses or virtual networks (only available with Premium SKU).",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "default_action",
+                "label": "Default Action",
+                "description": "The default action when no rule matches: Allow or Deny.",
+                "type": "select",
+                "required": false,
+                "default": "Allow",
+                "options": [
+                  { "value": "Allow", "label": "Allow" },
+                  { "value": "Deny", "label": "Deny" }
+                ]
+              },
+              {
+                "id": "ip_rule",
+                "label": "IP Firewall Rules",
+                "description": "List of IP rules to allow access from specific CIDR IP ranges.",
+                "type": "repeatable",
+                "required": false,
+                "default": [],
+                "fields": [
+                  {
+                    "id": "action",
+                    "label": "Action",
+                    "description": "The action to apply for this IP range.",
+                    "type": "select",
+                    "required": true,
+                    "default": "Allow",
+                    "options": [
+                      { "value": "Allow", "label": "Allow" }
+                    ]
+                  },
+                  {
+                    "id": "ip_range",
+                    "label": "IP Range (CIDR)",
+                    "description": "The CIDR to grant access to (e.g. 104.45.231.0/24).",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "104.45.231.0/24"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "policies_and_features",
+        "label": "Policies & Premium Features",
+        "description": "Zone redundancy, geo-replication, retention, and content trust policies.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "zone_redundancy_enabled",
+            "label": "Zone Redundancy Enabled",
+            "description": "Whether zone redundancy is enabled for this container registry (only available with Premium SKU).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "anonymous_pull_enabled",
+            "label": "Anonymous Pull Enabled",
+            "description": "Whether anonymous (unauthenticated) pull access is enabled (only available with Standard or Premium SKU).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "data_endpoint_enabled",
+            "label": "Data Endpoint Enabled",
+            "description": "Whether to enable dedicated data endpoints for this container registry (only available with Premium SKU).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "export_policy_enabled",
+            "label": "Export Policy Enabled",
+            "description": "Boolean value that indicates whether export policy is enabled (only available with Premium SKU).",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "quarantine_policy_enabled",
+            "label": "Quarantine Policy Enabled",
+            "description": "Boolean value that indicates whether quarantine policy is enabled.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "retention_policy_in_days",
+            "label": "Retention Policy (Days)",
+            "description": "The number of days to retain untagged manifests before deletion. Set to null to disable (only available with Premium SKU).",
+            "type": "number",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "validation": {
+              "min": 1,
+              "max": 365
+            }
+          },
+          {
+            "id": "trust_policy_enabled",
+            "label": "Content Trust Policy Enabled",
+            "description": "Boolean value that indicates whether Docker Content Trust (DCT) image signing is enabled (only available with Premium SKU).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "georeplications",
+            "label": "Geo-Replications",
+            "description": "List of geo-replications for the container registry across different Azure regions (only available with Premium SKU).",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "location",
+                "label": "Replication Region",
+                "description": "The Azure location where the container registry should be geo-replicated.",
+                "type": "select",
+                "required": true,
+                "default": "westeurope",
+                "options": [
+                  { "value": "eastus", "label": "East US (Virginia)" },
+                  { "value": "eastus2", "label": "East US 2 (Virginia)" },
+                  { "value": "westus", "label": "West US (California)" },
+                  { "value": "westus2", "label": "West US 2 (Washington)" },
+                  { "value": "westus3", "label": "West US 3 (Phoenix)" },
+                  { "value": "centralus", "label": "Central US (Iowa)" },
+                  { "value": "northcentralus", "label": "North Central US (Illinois)" },
+                  { "value": "southcentralus", "label": "South Central US (Texas)" },
+                  { "value": "northeurope", "label": "North Europe (Ireland)" },
+                  { "value": "westeurope", "label": "West Europe (Netherlands)" },
+                  { "value": "uksouth", "label": "UK South (London)" },
+                  { "value": "ukwest", "label": "UK West (Cardiff)" },
+                  { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+                  { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+                  { "value": "australiaeast", "label": "Australia East (Sydney)" },
+                  { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+                  { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+                  { "value": "francecentral", "label": "France Central (Paris)" },
+                  { "value": "japaneast", "label": "Japan East (Tokyo)" },
+                  { "value": "centralindia", "label": "Central India (Pune)" }
+                ]
+              },
+              {
+                "id": "regional_endpoint_enabled",
+                "label": "Regional Endpoint Enabled",
+                "description": "Whether to enable a dedicated regional data endpoint for this replication.",
+                "type": "boolean",
+                "required": false,
+                "default": null,
+                "nullable": true
+              },
+              {
+                "id": "zone_redundancy_enabled",
+                "label": "Zone Redundancy Enabled",
+                "description": "Whether zone redundancy is enabled for this geo-replication.",
+                "type": "boolean",
+                "required": false,
+                "default": null,
+                "nullable": true
+              },
+              {
+                "id": "tags",
+                "label": "Replication Tags",
+                "description": "A mapping of tags to assign to this replication.",
+                "type": "map",
+                "required": false,
+                "default": {}
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags_section",
+        "label": "Tags",
+        "description": "Resource tags for organization, governance, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Container Registry for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
