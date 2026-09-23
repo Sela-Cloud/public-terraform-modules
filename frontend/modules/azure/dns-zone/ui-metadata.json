@@ -1,0 +1,186 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "dns-zone",
+  "version": "1.0.0",
+  "display": {
+    "label": "DNS Zone",
+    "icon": "azure-dns",
+    "description": "Azure DNS Zone for hosting public DNS domains and managing name resolution records",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "dns_zone",
+    "key_field": "name",
+    "key_label": "Domain Name",
+    "key_description": "The unique domain name for the Azure DNS Zone (e.g. example.com). Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core DNS Zone domain name and resource group placement.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Domain Name",
+            "description": "Name of the DNS Zone. Must be a valid domain name (e.g., example.com, sub.example.com). Changing this forces a new resource to be created.",
+            "type": "text",
+            "required": true,
+            "default": "example.com",
+            "placeholder": "mydomain.com",
+            "locked_after_create": true,
+            "validation": {
+              "min": 1,
+              "max": 253,
+              "pattern": "^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}$",
+              "pattern_error": "Must be a valid domain name (e.g., example.com) between 1 and 253 characters."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the DNS Zone. Changing this forces a new resource to be created.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-dns",
+            "locked_after_create": true,
+            "validation": {
+              "min": 1,
+              "max": 90,
+              "pattern": "^[-\\w\\._\\(\\)]+[^\\.]$",
+              "pattern_error": "Resource Group name must be 1-90 characters (alphanumerics, underscores, parentheses, hyphens, periods) and cannot end in a period."
+            }
+          }
+        ]
+      },
+      {
+        "id": "soa_configuration",
+        "label": "SOA Record Settings",
+        "description": "Custom Start of Authority (SOA) record settings for the DNS Zone. If omitted, Azure defaults are used.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "soa_record",
+            "label": "SOA Record",
+            "description": "Customize the Start of Authority (SOA) record for the zone.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "email",
+                "label": "Administrator Email",
+                "description": "The email contact for the SOA record, using a dot instead of @ (e.g. hostmaster.example.com).",
+                "type": "text",
+                "required": true,
+                "placeholder": "hostmaster.example.com"
+              },
+              {
+                "id": "host_name",
+                "label": "Authoritative Name Server",
+                "description": "The domain name of the authoritative name server for the SOA record. Leave empty to let Azure automatically configure.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "ns1-01.azure-dns.com."
+              },
+              {
+                "id": "expire_time",
+                "label": "Expire Time (seconds)",
+                "description": "The time in seconds that a secondary name server will treat its zone data as valid before expiring (default: 2419200 = 28 days).",
+                "type": "number",
+                "required": false,
+                "default": 2419200,
+                "validation": {
+                  "min": 1
+                }
+              },
+              {
+                "id": "minimum_ttl",
+                "label": "Minimum TTL (seconds)",
+                "description": "The minimum Time To Live in seconds for negative caching (default: 300 = 5 minutes).",
+                "type": "number",
+                "required": false,
+                "default": 300,
+                "validation": {
+                  "min": 1
+                }
+              },
+              {
+                "id": "refresh_time",
+                "label": "Refresh Time (seconds)",
+                "description": "The interval in seconds before the zone should be refreshed (default: 3600 = 1 hour).",
+                "type": "number",
+                "required": false,
+                "default": 3600,
+                "validation": {
+                  "min": 1
+                }
+              },
+              {
+                "id": "retry_time",
+                "label": "Retry Time (seconds)",
+                "description": "The interval in seconds that should elapse before a failed refresh should be retried (default: 300 = 5 minutes).",
+                "type": "number",
+                "required": false,
+                "default": 300,
+                "validation": {
+                  "min": 1
+                }
+              },
+              {
+                "id": "serial_number",
+                "label": "Serial Number",
+                "description": "The serial number for the SOA record (default: 1).",
+                "type": "number",
+                "required": false,
+                "default": 1,
+                "validation": {
+                  "min": 1
+                }
+              },
+              {
+                "id": "ttl",
+                "label": "SOA TTL (seconds)",
+                "description": "The Time To Live for the SOA record set in seconds (default: 3600 = 1 hour).",
+                "type": "number",
+                "required": false,
+                "default": 3600,
+                "validation": {
+                  "min": 1
+                }
+              },
+              {
+                "id": "tags",
+                "label": "SOA Record Tags",
+                "description": "A mapping of tags to assign to the SOA record set.",
+                "type": "map",
+                "required": false,
+                "default": {}
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags_section",
+        "label": "Tags",
+        "description": "Resource tags for organization, governance, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the DNS Zone for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
