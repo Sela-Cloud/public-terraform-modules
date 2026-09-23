@@ -1,0 +1,62 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "app-service-managed-certificate",
+  "version": "1.0.0",
+  "display": {
+    "label": "App Service Managed Certificate",
+    "icon": "azure-app-service",
+    "description": "Azure App Service Managed Certificate for securing custom domains on Windows and Linux Web Apps",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "app_service_managed_certificate",
+    "key_field": "name",
+    "key_label": "Certificate Identifier",
+    "key_description": "The unique identifier or key for this managed certificate entry (used as the map key in terraform.tfvars).",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core certificate settings and custom hostname binding.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Certificate Identifier",
+            "description": "Unique key or name identifying this managed certificate configuration.",
+            "type": "text",
+            "required": true,
+            "default": "cert-default",
+            "placeholder": "cert-custom-domain",
+            "locked_after_create": true
+          },
+          {
+            "id": "custom_hostname_binding_id",
+            "label": "Custom Hostname Binding ID",
+            "description": "The Azure resource ID of the App Service Custom Hostname Binding to secure with this certificate. Changing this forces a new certificate to be created.",
+            "type": "text",
+            "required": true,
+            "placeholder": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Web/sites/my-app/hostNameBindings/custom.example.com",
+            "locked_after_create": true
+          }
+        ]
+      },
+      {
+        "id": "tags_section",
+        "label": "Tags",
+        "description": "Resource tags for governance and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Managed Certificate for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
