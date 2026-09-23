@@ -1,0 +1,129 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "iam-policy",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS IAM Policy",
+    "icon": "iam",
+    "description": "Provision AWS IAM Managed Policies with custom JSON documents, paths, and tags",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "iam_policy",
+    "key_field": "name",
+    "key_label": "Policy Name",
+    "key_description": "Unique friendly name for the IAM policy.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core IAM policy settings including policy name, name prefix, description, and path hierarchy.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Policy Name",
+            "description": "Friendly name of the policy. Conflicts with name_prefix.",
+            "type": "text",
+            "required": true,
+            "default": "iam-policy-default",
+            "placeholder": "app-custom-policy",
+            "validation": {
+              "min": 1,
+              "max": 128,
+              "pattern": "^[a-zA-Z0-9+=,.@_-]+$",
+              "pattern_error": "Policy name must be 1 to 128 characters and contain only alphanumeric characters and symbols +=,.@_-"
+            }
+          },
+          {
+            "id": "name_prefix",
+            "label": "Policy Name Prefix",
+            "description": "Creates a unique friendly name beginning with the specified prefix. Conflicts with name.",
+            "type": "text",
+            "required": false,
+            "placeholder": "app-policy-"
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "description": "Description of the IAM policy.",
+            "type": "text",
+            "required": false,
+            "default": "Managed by Terraform",
+            "placeholder": "Policy description"
+          },
+          {
+            "id": "path",
+            "label": "Path",
+            "description": "Path in which to create the policy. Must begin and end with a forward slash (/).",
+            "type": "text",
+            "required": false,
+            "default": "/",
+            "placeholder": "/",
+            "validation": {
+              "pattern": "^(/|(/[a-zA-Z0-9_+=,.@-]+)+/)$",
+              "pattern_error": "Path must begin and end with a forward slash (/)."
+            }
+          }
+        ]
+      },
+      {
+        "id": "policy_document",
+        "label": "Policy Document",
+        "description": "JSON formatted IAM policy statement defining access permissions.",
+        "fields": [
+          {
+            "id": "policy",
+            "label": "Policy Document (JSON)",
+            "description": "Valid JSON formatted policy document specifying actions, effects, and resources.",
+            "type": "text",
+            "multiline": true,
+            "required": true,
+            "default": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"DefaultCloudWatchLogsAccess\",\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"logs:CreateLogGroup\",\n        \"logs:CreateLogStream\",\n        \"logs:PutLogEvents\"\n      ],\n      \"Resource\": \"*\"\n    }\n  ]\n}",
+            "placeholder": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [...]\n}"
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced Configuration",
+        "description": "Consistency and creation delay settings.",
+        "fields": [
+          {
+            "id": "delay_after_policy_creation_in_ms",
+            "label": "Creation Delay (ms)",
+            "description": "Number of milliseconds to wait between creating the policy and setting its version as default.",
+            "type": "number",
+            "required": false,
+            "placeholder": "1000"
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for organizational, tracking, and cost allocation purposes.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Policy Tags",
+            "description": "Key-value tags assigned to the IAM policy.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

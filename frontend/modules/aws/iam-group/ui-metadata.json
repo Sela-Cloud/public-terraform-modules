@@ -1,0 +1,87 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "iam-group",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS IAM Group",
+    "icon": "iam",
+    "description": "Provision AWS IAM Groups with custom paths and managed policy attachments for centralized access control",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "iam_group",
+    "key_field": "name",
+    "key_label": "Group Name",
+    "key_description": "Unique friendly name for the IAM group.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core IAM group settings including group name and path hierarchy.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Group Name",
+            "description": "The group's name consisting of alphanumeric characters and symbols +=,.@_-",
+            "type": "text",
+            "required": true,
+            "default": "iam-group-default",
+            "placeholder": "developers",
+            "validation": {
+              "min": 1,
+              "max": 128,
+              "pattern": "^[a-zA-Z0-9+=,.@_-]+$",
+              "pattern_error": "Group name must be 1 to 128 characters and contain only alphanumeric characters and symbols +=,.@_-"
+            }
+          },
+          {
+            "id": "path",
+            "label": "Path",
+            "description": "Path in which to create the group. Must begin and end with a forward slash (/).",
+            "type": "text",
+            "required": false,
+            "default": "/",
+            "placeholder": "/",
+            "validation": {
+              "pattern": "^(/|(/[a-zA-Z0-9_+=,.@-]+)+/)$",
+              "pattern_error": "Path must begin and end with a forward slash (/)."
+            }
+          }
+        ]
+      },
+      {
+        "id": "policy_attachments",
+        "label": "Policy Attachments",
+        "description": "Managed policy attachments to assign permissions to this group.",
+        "fields": [
+          {
+            "id": "managed_policy_arns",
+            "label": "Managed Policy ARNs",
+            "description": "List of AWS managed or customer managed policy ARNs to attach to the group.",
+            "type": "list",
+            "required": false,
+            "default": []
+          }
+        ]
+      }
+    ]
+  },
+  "satellites": [
+    {
+      "address": "aws_iam_group_policy_attachment.this",
+      "driven_by": "managed_policy_arns",
+      "note": "Policy attachments are secondary resources driven by managed_policy_arns."
+    }
+  ]
+}

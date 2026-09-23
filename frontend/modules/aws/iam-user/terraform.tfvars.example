@@ -1,0 +1,29 @@
+region = "us-east-1"
+
+iam_user = {
+  "john.doe" = {
+    name                 = "john.doe"
+    path                 = "/engineering/"
+    permissions_boundary = null
+
+    tags = {
+      Environment = "development"
+      Department  = "Engineering"
+      Role        = "Backend Developer"
+      ManagedBy   = "Terraform"
+    }
+  },
+
+  "cicd-deployer" = {
+    name                 = "cicd-deployer"
+    path                 = "/automation/"
+    permissions_boundary = "arn:aws:iam::123456789012:policy/DeveloperBoundary"
+
+    tags = {
+      Environment = "production"
+      Team        = "DevOps"
+      Purpose     = "Automated CI/CD deployment"
+      ManagedBy   = "Terraform"
+    }
+  }
+}

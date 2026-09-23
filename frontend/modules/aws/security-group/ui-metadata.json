@@ -1,0 +1,282 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "security-group",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Security Group",
+    "icon": "shield",
+    "description": "Provision Amazon Virtual Private Cloud (VPC) Security Groups and network access control rules",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "security_group",
+    "key_field": "name",
+    "key_label": "Security Group Name",
+    "key_description": "Unique name for the Security Group, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Security Group attributes including name, description, and target VPC.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Security Group Name",
+            "description": "Unique name for the Security Group, applied as the 'Name' tag and map key.",
+            "type": "text",
+            "required": true,
+            "default": "security-group-default",
+            "placeholder": "web-sg",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Name must only contain alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "description": "Description for the security group.",
+            "type": "text",
+            "required": false,
+            "default": "Managed by Terraform",
+            "placeholder": "Security group for web instances"
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC ID",
+            "description": "The VPC ID in which to create the security group.",
+            "type": "select",
+            "required": true,
+            "placeholder": "vpc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "revoke_rules_on_delete",
+            "label": "Revoke Rules On Delete",
+            "description": "Instruct Terraform to revoke all security group rules before deleting the group.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "rules",
+        "label": "Rules",
+        "description": "Inbound and outbound rules. Each is created as its own resource.",
+        "fields": [
+          {
+            "id": "ingress_rules",
+            "label": "Ingress rules",
+            "description": "Each entry becomes its own rule resource. Leave empty to allow no inbound traffic.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "description",
+                "label": "Description",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "ip_protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": true,
+                "default": "tcp",
+                "description": "Use All to match every protocol, which ignores the port range.",
+                "options": [
+                  {
+                    "value": "tcp",
+                    "label": "TCP"
+                  },
+                  {
+                    "value": "udp",
+                    "label": "UDP"
+                  },
+                  {
+                    "value": "icmp",
+                    "label": "ICMP"
+                  },
+                  {
+                    "value": "-1",
+                    "label": "All protocols"
+                  }
+                ]
+              },
+              {
+                "id": "from_port",
+                "label": "From port",
+                "type": "number",
+                "required": false,
+                "description": "Start of the port range. Leave unset when the protocol is All.",
+                "validation": {
+                  "min": -1,
+                  "max": 65535
+                }
+              },
+              {
+                "id": "to_port",
+                "label": "To port",
+                "type": "number",
+                "required": false,
+                "description": "End of the port range. Set it equal to the start for a single port.",
+                "validation": {
+                  "min": -1,
+                  "max": 65535
+                }
+              },
+              {
+                "id": "cidr_ipv4",
+                "label": "IPv4 CIDR",
+                "type": "text",
+                "required": false,
+                "placeholder": "10.0.0.0/16",
+                "description": "Give exactly one source: an IPv4 CIDR, an IPv6 CIDR, or a security group."
+              },
+              {
+                "id": "cidr_ipv6",
+                "label": "IPv6 CIDR",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "referenced_security_group_id",
+                "label": "Source security group",
+                "type": "text",
+                "required": false,
+                "description": "Allow traffic from members of another security group instead of a CIDR."
+              }
+            ]
+          },
+          {
+            "id": "egress_rules",
+            "label": "Egress rules",
+            "description": "Each entry becomes its own rule resource. Leave empty to allow no outbound traffic \u2014 note AWS's own default is allow-all egress, which this module does not reproduce.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "description",
+                "label": "Description",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "ip_protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": true,
+                "default": "-1",
+                "description": "Use All to match every protocol, which ignores the port range.",
+                "options": [
+                  {
+                    "value": "tcp",
+                    "label": "TCP"
+                  },
+                  {
+                    "value": "udp",
+                    "label": "UDP"
+                  },
+                  {
+                    "value": "icmp",
+                    "label": "ICMP"
+                  },
+                  {
+                    "value": "-1",
+                    "label": "All protocols"
+                  }
+                ]
+              },
+              {
+                "id": "from_port",
+                "label": "From port",
+                "type": "number",
+                "required": false,
+                "description": "Start of the port range. Leave unset when the protocol is All.",
+                "validation": {
+                  "min": -1,
+                  "max": 65535
+                }
+              },
+              {
+                "id": "to_port",
+                "label": "To port",
+                "type": "number",
+                "required": false,
+                "description": "End of the port range. Set it equal to the start for a single port.",
+                "validation": {
+                  "min": -1,
+                  "max": 65535
+                }
+              },
+              {
+                "id": "cidr_ipv4",
+                "label": "IPv4 CIDR",
+                "type": "text",
+                "required": false,
+                "default": "0.0.0.0/0",
+                "placeholder": "10.0.0.0/16",
+                "description": "Give exactly one source: an IPv4 CIDR, an IPv6 CIDR, or a security group."
+              },
+              {
+                "id": "cidr_ipv6",
+                "label": "IPv6 CIDR",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "referenced_security_group_id",
+                "label": "Source security group",
+                "type": "text",
+                "required": false,
+                "description": "Allow traffic from members of another security group instead of a CIDR."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "satellites": [
+    {
+      "address": "aws_vpc_security_group_ingress_rule.ingress",
+      "driven_by": "ingress_rules",
+      "note": "One resource per inbound rule rather than blocks on the group, so a single rule can be revoked without rewriting the others."
+    },
+    {
+      "address": "aws_vpc_security_group_egress_rule.egress",
+      "driven_by": "egress_rules",
+      "note": "One resource per outbound rule. With none given the group permits no egress at all, which is not the AWS console's default."
+    }
+  ]
+}
