@@ -1,0 +1,162 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "manage-identities",
+  "version": "1.0.0",
+  "display": {
+    "label": "Managed Identity",
+    "icon": "azure-managed-identity",
+    "description": "Azure Managed Identity for authenticating applications and cloud resources without credentials",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "manage_identities",
+    "key_field": "name",
+    "key_label": "Identity Name",
+    "key_description": "The unique name for the Azure Managed Identity. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Managed Identity settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Identity Name",
+            "description": "Name of the Managed Identity. Must be 3-128 characters using alphanumerics, hyphens, and underscores.",
+            "type": "text",
+            "required": true,
+            "default": "uai-default",
+            "placeholder": "uai-my-app-prod",
+            "locked_after_create": true,
+            "validation": {
+              "min": 3,
+              "max": 128,
+              "pattern": "^[a-zA-Z0-9-_]{3,128}$",
+              "pattern_error": "Identity name must be 3-128 characters and contain only alphanumerics, underscores, and hyphens."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Managed Identity. Changing this forces a new resource to be created.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload",
+            "locked_after_create": true,
+            "validation": {
+              "min": 1,
+              "max": 90,
+              "pattern": "^[-\\w\\._\\(\\)]+[^\\.]$",
+              "pattern_error": "Resource Group name must be 1-90 characters (alphanumerics, underscores, parentheses, hyphens, periods) and cannot end in a period."
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Managed Identity should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "locked_after_create": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (Sydney)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo)" },
+              { "value": "centralindia", "label": "Central India (Pune)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "role_assignments_section",
+        "label": "Role Assignments (RBAC)",
+        "description": "Optional Azure RBAC role assignments to grant permissions to this Managed Identity.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "role_assignments",
+            "label": "Role Assignments",
+            "description": "List of Azure RBAC role assignments granted to this Managed Identity.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "scope",
+                "label": "Scope",
+                "description": "The scope at which the role assignment applies (e.g. subscription ID, resource group ID, or specific resource ID).",
+                "type": "text",
+                "required": true,
+                "placeholder": "/subscriptions/.../resourceGroups/..."
+              },
+              {
+                "id": "role_definition_name",
+                "label": "Role Definition Name",
+                "description": "The name of a built-in Azure role (e.g. 'Contributor', 'Reader', 'Storage Blob Data Contributor', 'Key Vault Secrets User').",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "Contributor"
+              },
+              {
+                "id": "role_definition_id",
+                "label": "Role Definition ID",
+                "description": "The Scoped-ID of the Role Definition. Mutually exclusive with Role Definition Name.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../providers/Microsoft.Authorization/roleDefinitions/..."
+              },
+              {
+                "id": "description",
+                "label": "Description",
+                "description": "A description for this role assignment.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "Allow access to workload storage"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags_section",
+        "label": "Tags",
+        "description": "Resource tags for organization, governance, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Managed Identity for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
