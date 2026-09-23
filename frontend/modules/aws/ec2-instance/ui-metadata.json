@@ -1,5 +1,5 @@
 {
-  "$schema": "../../ui-metadata.schema.json",
+  "$schema": "../../../ui-metadata.schema.json",
   "module": "ec2-instance",
   "version": "1.0.0",
   "display": {
@@ -164,6 +164,7 @@
             "fields": [
               {
                 "id": "volume_type",
+                "description": "EBS volume type for the root disk. gp3 is the current general-purpose default.",
                 "label": "Volume Type",
                 "type": "select",
                 "default": "gp3",
@@ -177,18 +178,21 @@
               },
               {
                 "id": "volume_size",
+                "description": "Root disk size in GiB. It must be at least as large as the AMI's snapshot.",
                 "label": "Volume Size (GB)",
                 "type": "number",
                 "default": 30
               },
               {
                 "id": "delete_on_termination",
+                "description": "Delete the root volume when the instance is terminated. Turning this off leaves the volume, and its cost, behind.",
                 "label": "Delete on Termination",
                 "type": "boolean",
                 "default": true
               },
               {
                 "id": "encrypted",
+                "description": "Encrypt the root volume at rest.",
                 "label": "Encrypted",
                 "type": "boolean",
                 "default": true
@@ -219,6 +223,7 @@
               },
               {
                 "id": "volume_type",
+                "description": "EBS volume type for this data disk.",
                 "label": "Volume Type",
                 "type": "select",
                 "default": "gp3",
@@ -231,18 +236,21 @@
               },
               {
                 "id": "volume_size",
+                "description": "Size of this data disk in GiB.",
                 "label": "Volume Size (GB)",
                 "type": "number",
                 "default": 20
               },
               {
                 "id": "encrypted",
+                "description": "Encrypt this data volume at rest.",
                 "label": "Encrypted",
                 "type": "boolean",
                 "default": true
               },
               {
                 "id": "delete_on_termination",
+                "description": "Delete this volume when the instance is terminated.",
                 "label": "Delete on Termination",
                 "type": "boolean",
                 "default": true
@@ -273,6 +281,7 @@
             "fields": [
               {
                 "id": "http_endpoint",
+                "description": "Whether the instance metadata service is reachable at all.",
                 "label": "HTTP Endpoint",
                 "type": "select",
                 "default": "enabled",
@@ -294,6 +303,7 @@
               },
               {
                 "id": "http_put_response_hop_limit",
+                "description": "How many network hops a metadata response may travel. Keep it at 1 unless containers on the host need metadata, which needs 2.",
                 "label": "Hop Limit",
                 "type": "number",
                 "default": 2
@@ -394,5 +404,25 @@
         ]
       }
     ]
-  }
+  },
+  "satellites": [
+    {
+      "address": "aws_ebs_volume.this",
+      "driven_by": "ebs_block_device",
+      "note": "Data volumes are separate resources, not blocks on the instance, so they survive a replacement of the instance itself."
+    },
+    {
+      "address": "aws_volume_attachment.this",
+      "driven_by": "ebs_block_device"
+    },
+    {
+      "address": "aws_eip.this",
+      "driven_by": "enable_eip",
+      "note": "An Elastic IP is billed for as long as it is allocated, including while its instance is stopped."
+    },
+    {
+      "address": "aws_eip_association.this",
+      "driven_by": "enable_eip"
+    }
+  ]
 }
