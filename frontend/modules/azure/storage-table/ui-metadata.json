@@ -1,0 +1,118 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "storage-table",
+  "version": "1.0.0",
+  "display": {
+    "label": "Storage Table",
+    "icon": "storage-table",
+    "description": "Azure Storage Table for NoSQL structured key-value data storage within an Azure Storage Account",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "storage_table",
+    "key_field": "name",
+    "key_label": "Table Name",
+    "key_description": "The unique name for the Azure Storage Table within the storage account. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Storage Table settings and storage account association.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Table Name",
+            "description": "Name of the Storage Table. Must be 3-63 characters, start with a letter, and contain only alphanumeric characters.",
+            "type": "text",
+            "required": true,
+            "default": "mysampletable",
+            "placeholder": "mysampletable",
+            "locked_after_create": true,
+            "validation": {
+              "min": 3,
+              "max": 63,
+              "pattern": "^[a-zA-Z][a-zA-Z0-9]{2,62}$",
+              "pattern_error": "Table name must be 3-63 characters, start with a letter, and contain only alphanumeric characters."
+            }
+          },
+          {
+            "id": "storage_account_id",
+            "label": "Storage Account ID",
+            "description": "The Resource ID of the Azure Storage Account where the table should reside.",
+            "type": "text",
+            "required": true,
+            "default": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-default/providers/Microsoft.Storage/storageAccounts/storagedefault",
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Storage/storageAccounts/...",
+            "locked_after_create": true
+          }
+        ]
+      },
+      {
+        "id": "acl_section",
+        "label": "Access Control Lists (ACLs)",
+        "description": "Optional stored access policies for Shared Access Signature (SAS) delegation. Requires Shared Key authentication enabled on the Storage Account.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "acl",
+            "label": "Stored Access Policies",
+            "description": "List of Stored Access Policies defining permissions and expiry for the table.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "id",
+                "label": "Policy Identifier",
+                "description": "Unique identifier for the stored access policy (up to 64 characters).",
+                "type": "text",
+                "required": true,
+                "placeholder": "Policy1"
+              },
+              {
+                "id": "access_policy",
+                "label": "Access Policy",
+                "description": "Permissions and time window for this stored access policy.",
+                "type": "object",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "permissions",
+                    "label": "Permissions",
+                    "description": "Permissions for the policy. Combination of 'r' (read), 'w' (write), 'd' (delete), and 'l' (list).",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "rwdl"
+                  },
+                  {
+                    "id": "start",
+                    "label": "Start Time",
+                    "description": "Start time in ISO 8601 format (e.g. '2026-01-01T00:00:00Z').",
+                    "type": "text",
+                    "required": false,
+                    "default": null,
+                    "nullable": true,
+                    "placeholder": "2026-01-01T00:00:00Z"
+                  },
+                  {
+                    "id": "expiry",
+                    "label": "Expiry Time",
+                    "description": "Expiry time in ISO 8601 format (e.g. '2026-12-31T23:59:59Z').",
+                    "type": "text",
+                    "required": false,
+                    "default": null,
+                    "nullable": true,
+                    "placeholder": "2026-12-31T23:59:59Z"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
