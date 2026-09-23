@@ -1,5 +1,5 @@
 module "cloud_router" {
-  source               = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/cloud-router?ref=v0.7.7"
+  source               = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/cloud-router?ref=v0.7.8"
   for_each             = var.cloud_router
   project_id           = var.project_id
   name                 = each.value.name

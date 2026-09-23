@@ -1,5 +1,5 @@
 module "cloud_run_v2" {
-  source                           = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/cloud-run?ref=v0.7.7"
+  source                           = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/cloud-run?ref=v0.7.8"
   for_each                         = var.cloud_run
   project_id                       = var.project_id
   service_name                     = each.value.service_name

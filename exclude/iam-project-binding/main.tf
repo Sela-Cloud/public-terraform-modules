@@ -1,5 +1,5 @@
 module "iam_project_binding" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/iam/member-iam?ref=v0.7.7"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/iam/member-iam?ref=v0.7.8"
   for_each = var.iam_project_binding
 
   project                 = var.project_id

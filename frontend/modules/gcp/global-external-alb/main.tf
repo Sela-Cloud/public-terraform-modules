@@ -15,7 +15,7 @@ locals {
 }
 
 module "global_external_alb" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/global-external-alb?ref=v0.7.7"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/global-external-alb?ref=v0.7.8"
   for_each = local.load_balancers
 
   project_id              = var.project_id

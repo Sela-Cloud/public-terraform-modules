@@ -1,5 +1,5 @@
 module "gke_standard_node_pool" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/gke-standard-node-pool?ref=v0.7.7"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/gke-standard-node-pool?ref=v0.7.8"
   for_each = var.gke_node_pool
 
   project_id         = var.project_id
