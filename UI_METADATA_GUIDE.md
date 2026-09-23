@@ -17,7 +17,7 @@ Sela Craft provides a dynamic UI for deploying cloud infrastructure modules. The
 [ User Fills Form ] ────► [ API Payload: values dict ]
                                  │
                                  ▼
-                    [ Backend (selacraft_shared.tfvars) ]
+                    [ Backend (terraform_runner.py) ]
                                  │ (Converts values to HCL)
                                  ▼
                     [ terraform.tfvars ] ──► [ Terraform Plan / Apply ]
@@ -109,27 +109,12 @@ When crafting or generating Terraform code for Sela Craft modules, follow these 
 
 ## 3. `ui-metadata.json` Complete Specification
 
-The `ui-metadata.json` file resides in the root directory of the module and instructs Sela Craft how
-to build form controls, group fields into collapsible sections, run client-side validations, and
-query GCP data sources.
-
-The catalog groups modules by cloud, so a module is a pair of directories:
-
-```
-modules/<provider>/<module-id>/            the Terraform a wrapper calls
-frontend/modules/<provider>/<module-id>/   the wrapper + ui-metadata.json
-```
-
-**The module id stays flat.** `artifact-registry` is never `gcp/artifact-registry`: the id is
-written into request documents, inventory rows and directories inside customers' own repositories,
-none of which this platform can migrate. The provider is only where the catalog keeps the module, so
-`module` in the metadata matches the *last* path segment, and a wrapper's `source` points at
-`//modules/<provider>/<module-id>`.
+The `ui-metadata.json` file resides in the root directory of the module and instructs Sela Craft how to build form controls, group fields into collapsible sections, run client-side validations, and query GCP data sources.
 
 ### JSON Schema Structure Overview
 ```json
 {
-  "$schema": "../../../ui-metadata.schema.json",
+  "$schema": "../ui-metadata.schema.json",
   "module": "<module-id>",
   "version": "1.0.0",
   "display": { ... },
@@ -146,7 +131,7 @@ none of which this platform can migrate. The provider is only where the catalog 
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `$schema` | `string` | No | Path to the schema, relative to this file: `"../../../ui-metadata.schema.json"` from `frontend/modules/<provider>/<module-id>/`. An editor hint only — the validators load the schema directly — so a wrong value fails nothing and goes unnoticed. |
+| `$schema` | `string` | No | Path to schema definition (e.g., `"../ui-metadata.schema.json"`). |
 | `module` | `string` | **Yes** | Unique module identifier, matching folder name (e.g., `"cloud-storage"`, `"compute-engine"`). |
 | `version` | `string` | **Yes** | Semver string (e.g., `"1.0.0"`). |
 | `import` | `object` | No | Enables importing pre-existing resources into this module. Omit it and the module is create-only. See [`import` Block](#import-block). |
@@ -288,7 +273,7 @@ This block exists because two facts cannot be inferred from outside the module:
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `module` | `string` | **Yes** | Label of the `module` block in `main.tf` that this import targets. **Always set it explicitly; there is no default.** It coincides with `resource.variable` often enough to look defaultable, but differs in 3 of the 29 modules that declare an import block — `cloud-run` declares `module "cloud_run_v2"` for variable `cloud_run`, `gke-autopilot-cluster` declares `module "gke_autopilot"` for variable `gke_autopilot_cluster`, and `gke-node-pool` declares `module "gke_standard_node_pool"` for variable `gke_node_pool`. A silent default would resolve to an address that does not exist. Read it out of `main.tf`. |
+| `module` | `string` | **Yes** | Label of the `module` block in `main.tf` that this import targets. **Always set it explicitly; there is no default.** It coincides with `resource.variable` often enough to look defaultable, but differs in 6 of 25 catalog modules — `cloud-run` declares `module "cloud_run_v2"` for variable `cloud_run`, `gke-autopilot-cluster` declares `module "gke_autopilot"` for variable `gke_autopilot_cluster`, and `gke-node-pool` declares `module "gke_standard_node_pool"` for variable `gke_node_pool`. A silent default would resolve to an address that does not exist. Read it out of `main.tf`. |
 | `target` | `string` | **Yes** | Resource address **inside** the wrapped remote module, e.g. `google_storage_bucket.bucket`. Sela Craft prefixes it with `module.<import.module>["<key>"]`. Do **not** include that prefix. |
 | `id_template` | `string` | **Yes** | The provider's import ID format, with `{field_id}` placeholders resolved from `identity_fields`. Take it from the provider's import documentation for `target`'s type. |
 | `identity_fields` | `string[]` | **Yes** | The fields needed to build `id_template` uniquely. Every other value is discovered from the live resource. List `project_id` here if the ID needs it — but note it is **resolved from the environment, not asked of the user** (see below). |
@@ -307,7 +292,7 @@ This block exists because two facts cannot be inferred from outside the module:
   three, and in `gke-cluster` *which* one applies depends on a field value, so a single static
   `target` cannot express it. Omit the `import` block for these.
 - `target` names a resource inside the remote module **at the `?ref=` pinned in `main.tf`** (the
-  catalog is uniformly pinned, `v0.7.5` at the time of writing). A ref bump can rename inner resources, so re-verify `target`
+  catalog is uniformly on `v0.5.4`). A ref bump can rename inner resources, so re-verify `target`
   when it moves.
 - Some remote modules build a **set** of resources from one input — `cloud-run` also creates a
   service account, `compute-engine` also creates disks and addresses. A single `target` cannot
@@ -316,7 +301,7 @@ This block exists because two facts cannot be inferred from outside the module:
 - `identity_fields` must be a subset of `globals` and section field ids, and must include
   `resource.key_field` — the key decides the tfvars map entry.
 - **Never assume the block label equals `resource.variable`.** Copy it from the `module "..."` line
-  in that module's own `main.tf`. Three modules differ today: `cloud-run`, `gke-autopilot-cluster` and `gke-node-pool`.
+  in that module's own `main.tf`. Six of 25 modules differ, including two of the newest ones.
 - **`project_id` is injected from the environment, never entered by the user.** Sela Craft takes
   it from the environment record, so a user cannot import from a project they have no environment
   for. Keep it in `identity_fields` when `id_template` needs it; it simply will not be rendered as
@@ -520,8 +505,6 @@ Supported `type` values:
 | `nullable` | `boolean` | Allows setting value to `null` (renders 'None' option). |
 | `locked_after_create` | `boolean` | Disables the field while editing a resource already managed by Terraform; use it for create-time-only values. |
 | `ui_only` | `boolean` | Marks a control that does not map to any Terraform attribute or global. See [`ui_only` Controls](#4-ui_only-controls). |
-| `sensitive` | `boolean` | The value is a secret in its own right, not a reference to one. Keeps it out of logs, makes an exported archive secret-bearing, and stops the AI builder asking for it in chat. Do **not** set it on a field that merely names a Secret Manager secret or version — those carry no secret material. |
-| `multiline` | `boolean` | Renders a `text` control as a multi-line editor. See [Multi-line text](#4-multi-line-text). |
 | `options` | `array` | Options array for `select` type: `[{"value": "...", "label": "...", "description": "..."}]`. |
 | `validation` | `object` | Client validation rules (`min`, `max`, `pattern`, `pattern_error`). |
 | `depends_on` | `object` | Conditional visibility condition based on another field. |
@@ -554,8 +537,24 @@ Operators: `"eq"`, `"neq"`, `"in"`, `"not_in"`.
 }
 ```
 
-#### 3. Dynamic GCP Data Sources (`data_source`)
-Populates select dropdowns dynamically by querying GCP backend endpoints (e.g., VPC networks, subnets, service accounts, zones).
+#### 3. Dynamic Data Sources (`data_source`)
+
+Populates a select dropdown from the customer's own cloud — the VPCs they actually have, the
+regions available to them, the service accounts already created. The read runs as *that
+organization's* identity, never the platform's, so a tenant only ever sees their own resources.
+
+**The identifiers are each cloud's own vocabulary.** A GCP module asks for `compute.networks`; an
+AWS module asks for `ec2.vpcs`. They are not aliases of one another and there is no neutral name
+for "the network list" — a module is written for one cloud, and inventing a shared vocabulary in
+between would be an abstraction with no second user.
+
+A module is only ever offered its own cloud's lookups. Naming a resource from another cloud fails
+with `'<cloud>' has no lookup for '<resource>'` rather than silently returning the wrong kind of
+thing, and the catalog itself is per cloud, so the mistake is hard to make by accident.
+
+**A `data_source` is optional.** A cloud with no lookup for what a field needs is not a blocked
+module: leave the `data_source` off and the field is a plain input. That is how every field worked
+before lookups existed, and it is a much better outcome than a dropdown that cannot be filled.
 
 ```json
 "data_source": {
@@ -577,9 +576,9 @@ Populates select dropdowns dynamically by querying GCP backend endpoints (e.g., 
 
 ##### Supported GCP Data Source Resources & Parameters
 
-Generated from `RESOURCE_HANDLERS` in `apps/api/services/gcp_client.py`. Every identifier below is
-implemented; anything **not** listed here will raise `Unknown resource type` at request time, so do
-not invent one. `project` and `project_id` are interchangeable everywhere, as are
+From `RESOURCE_HANDLERS` in `applications/api/services/clouds/gcp/lookups.py`. Every identifier
+below is implemented; anything **not** listed here will raise `Unknown resource type` at request
+time, so do not invent one. `project` and `project_id` are interchangeable everywhere, as are
 `region`/`location`. All handlers return a `description` key in addition to those listed.
 
 | Resource Identifier | Aliases | Returns | Parameters | Response Keys |
@@ -587,19 +586,11 @@ not invent one. `project` and `project_id` are interchangeable everywhere, as ar
 | `compute.networks` | `compute.vpc`, `vpc.networks` | VPC networks | `project_id` | `name`, `selfLink`, `autoCreateSubnetworks` |
 | `compute.subnetworks` | `compute.subnets`, `subnet.subnetworks` | Subnets, optionally filtered by VPC | `project_id`, `region`, `vpc`/`network` | `name`, `ipCidrRange`, `region`, `network`, `selfLink` |
 | `compute.zones` | — | Zones, optionally filtered by region | `project_id`, `region` | `name`, `region`, `status` |
-| `compute.regions` | — | Regions with status `UP`; `description` carries the location (`asia-south1` → `Mumbai`) | `project_id` | `name`, `status` |
+| `compute.regions` | — | Regions with status `UP` | `project_id` | `name`, `status` |
 | `compute.disks` | `compute.additionalDisks`, `compute.additional_disks` | Persistent disks | `project_id`, `zone`, `region` | `name`, `sizeGb`, `type`, `zone`, `region`, `selfLink` |
 | `compute.machineTypes` | `compute.machine_types` | Machine types in a zone | `project_id`, `zone` | `name`, `guestCpus`, `memoryMb` |
 | `compute.routers` | — | Cloud Routers in a region | `project_id`, `region` | `name`, `network` |
 | `compute.healthChecks` | — | Health checks, for DNS routing policies | `project_id` | `name`, `selfLink` |
-| `compute.instances` | — | VM instances in one zone | `project_id`, `zone` | `name` |
-| `compute.instanceTemplates` | — | Global instance templates, newest first | `project_id` | `name`, `selfLink`, `creationTimestamp` |
-| `compute.managedInstanceGroups` | — | Regional MIGs, for load balancer backends | `project_id`, `region` | `name` |
-| `compute.unmanagedInstanceGroups` | — | Zonal unmanaged instance groups | `project_id`, `zone` | `name` |
-| `compute.networkEndpointGroups` | — | Regional NEGs | `project_id`, `region` | `name` |
-| `compute.addresses` | — | Reserved regional IP addresses | `project_id`, `region` | `name` |
-| `compute.globalAddresses` | — | Reserved global IP addresses | `project_id` | `name` |
-| `compute.targetVpnGateways` | — | Classic target VPN gateways in a region | `project_id`, `region` | `name` |
 | `iam.serviceAccounts` | `iam.service_accounts`, `iam.sa` | Service accounts | `project_id` | `email`, `displayName`, `uniqueId` |
 | `iam.roles` | `iam.custom_roles`, `iam.customRoles` | Predefined and/or custom roles | `project_id`, `scope` (`predefined`\|`custom`\|`all`, default `all`) | `name`, `title`, `type` |
 | `cloudsql.instances` | `cloudsql.sqlInstances` | Cloud SQL instances; read replicas excluded | `project_id`, `region` | `name`, `databaseVersion`, `region`, `state` |
@@ -615,53 +606,67 @@ not invent one. `project` and `project_id` are interchangeable everywhere, as ar
 | `dns.peeringNetworks` | — | Target VPCs for a peering zone | `project_id` | `project_id` |
 | `kms.cryptoKeys` | — | CryptoKeys; never reads key material | `project_id`, `location` | `name` |
 | `servicenetworking.psa` | `servicenetworking.connections`, `compute.psa` | PSA connections and reserved ranges | `project_id`, `vpc`/`network`, `region` | `name`, `peering`, `address`, `prefixLength` |
-| `run.services` | — | Cloud Run services in one region | `project_id`, `region` | `name` |
-| `storage.buckets` | — | Cloud Storage buckets | `project_id` | `name` |
-| `certificatemanager.certificateMaps` | — | Certificate Manager maps | `project_id` | `name` |
-| `certificatemanager.certificates` | — | Certificates; `description` says Google- or self-managed | `project_id` | `name` |
-| `certificatemanager.dnsAuthorizations` | — | DNS authorizations | `project_id` | `name` |
 
 Note the two parent pickers, `cloudsql.instances` and `container.clusters`: they exist so a
 standalone child resource (a database, a user, a node pool) can select its parent rather than have
 an operator retype a name that must match exactly. Both set `allow_custom: true` in practice, so a
 parent being created in the same change can still be named by hand.
 
-#### 4. Multi-line text
+##### Supported AWS Data Source Resources & Parameters
 
-`type: "text"` is a single-line input by default. Set `multiline: true` for values that are
-genuinely documents rather than identifiers — a startup script, cloud-init, an embedded config file:
+From `RESOURCE_HANDLERS` in `applications/api/services/clouds/aws/lookups.py`.
+
+| Resource Identifier | Aliases | Returns | Parameters | Response Keys |
+| :--- | :--- | :--- | :--- | :--- |
+| `ec2.vpcs` | `ec2.vpc` | VPCs in one region | `region` (or `location`) | `id`, `name`, `cidr`, `isDefault`, `state` |
+
+**One so far, and that is deliberate.** The GCP list above has thirty-six because forty-one modules
+accumulated them one at a time, each written because a real field needed it. Adding AWS handlers
+speculatively would be writing code for fields nobody has declared. If a module you are writing
+needs a lookup that is not here, ask for it — a handler is small, and `ec2.vpcs` is the worked
+example to copy.
+
+**`id` is the value, `name` is the label.** This is the one real difference from the GCP tables
+above, and getting it backwards produces a form that looks right and generates Terraform that does
+not apply. AWS resources are identified by opaque ids (`vpc-0a1b2c3d`) and named by an optional
+`Name` *tag*, so:
+
+- `value_key` must be `id` — it is what Terraform takes;
+- `label_key` should be `name`, which is `""` when the customer never set the tag. Pair it with
+  `description_key: "cidr"` so an unnamed VPC is still identifiable.
 
 ```json
 {
-  "id": "startup_script",
-  "label": "Startup script",
-  "type": "text",
-  "multiline": true,
-  "default": ""
+  "id": "vpc_id",
+  "label": "VPC",
+  "type": "select",
+  "required": true,
+  "data_source": {
+    "resource": "ec2.vpcs",
+    "params": {
+      "region": { "from_field": "region" }
+    },
+    "display": {
+      "value_key": "id",
+      "label_key": "name",
+      "description_key": "cidr"
+    },
+    "allow_custom": true
+  }
 }
 ```
 
-This changes the **input control only** — the value is an ordinary string throughout, and the flag
-exists so the operator gets a text area instead of typing a script into a one-line box.
+`region` comes from the form. If the field is omitted the lookup falls back to the region the
+organization's verified target names, which is the state bucket's — usually right, but not
+something to rely on for a resource whose region the user should be choosing.
 
-How such a value reaches Terraform is handled for you by the tfvars writer, and is worth knowing
-when you read a generated `terraform.tfvars`:
+**What the read needs to exist first.** An AWS lookup assumes the customer's role, so it needs both
+the organization's external ID *and* a **verified** target naming the role. Either missing is an
+ordinary onboarding state, not a fault, and the dropdown says which one — "no external ID yet" or
+"no verified AWS role yet". An organization with several verified AWS targets is refused rather
+than guessed at, since picking the wrong account would return a plausible, empty list.
 
-- A multi-line value ending in a newline is written as a `<<-EOT` heredoc, indented to its position
-  in the file. That is the readable form, and the one you will normally see.
-- If **every** line is indented, plain `<<EOT` is used instead: `<<-` strips the common indent and
-  would otherwise eat the value's own.
-- A multi-line value **not** ending in a newline stays a quoted string with escaped newlines. A
-  heredoc always yields a trailing newline, so it cannot represent that value exactly.
-- `${` and `%{` are escaped to `$${` and `%%{`. Quoted strings *and* heredocs are HCL templates, so
-  an unescaped `${IMAGE}` in a startup script is parsed as an interpolation and fails the run. The
-  escapes evaluate back to the original two characters, so the script the VM receives is unchanged.
-  `$(` is not a template sequence and is left alone.
-
-Only meaningful on `text`. It has no effect on `select`, `number`, `map`, `list`, `object` or
-`repeatable`.
-
-#### 5. `ui_only` Controls
+#### 4. `ui_only` Controls
 
 Every form control must map to **an attribute of the resource object, or a global** — that is R6 in
 `MODULE_CONTRACT.md`, and CI fails the build otherwise. `ui_only: true` is the declared exception,
@@ -716,7 +721,7 @@ When tasked with generating a module for Sela Craft, follow these steps sequenti
 ### A. `ui-metadata.json`
 ```json
 {
-  "$schema": "../../../ui-metadata.schema.json",
+  "$schema": "../ui-metadata.schema.json",
   "module": "compute-engine",
   "version": "1.0.0",
   "display": {

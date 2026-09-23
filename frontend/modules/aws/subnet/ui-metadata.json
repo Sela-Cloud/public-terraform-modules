@@ -1,5 +1,5 @@
 {
-  "$schema": "../../ui-metadata.schema.json",
+  "$schema": "../../../ui-metadata.schema.json",
   "module": "subnet",
   "version": "1.0.0",
   "display": {
@@ -49,9 +49,24 @@
             "id": "vpc_id",
             "label": "VPC ID",
             "description": "The ID of the VPC in which the subnet will be created.",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "placeholder": "vpc-0123456789abcdef0"
+            "placeholder": "vpc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "cidr_block",

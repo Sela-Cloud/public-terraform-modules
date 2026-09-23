@@ -1,5 +1,5 @@
 {
-  "$schema": "../../ui-metadata.schema.json",
+  "$schema": "../../../ui-metadata.schema.json",
   "module": "iam-role",
   "version": "1.0.0",
   "display": {
@@ -86,7 +86,8 @@
             "id": "assume_role_policy",
             "label": "Assume Role Policy Document",
             "description": "JSON formatted trust policy document granting entities permission to assume this role.",
-            "type": "textarea",
+            "type": "text",
+            "multiline": true,
             "required": true,
             "default": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Action\": \"sts:AssumeRole\",\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"Service\": \"ec2.amazonaws.com\"\n      }\n    }\n  ]\n}",
             "placeholder": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [...]\n}"

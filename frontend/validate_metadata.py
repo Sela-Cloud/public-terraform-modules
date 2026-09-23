@@ -86,6 +86,10 @@ KNOWN_DATA_SOURCES = {
     "dns.managedZones",
     "dns.managed_zones",
     "dns.peeringNetworks",
+    # AWS. Implemented in services/clouds/aws/lookups.py; the Google handlers live in
+    # services/clouds/gcp/lookups.py and both are mirrored here.
+    "ec2.vpc",
+    "ec2.vpcs",
     "gke.clusters",
     "iam.customRoles",
     "iam.custom_roles",
