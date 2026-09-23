@@ -1,0 +1,183 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "role-assignment",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure RBAC",
+    "icon": "azure-rbac",
+    "description": "Azure Role-Based Access Control (RBAC) role assignments for granting access permissions to security principals across Azure scopes",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "role_assignment",
+    "key_field": "name",
+    "key_label": "Role Assignment Identifier",
+    "key_description": "The unique key identifier for this Role Assignment entry (used as the map key in terraform.tfvars).",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Role Assignment settings including scope, principal, and principal type.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Role Assignment Identifier",
+            "description": "Unique key or UUID identifying this role assignment. If a valid UUID is provided, it is used as the Azure Role Assignment name; otherwise Azure/Terraform generates one automatically.",
+            "type": "text",
+            "required": true,
+            "default": "ra-default",
+            "placeholder": "ra-app-contributor or 00000000-0000-0000-0000-000000000000",
+            "locked_after_create": true
+          },
+          {
+            "id": "scope",
+            "label": "Scope",
+            "description": "The target Azure scope at which the role assignment applies (e.g. Subscription, Resource Group, Management Group, or specific Resource ID).",
+            "type": "text",
+            "required": true,
+            "placeholder": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-myworkload",
+            "locked_after_create": true
+          },
+          {
+            "id": "principal_id",
+            "label": "Principal ID (Object ID)",
+            "description": "The Azure AD / Entra ID Object ID of the User, Group, Service Principal, or Managed Identity receiving permissions.",
+            "type": "text",
+            "required": true,
+            "placeholder": "00000000-0000-0000-0000-000000000000",
+            "locked_after_create": true,
+            "validation": {
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              "pattern_error": "Principal ID must be a valid Azure Active Directory / Entra ID Object ID (GUID format)."
+            }
+          },
+          {
+            "id": "principal_type",
+            "label": "Principal Type",
+            "description": "The type of the principal. Explicitly specifying this prevents ABAC filter issues during role assignment.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "locked_after_create": true,
+            "options": [
+              {
+                "value": "User",
+                "label": "User"
+              },
+              {
+                "value": "Group",
+                "label": "Group"
+              },
+              {
+                "value": "ServicePrincipal",
+                "label": "Service Principal"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "role_definition_section",
+        "label": "Role Definition",
+        "description": "Specify either a built-in role name or a custom role definition ID.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "role_definition_name",
+            "label": "Built-in Role Definition Name",
+            "description": "The name of a built-in Azure role (e.g. 'Reader', 'Contributor', 'Owner', 'Storage Blob Data Contributor', 'Key Vault Secrets User'). Mutually exclusive with Role Definition ID.",
+            "type": "text",
+            "required": false,
+            "default": "Reader",
+            "placeholder": "Reader or Contributor",
+            "nullable": true,
+            "locked_after_create": true
+          },
+          {
+            "id": "role_definition_id",
+            "label": "Custom Role Definition ID",
+            "description": "The Scoped-ID of a custom Role Definition. Mutually exclusive with Role Definition Name.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "placeholder": "/subscriptions/.../providers/Microsoft.Authorization/roleDefinitions/...",
+            "nullable": true,
+            "locked_after_create": true
+          }
+        ]
+      },
+      {
+        "id": "advanced_section",
+        "label": "Advanced & ABAC Settings",
+        "description": "Optional configurations including descriptions, ABAC conditions, and Service Principal replication lag handling.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "description",
+            "label": "Description",
+            "description": "A description explaining the purpose or rationale of this role assignment.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "placeholder": "Allow read access to workload storage",
+            "nullable": true
+          },
+          {
+            "id": "skip_service_principal_aad_check",
+            "label": "Skip Service Principal AAD Check",
+            "description": "If the Principal ID is a newly provisioned Service Principal, set to true to bypass the Azure Active Directory check which might otherwise fail due to replication lag.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "condition",
+            "label": "ABAC Condition",
+            "description": "The condition that limits the resources that the role can be assigned to (Azure Attribute-Based Access Control).",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "default": null,
+            "nullable": true
+          },
+          {
+            "id": "condition_version",
+            "label": "Condition Version",
+            "description": "The version of the ABAC condition. Required if an ABAC condition is specified.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              {
+                "value": "1.0",
+                "label": "1.0"
+              },
+              {
+                "value": "2.0",
+                "label": "2.0"
+              }
+            ],
+            "depends_on": {
+              "field": "condition",
+              "operator": "neq",
+              "value": null
+            }
+          },
+          {
+            "id": "delegated_managed_identity_resource_id",
+            "label": "Delegated Managed Identity Resource ID",
+            "description": "The delegated Azure Resource Id containing a Managed Identity (used in cross-tenant scenarios).",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "locked_after_create": true
+          }
+        ]
+      }
+    ]
+  }
+}
