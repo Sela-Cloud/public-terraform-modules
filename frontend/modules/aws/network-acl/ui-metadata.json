@@ -1,0 +1,357 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "network-acl",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Network ACL",
+    "icon": "shield",
+    "description": "Provision and manage AWS Network Access Control Lists (NACLs) with stateless inbound and outbound traffic filtering rules",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "network_acl",
+    "key_field": "name",
+    "key_label": "Network ACL Name",
+    "key_description": "Unique identifier name for the Network ACL, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Network ACL settings including VPC attachment and subnet associations.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Network ACL Name",
+            "description": "Name applied to the Network ACL as an identifier and 'Name' tag.",
+            "type": "text",
+            "required": true,
+            "default": "network-acl-default",
+            "placeholder": "custom-web-nacl",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Name must contain only alphanumeric characters, dashes, and underscores."
+            }
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "description": "The VPC in which to create the Network ACL.",
+            "type": "select",
+            "required": true,
+            "placeholder": "vpc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnet_ids",
+            "label": "Associated Subnet IDs",
+            "description": "List of Subnet IDs to associate with this Network ACL.",
+            "type": "list",
+            "required": false,
+            "default": []
+          }
+        ]
+      },
+      {
+        "id": "rules",
+        "label": "Rules",
+        "description": "Inbound and outbound stateless traffic filtering rules.",
+        "fields": [
+          {
+            "id": "ingress",
+            "label": "Ingress Rules",
+            "description": "Inbound rules evaluated in rule number order (lowest first).",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "rule_no",
+                "label": "Rule Number",
+                "description": "Rule number for ordering evaluation (1 to 32766). Lower numbers evaluated first.",
+                "type": "number",
+                "required": true,
+                "default": 100,
+                "validation": {
+                  "min": 1,
+                  "max": 32766
+                }
+              },
+              {
+                "id": "action",
+                "label": "Action",
+                "description": "Whether to allow or deny matching traffic.",
+                "type": "select",
+                "required": true,
+                "default": "allow",
+                "options": [
+                  {
+                    "value": "allow",
+                    "label": "Allow",
+                    "description": "Allow matching traffic"
+                  },
+                  {
+                    "value": "deny",
+                    "label": "Deny",
+                    "description": "Deny matching traffic"
+                  }
+                ]
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "description": "Protocol to match. Use '-1' for all protocols.",
+                "type": "select",
+                "required": true,
+                "default": "tcp",
+                "options": [
+                  {
+                    "value": "tcp",
+                    "label": "TCP (6)"
+                  },
+                  {
+                    "value": "udp",
+                    "label": "UDP (17)"
+                  },
+                  {
+                    "value": "icmp",
+                    "label": "ICMP (1)"
+                  },
+                  {
+                    "value": "-1",
+                    "label": "All protocols (-1)"
+                  }
+                ]
+              },
+              {
+                "id": "from_port",
+                "label": "From Port",
+                "description": "Start of port range (0-65535). Use 0 when protocol is All.",
+                "type": "number",
+                "required": true,
+                "default": 0,
+                "validation": {
+                  "min": 0,
+                  "max": 65535
+                }
+              },
+              {
+                "id": "to_port",
+                "label": "To Port",
+                "description": "End of port range (0-65535). Use 0 when protocol is All.",
+                "type": "number",
+                "required": true,
+                "default": 0,
+                "validation": {
+                  "min": 0,
+                  "max": 65535
+                }
+              },
+              {
+                "id": "cidr_block",
+                "label": "IPv4 CIDR Block",
+                "description": "The IPv4 network range to match (e.g., 0.0.0.0/0).",
+                "type": "text",
+                "required": false,
+                "placeholder": "0.0.0.0/0"
+              },
+              {
+                "id": "ipv6_cidr_block",
+                "label": "IPv6 CIDR Block",
+                "description": "The IPv6 network range to match (e.g., ::/0).",
+                "type": "text",
+                "required": false,
+                "placeholder": "::/0"
+              },
+              {
+                "id": "icmp_type",
+                "label": "ICMP Type",
+                "description": "The ICMP type code (required if protocol is ICMP).",
+                "type": "number",
+                "required": false
+              },
+              {
+                "id": "icmp_code",
+                "label": "ICMP Code",
+                "description": "The ICMP code (required if protocol is ICMP).",
+                "type": "number",
+                "required": false
+              }
+            ]
+          },
+          {
+            "id": "egress",
+            "label": "Egress Rules",
+            "description": "Outbound rules evaluated in rule number order (lowest first).",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "rule_no",
+                "label": "Rule Number",
+                "description": "Rule number for ordering evaluation (1 to 32766). Lower numbers evaluated first.",
+                "type": "number",
+                "required": true,
+                "default": 100,
+                "validation": {
+                  "min": 1,
+                  "max": 32766
+                }
+              },
+              {
+                "id": "action",
+                "label": "Action",
+                "description": "Whether to allow or deny matching traffic.",
+                "type": "select",
+                "required": true,
+                "default": "allow",
+                "options": [
+                  {
+                    "value": "allow",
+                    "label": "Allow",
+                    "description": "Allow matching traffic"
+                  },
+                  {
+                    "value": "deny",
+                    "label": "Deny",
+                    "description": "Deny matching traffic"
+                  }
+                ]
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "description": "Protocol to match. Use '-1' for all protocols.",
+                "type": "select",
+                "required": true,
+                "default": "-1",
+                "options": [
+                  {
+                    "value": "-1",
+                    "label": "All protocols (-1)"
+                  },
+                  {
+                    "value": "tcp",
+                    "label": "TCP (6)"
+                  },
+                  {
+                    "value": "udp",
+                    "label": "UDP (17)"
+                  },
+                  {
+                    "value": "icmp",
+                    "label": "ICMP (1)"
+                  }
+                ]
+              },
+              {
+                "id": "from_port",
+                "label": "From Port",
+                "description": "Start of port range (0-65535). Use 0 when protocol is All.",
+                "type": "number",
+                "required": true,
+                "default": 0,
+                "validation": {
+                  "min": 0,
+                  "max": 65535
+                }
+              },
+              {
+                "id": "to_port",
+                "label": "To Port",
+                "description": "End of port range (0-65535). Use 0 when protocol is All.",
+                "type": "number",
+                "required": true,
+                "default": 0,
+                "validation": {
+                  "min": 0,
+                  "max": 65535
+                }
+              },
+              {
+                "id": "cidr_block",
+                "label": "IPv4 CIDR Block",
+                "description": "The IPv4 network range to match (e.g., 0.0.0.0/0).",
+                "type": "text",
+                "required": false,
+                "placeholder": "0.0.0.0/0"
+              },
+              {
+                "id": "ipv6_cidr_block",
+                "label": "IPv6 CIDR Block",
+                "description": "The IPv6 network range to match (e.g., ::/0).",
+                "type": "text",
+                "required": false,
+                "placeholder": "::/0"
+              },
+              {
+                "id": "icmp_type",
+                "label": "ICMP Type",
+                "description": "The ICMP type code (required if protocol is ICMP).",
+                "type": "number",
+                "required": false
+              },
+              {
+                "id": "icmp_code",
+                "label": "ICMP Code",
+                "description": "The ICMP code (required if protocol is ICMP).",
+                "type": "number",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for organizational, tracking, and cost allocation purposes.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value tags assigned to the Network ACL.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

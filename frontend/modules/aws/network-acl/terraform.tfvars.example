@@ -1,0 +1,65 @@
+region = "us-east-1"
+
+network_acl = {
+  "app-nacl" = {
+    name       = "app-nacl"
+    vpc_id     = "vpc-0123456789abcdef0"
+    subnet_ids = ["subnet-0123456789abcdef0", "subnet-0fedcba9876543210"]
+
+    ingress = [
+      {
+        rule_no         = 100
+        action          = "allow"
+        protocol        = "tcp"
+        from_port       = 80
+        to_port         = 80
+        cidr_block      = "0.0.0.0/0"
+        ipv6_cidr_block = null
+        icmp_type       = null
+        icmp_code       = null
+      },
+      {
+        rule_no         = 110
+        action          = "allow"
+        protocol        = "tcp"
+        from_port       = 443
+        to_port         = 443
+        cidr_block      = "0.0.0.0/0"
+        ipv6_cidr_block = null
+        icmp_type       = null
+        icmp_code       = null
+      },
+      {
+        rule_no         = 120
+        action          = "allow"
+        protocol        = "tcp"
+        from_port       = 1024
+        to_port         = 65535
+        cidr_block      = "0.0.0.0/0"
+        ipv6_cidr_block = null
+        icmp_type       = null
+        icmp_code       = null
+      }
+    ]
+
+    egress = [
+      {
+        rule_no         = 100
+        action          = "allow"
+        protocol        = "-1"
+        from_port       = 0
+        to_port         = 0
+        cidr_block      = "0.0.0.0/0"
+        ipv6_cidr_block = null
+        icmp_type       = null
+        icmp_code       = null
+      }
+    ]
+
+    tags = {
+      Environment = "production"
+      Role        = "network-acl"
+      ManagedBy   = "Terraform"
+    }
+  }
+}
