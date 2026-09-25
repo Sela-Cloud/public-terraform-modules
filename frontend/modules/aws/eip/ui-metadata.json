@@ -1,0 +1,186 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "eip",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Elastic IP",
+    "icon": "network",
+    "description": "Allocate and manage static IPv4 Elastic IP addresses for Amazon EC2 instances and network interfaces",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "eip",
+    "key_field": "name",
+    "key_label": "Elastic IP Name",
+    "key_description": "Unique identifier name for the Elastic IP, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Elastic IP settings including name identifier and VPC domain scope.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Elastic IP Name",
+            "description": "Name applied to the Elastic IP as an identifier and 'Name' tag.",
+            "type": "text",
+            "required": true,
+            "default": "eip-default",
+            "placeholder": "eip-web-app",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Name must contain only alphanumeric characters, dashes, and underscores."
+            }
+          },
+          {
+            "id": "domain",
+            "label": "Domain",
+            "description": "Indicates whether this Elastic IP is for use in a VPC.",
+            "type": "select",
+            "required": false,
+            "default": "vpc",
+            "options": [
+              {
+                "value": "vpc",
+                "label": "VPC",
+                "description": "Allocate Elastic IP for use in Amazon VPC (standard for AWS accounts)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "association",
+        "label": "Instance & Network Interface Association",
+        "description": "Optionally attach the Elastic IP to an Amazon EC2 instance or Elastic Network Interface (ENI).",
+        "fields": [
+          {
+            "id": "instance",
+            "label": "EC2 Instance ID",
+            "description": "EC2 instance ID to associate with the Elastic IP (e.g., i-0123456789abcdef0). Conflicts with Network Interface ID.",
+            "type": "text",
+            "required": false,
+            "placeholder": "i-0123456789abcdef0"
+          },
+          {
+            "id": "network_interface",
+            "label": "Network Interface ID",
+            "description": "Elastic Network Interface (ENI) ID to associate with (e.g., eni-0123456789abcdef0). Conflicts with Instance ID.",
+            "type": "text",
+            "required": false,
+            "placeholder": "eni-0123456789abcdef0"
+          },
+          {
+            "id": "associate_with_private_ip",
+            "label": "Private IP Address",
+            "description": "User-specified primary or secondary private IP address to associate with the Elastic IP address.",
+            "type": "text",
+            "required": false,
+            "placeholder": "10.0.1.50",
+            "validation": {
+              "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}$",
+              "pattern_error": "Must be a valid IPv4 address (e.g., 10.0.1.50)."
+            }
+          }
+        ]
+      },
+      {
+        "id": "ip_pool",
+        "label": "IP Address Pool & Routing",
+        "description": "Configure custom IP pools, BYOIP addresses, and network border advertising locations.",
+        "fields": [
+          {
+            "id": "network_border_group",
+            "label": "Network Border Group",
+            "description": "Location from which the IP address is advertised. Select an AWS Region or specify a Local Zone.",
+            "type": "select",
+            "required": false,
+            "data_source": {
+              "resource": "ec2.regions",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "description",
+                "description_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "public_ipv4_pool",
+            "label": "Public IPv4 Pool",
+            "description": "EC2 IPv4 address pool identifier or 'amazon' for standard Amazon-provided pool.",
+            "type": "text",
+            "required": false,
+            "placeholder": "amazon"
+          },
+          {
+            "id": "ipam_pool_id",
+            "label": "IPAM Pool ID",
+            "description": "The ID of an IPAM pool which has an Amazon-provided or BYOIP public IPv4 CIDR provisioned to it.",
+            "type": "text",
+            "required": false,
+            "placeholder": "ipam-pool-07ccc86aa41bef7ce"
+          },
+          {
+            "id": "customer_owned_ipv4_pool",
+            "label": "Customer-Owned IPv4 Pool",
+            "description": "ID of a customer-owned address pool for AWS Outposts.",
+            "type": "text",
+            "required": false,
+            "placeholder": "ipv4pool-coip-0123456789abcdef0"
+          },
+          {
+            "id": "address",
+            "label": "BYOIP Address",
+            "description": "IP address from an EC2 BYOIP pool.",
+            "type": "text",
+            "required": false,
+            "placeholder": "198.51.100.1",
+            "validation": {
+              "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}$",
+              "pattern_error": "Must be a valid IPv4 address (e.g., 198.51.100.1)."
+            }
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for organizational, tracking, and cost allocation purposes.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value tags assigned to the Elastic IP.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
