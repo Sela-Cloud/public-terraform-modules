@@ -1,0 +1,545 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "load-balancer",
+  "version": "1.0.0",
+  "display": {
+    "label": "Load Balancer",
+    "icon": "load-balancer",
+    "description": "Azure Load Balancer (Layer 4) delivering high availability and network performance for applications",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "load_balancer",
+    "key_field": "name",
+    "key_label": "Load Balancer Name",
+    "key_description": "The unique name for the Azure Load Balancer. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Load Balancer identity and location settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Load Balancer Name",
+            "description": "Name of the Azure Load Balancer. Must be between 1 and 80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores.",
+            "type": "text",
+            "required": true,
+            "placeholder": "lb-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "Load Balancer name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Load Balancer.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Load Balancer should be created.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sizing",
+        "label": "Load Balancer Sizing & Tier",
+        "description": "SKU, routing tier, and deployment type (Public vs Internal).",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "sku",
+            "label": "SKU",
+            "description": "The SKU of the Azure Load Balancer. Standard is recommended for production enterprise workloads.",
+            "type": "select",
+            "required": false,
+            "default": "Standard",
+            "options": [
+              { "value": "Standard", "label": "Standard (Recommended - High Availability & Zone Redundancy)" },
+              { "value": "Gateway", "label": "Gateway (For Network Virtual Appliances)" },
+              { "value": "Basic", "label": "Basic (Legacy / Dev-Test only)" }
+            ]
+          },
+          {
+            "id": "sku_tier",
+            "label": "SKU Tier",
+            "description": "The SKU tier of the Load Balancer. Regional operates within a single region; Global provides cross-region balancing (Standard SKU only).",
+            "type": "select",
+            "required": false,
+            "default": "Regional",
+            "options": [
+              { "value": "Regional", "label": "Regional (Single Region)" },
+              { "value": "Global", "label": "Global (Cross-Region)" }
+            ]
+          },
+          {
+            "id": "type",
+            "label": "Load Balancer Type",
+            "description": "Public (internet-facing via Public IP) or Internal (private multi-tier VNet traffic via Subnet).",
+            "type": "select",
+            "required": false,
+            "default": "Public",
+            "options": [
+              { "value": "Public", "label": "Public (Internet-Facing)" },
+              { "value": "Internal", "label": "Internal (Private VNet)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "frontend_ip",
+        "label": "Frontend IP Configuration",
+        "description": "Frontend IP configurations for the Load Balancer. At least one is required.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "frontend_ip_configurations",
+            "label": "Frontend Configurations",
+            "description": "List of frontend IP configurations.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Configuration Name",
+                "description": "The unique name of the frontend IP configuration.",
+                "type": "text",
+                "required": true,
+                "placeholder": "LoadBalancerFrontEnd"
+              },
+              {
+                "id": "public_ip_address_id",
+                "label": "Public IP Address ID",
+                "description": "Resource ID of the Public IP address (for Public Load Balancer).",
+                "type": "text",
+                "required": false,
+                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/publicIPAddresses/pip-lb"
+              },
+              {
+                "id": "public_ip_prefix_id",
+                "label": "Public IP Prefix ID",
+                "description": "Resource ID of a Public IP Prefix (for Public Load Balancer).",
+                "type": "text",
+                "required": false,
+                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/publicIPPrefixes/pipp-lb"
+              },
+              {
+                "id": "subnet_id",
+                "label": "Subnet ID",
+                "description": "Resource ID of the Subnet (for Internal Load Balancer).",
+                "type": "text",
+                "required": false,
+                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/snet-app"
+              },
+              {
+                "id": "private_ip_address",
+                "label": "Private IP Address",
+                "description": "Static private IP address within the subnet (optional for Internal Load Balancer).",
+                "type": "text",
+                "required": false,
+                "placeholder": "10.0.2.100"
+              },
+              {
+                "id": "private_ip_address_allocation",
+                "label": "Private IP Allocation",
+                "description": "Allocation method for private IP address: Dynamic or Static.",
+                "type": "select",
+                "required": false,
+                "default": "Dynamic",
+                "options": [
+                  { "value": "Dynamic", "label": "Dynamic (Azure assigns available IP)" },
+                  { "value": "Static", "label": "Static (Specified in Private IP Address)" }
+                ]
+              },
+              {
+                "id": "private_ip_address_version",
+                "label": "Private IP Version",
+                "description": "The IP version for the private IP address.",
+                "type": "select",
+                "required": false,
+                "default": "IPv4",
+                "options": [
+                  { "value": "IPv4", "label": "IPv4" },
+                  { "value": "IPv6", "label": "IPv6" }
+                ]
+              },
+              {
+                "id": "zones",
+                "label": "Availability Zones",
+                "description": "List of availability zones (e.g. ['1', '2', '3']).",
+                "type": "list",
+                "required": false,
+                "placeholder": "1, 2, 3"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "backend_pools",
+        "label": "Backend Address Pools",
+        "description": "Backend address pools for target virtual machines or NICs.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "backend_pools",
+            "label": "Backend Pools",
+            "description": "List of backend address pools to create for this Load Balancer.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Pool Name",
+                "description": "The name of the backend address pool.",
+                "type": "text",
+                "required": true,
+                "placeholder": "bepool-web-servers"
+              },
+              {
+                "id": "virtual_network_id",
+                "label": "Virtual Network ID",
+                "description": "Virtual Network ID (optional, required if using IP-based backend pool addresses).",
+                "type": "text",
+                "required": false,
+                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/vnet-main"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "health_probes",
+        "label": "Health Probes",
+        "description": "Health probes to monitor backend application status.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "health_probes",
+            "label": "Health Probes",
+            "description": "List of health probes to create for this Load Balancer.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Probe Name",
+                "description": "The name of the health probe.",
+                "type": "text",
+                "required": true,
+                "placeholder": "hp-http-80"
+              },
+              {
+                "id": "port",
+                "label": "Probe Port",
+                "description": "Port on which the probe checks health (1-65535).",
+                "type": "number",
+                "required": true,
+                "placeholder": "80"
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "description": "Protocol used by the health probe: Tcp, Http, or Https.",
+                "type": "select",
+                "required": false,
+                "default": "Tcp",
+                "options": [
+                  { "value": "Tcp", "label": "TCP" },
+                  { "value": "Http", "label": "HTTP" },
+                  { "value": "Https", "label": "HTTPS" }
+                ]
+              },
+              {
+                "id": "request_path",
+                "label": "Request Path",
+                "description": "URI used for checking health status (required if protocol is Http or Https).",
+                "type": "text",
+                "required": false,
+                "placeholder": "/health"
+              },
+              {
+                "id": "interval_in_seconds",
+                "label": "Interval (seconds)",
+                "description": "Interval between health probes in seconds. Default: 15.",
+                "type": "number",
+                "required": false,
+                "default": 15,
+                "placeholder": "15"
+              },
+              {
+                "id": "number_of_probes",
+                "label": "Unhealthy Threshold",
+                "description": "The number of consecutive probe failures required before considering an instance unhealthy. Default: 2.",
+                "type": "number",
+                "required": false,
+                "default": 2,
+                "placeholder": "2"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lb_rules",
+        "label": "Load Balancing Rules",
+        "description": "Rules defining how inbound traffic on a frontend port is distributed to backend instances.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "load_balancing_rules",
+            "label": "Load Balancing Rules",
+            "description": "List of load balancing rules.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Rule Name",
+                "description": "The name of the load balancing rule.",
+                "type": "text",
+                "required": true,
+                "placeholder": "lbr-http-80"
+              },
+              {
+                "id": "frontend_ip_configuration_name",
+                "label": "Frontend IP Configuration Name",
+                "description": "The name of the frontend IP configuration to which this rule applies.",
+                "type": "text",
+                "required": true,
+                "placeholder": "LoadBalancerFrontEnd"
+              },
+              {
+                "id": "frontend_port",
+                "label": "Frontend Port",
+                "description": "The port for inbound traffic exposed by the load balancer.",
+                "type": "number",
+                "required": true,
+                "placeholder": "80"
+              },
+              {
+                "id": "backend_port",
+                "label": "Backend Port",
+                "description": "The port on backend targets to which traffic is routed.",
+                "type": "number",
+                "required": true,
+                "placeholder": "80"
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "description": "The transport protocol: Tcp, Udp, or All.",
+                "type": "select",
+                "required": false,
+                "default": "Tcp",
+                "options": [
+                  { "value": "Tcp", "label": "TCP" },
+                  { "value": "Udp", "label": "UDP" },
+                  { "value": "All", "label": "All" }
+                ]
+              },
+              {
+                "id": "backend_address_pool_name",
+                "label": "Backend Pool Name",
+                "description": "Name of the backend pool defined in this module to bind to this rule.",
+                "type": "text",
+                "required": false,
+                "placeholder": "bepool-web-servers"
+              },
+              {
+                "id": "probe_name",
+                "label": "Health Probe Name",
+                "description": "Name of the health probe defined in this module to monitor backend instances.",
+                "type": "text",
+                "required": false,
+                "placeholder": "hp-http-80"
+              },
+              {
+                "id": "enable_floating_ip",
+                "label": "Enable Floating IP (Direct Server Return)",
+                "description": "Enable Floating IP / Direct Server Return (required for SQL AlwaysOn availability groups).",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "idle_timeout_in_minutes",
+                "label": "TCP Idle Timeout (minutes)",
+                "description": "Idle timeout in minutes for TCP connections (4 to 30). Default: 4.",
+                "type": "number",
+                "required": false,
+                "default": 4,
+                "placeholder": "4"
+              },
+              {
+                "id": "load_distribution",
+                "label": "Load Distribution",
+                "description": "Session persistence method: Default (5-tuple), SourceIP (2-tuple), or SourceIPProtocol (3-tuple).",
+                "type": "select",
+                "required": false,
+                "default": "Default",
+                "options": [
+                  { "value": "Default", "label": "Default (Hash-based / 5-tuple)" },
+                  { "value": "SourceIP", "label": "SourceIP (Client IP affinity / 2-tuple)" },
+                  { "value": "SourceIPProtocol", "label": "SourceIPProtocol (Client IP & Protocol / 3-tuple)" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "inbound_nat",
+        "label": "Inbound NAT Rules",
+        "description": "Direct port forwarding rules mapping a frontend port to a specific backend port.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "inbound_nat_rules",
+            "label": "Inbound NAT Rules",
+            "description": "List of inbound NAT rules.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "NAT Rule Name",
+                "description": "The name of the inbound NAT rule.",
+                "type": "text",
+                "required": true,
+                "placeholder": "nat-ssh-vm1"
+              },
+              {
+                "id": "frontend_ip_configuration_name",
+                "label": "Frontend IP Configuration Name",
+                "description": "The name of the frontend IP configuration to receive traffic.",
+                "type": "text",
+                "required": true,
+                "placeholder": "LoadBalancerFrontEnd"
+              },
+              {
+                "id": "frontend_port",
+                "label": "Frontend Port",
+                "description": "External frontend port (e.g. 2221).",
+                "type": "number",
+                "required": true,
+                "placeholder": "2221"
+              },
+              {
+                "id": "backend_port",
+                "label": "Backend Port",
+                "description": "Target backend port (e.g. 22 for SSH, 3389 for RDP).",
+                "type": "number",
+                "required": true,
+                "placeholder": "22"
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "description": "Transport protocol: Tcp or Udp.",
+                "type": "select",
+                "required": false,
+                "default": "Tcp",
+                "options": [
+                  { "value": "Tcp", "label": "TCP" },
+                  { "value": "Udp", "label": "UDP" },
+                  { "value": "All", "label": "All" }
+                ]
+              },
+              {
+                "id": "idle_timeout_in_minutes",
+                "label": "Idle Timeout (minutes)",
+                "description": "TCP idle timeout in minutes (4 to 30). Default: 4.",
+                "type": "number",
+                "required": false,
+                "default": 4,
+                "placeholder": "4"
+              },
+              {
+                "id": "enable_floating_ip",
+                "label": "Enable Floating IP",
+                "description": "Enable Direct Server Return.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced Settings",
+        "description": "Optional edge zone deployment.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "edge_zone",
+            "label": "Edge Zone",
+            "description": "The Edge Zone within the Azure Region where this Load Balancer should exist.",
+            "type": "text",
+            "required": false,
+            "placeholder": "microsoftlosangeles1"
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Resource Tags",
+        "description": "Key-value pairs to categorize this Load Balancer.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Tags assigned to the Load Balancer.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
