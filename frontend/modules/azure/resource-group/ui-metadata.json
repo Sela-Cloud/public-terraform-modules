@@ -1,5 +1,5 @@
 {
-  "$schema": "../../ui-metadata.schema.json",
+  "$schema": "../../../ui-metadata.schema.json",
   "module": "resource-group",
   "version": "1.0.0",
   "display": {
@@ -13,6 +13,7 @@
     "key_field": "name",
     "key_label": "Resource Group Name",
     "key_description": "The unique name for the Azure Resource Group within the subscription. Serves as the map key.",
+    "locked_after_create": true,
     "sections": [
       {
         "id": "basic",
@@ -28,6 +29,7 @@
             "required": true,
             "default": "rg-default",
             "placeholder": "rg-my-workload",
+            "locked_after_create": true,
             "validation": {
               "min": 1,
               "max": 90,
@@ -42,6 +44,7 @@
             "type": "select",
             "required": true,
             "default": "eastus",
+            "locked_after_create": true,
             "options": [
               { "value": "eastus", "label": "East US (Virginia)" },
               { "value": "eastus2", "label": "East US 2 (Virginia)" },
@@ -69,15 +72,15 @@
               { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
               { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
             ]
-          },
-          {
-            "id": "tags",
-            "label": "Tags",
-            "description": "Key-value pairs to tag the Resource Group for organization, governance, and billing.",
-            "type": "map",
-            "required": false,
-            "default": {}
-          },
+          }
+        ]
+      },
+      {
+        "id": "management",
+        "label": "Management & Governance",
+        "description": "Optional management settings for the Resource Group.",
+        "collapsed": true,
+        "fields": [
           {
             "id": "managed_by",
             "label": "Managed By",
@@ -87,6 +90,22 @@
             "default": null,
             "nullable": true,
             "placeholder": "/subscriptions/.../resourceGroups/..."
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for organizational, governance, and billing purposes.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Group Tags",
+            "description": "Key-value pairs to tag the Resource Group for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
           }
         ]
       }
