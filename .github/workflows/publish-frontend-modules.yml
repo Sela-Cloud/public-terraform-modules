@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       release_ref:
-        description: "Existing release tag to validate and publish, for example v0.3"
+        description: "An EXISTING tag to re-publish, e.g. v0.7.9. To cut a new release, run the Release workflow instead."
         required: true
         type: string
   # Called by release.yml after it pushes the tag. That push is made with GITHUB_TOKEN, which
@@ -47,6 +47,20 @@ jobs:
             exit 1
           fi
 
+      # This workflow publishes a tag; it never creates one. Run by hand with a version that has not
+      # been released yet, checkout otherwise fails three times with a bare `git fetch` exit code and
+      # a retry loop — naming neither the tag nor the workflow that would have created it.
+      - name: Check the tag exists
+        shell: bash
+        env:
+          RELEASE_REF: ${{ inputs.release_ref || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_REF}" --silent 2>/dev/null; then
+            echo "::error::${RELEASE_REF} is not a tag. This workflow re-publishes an existing release; to create ${RELEASE_REF}, run the Release workflow."
+            exit 1
+          fi
+
       - name: Check out release
         uses: actions/checkout@v4
         with:
@@ -77,9 +91,15 @@ jobs:
           pip install jsonschema
           python3 frontend/validate_schema.py
 
+      # --expect-ref: every wrapper must pin *this* tag, not merely one uniform tag that exists.
+      # Uniform-and-existing is what a hand-made tag passes — cut on a commit whose wrappers still
+      # pin the previous release — and it then fails deep inside `terraform init` below, on
+      # whichever wrapper first uses an argument the old child module lacks.
       - name: Validate catalog metadata against Terraform
         shell: bash
-        run: python3 frontend/validate_metadata.py
+        env:
+          RELEASE_REF: ${{ inputs.release_ref || github.ref_name }}
+        run: python3 frontend/validate_metadata.py --ref-mode release --expect-ref "${RELEASE_REF}"
 
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive frontend/modules
