@@ -31,3 +31,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "groups" {
+  description = "IAM groups this user belongs to. Authoritative for this user's group membership: do not also manage this same user via another group's own membership list, or the two will fight over it on every apply."
+  type        = list(string)
+  default     = []
+}
+
+variable "managed_policy_arns" {
+  description = "List of IAM managed policy ARNs to attach directly to the user."
+  type        = list(string)
+  default     = []
+}

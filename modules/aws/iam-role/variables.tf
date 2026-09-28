@@ -76,3 +76,44 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "trusted_entity_type" {
+  description = "Who can assume this role: AWS_SERVICE, AWS_ACCOUNT, IAM_PRINCIPAL, or null/CUSTOM_JSON to use assume_role_policy's raw JSON as-is."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.trusted_entity_type == null || contains(["AWS_SERVICE", "AWS_ACCOUNT", "IAM_PRINCIPAL", "CUSTOM_JSON"], var.trusted_entity_type)
+    error_message = "trusted_entity_type must be 'AWS_SERVICE', 'AWS_ACCOUNT', 'IAM_PRINCIPAL', 'CUSTOM_JSON', or null."
+  }
+}
+
+variable "trusted_service_principals" {
+  description = "AWS service principals (e.g. ec2.amazonaws.com) allowed to assume this role. Used when trusted_entity_type is AWS_SERVICE."
+  type        = list(string)
+  default     = []
+}
+
+variable "trusted_account_ids" {
+  description = "AWS account IDs allowed to assume this role. Used when trusted_entity_type is AWS_ACCOUNT."
+  type        = list(string)
+  default     = []
+}
+
+variable "trusted_role_arns" {
+  description = "ARNs of existing IAM roles allowed to assume this role. Used when trusted_entity_type is IAM_PRINCIPAL."
+  type        = list(string)
+  default     = []
+}
+
+variable "trusted_user_arns" {
+  description = "ARNs of existing IAM users allowed to assume this role. Used when trusted_entity_type is IAM_PRINCIPAL."
+  type        = list(string)
+  default     = []
+}
+
+variable "trusted_external_id" {
+  description = "Requires sts:ExternalId to match this value on assumption. Only meaningful alongside trusted_entity_type = IAM_PRINCIPAL or AWS_ACCOUNT, for the cross-account confused-deputy case."
+  type        = string
+  default     = null
+}

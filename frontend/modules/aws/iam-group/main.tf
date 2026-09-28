@@ -9,4 +9,5 @@ module "iam_group" {
   name                = coalesce(each.value.name, each.key)
   path                = each.value.path
   managed_policy_arns = each.value.managed_policy_arns
+  users               = each.value.users
 }

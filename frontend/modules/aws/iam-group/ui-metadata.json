@@ -71,7 +71,35 @@
             "description": "List of AWS managed or customer managed policy ARNs to attach to the group.",
             "type": "list",
             "required": false,
-            "default": []
+            "default": [],
+            "data_source": {
+              "resource": "iam.policies",
+              "params": { "scope": { "static": "local" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "arn" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "membership",
+        "label": "Membership",
+        "fields": [
+          {
+            "id": "users",
+            "label": "Users",
+            "description": "IAM users who are members of this group. Authoritative for this group's membership — don't also manage the same user via their own user-side Groups field, or the two will fight over it on every apply.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "iam.users",
+              "params": {},
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           }
         ]
       }
@@ -82,6 +110,11 @@
       "address": "aws_iam_group_policy_attachment.this",
       "driven_by": "managed_policy_arns",
       "note": "Policy attachments are secondary resources driven by managed_policy_arns."
+    },
+    {
+      "address": "aws_iam_group_membership.this",
+      "driven_by": "users",
+      "note": "Membership is a secondary resource driven by users, and is only created when the list is non-empty."
     }
   ]
 }

@@ -25,3 +25,9 @@ variable "managed_policy_arns" {
   type        = list(string)
   default     = []
 }
+
+variable "users" {
+  description = "IAM users who are members of this group. Authoritative for this group's membership: do not also manage the same user via their own user-side groups list, or the two will fight over it on every apply."
+  type        = list(string)
+  default     = []
+}

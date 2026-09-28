@@ -94,11 +94,23 @@
         "fields": [
           {
             "id": "subnet_id",
-            "label": "Subnet ID",
-            "description": "VPC Subnet ID where the instance primary interface will reside.",
-            "type": "text",
+            "label": "Subnet",
+            "description": "VPC Subnet where the instance primary interface will reside.",
+            "type": "select",
             "required": false,
-            "placeholder": "subnet-0123456789abcdef0"
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": {
+                "region": { "from_field": "region" }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "id",
+                "description_key": "availabilityZone"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "vpc_security_group_ids",

@@ -17,4 +17,11 @@ module "iam_role" {
   managed_policy_arns   = each.value.managed_policy_arns
   inline_policy         = each.value.inline_policy
   tags                  = each.value.tags
+
+  trusted_entity_type        = each.value.trusted_entity_type
+  trusted_service_principals = each.value.trusted_service_principals
+  trusted_account_ids        = each.value.trusted_account_ids
+  trusted_role_arns          = each.value.trusted_role_arns
+  trusted_user_arns          = each.value.trusted_user_arns
+  trusted_external_id        = each.value.trusted_external_id
 }

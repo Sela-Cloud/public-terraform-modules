@@ -620,11 +620,16 @@ From `RESOURCE_HANDLERS` in `applications/api/services/clouds/aws/lookups.py`.
 | :--- | :--- | :--- | :--- | :--- |
 | `ec2.vpcs` | `ec2.vpc` | VPCs in one region | `region` (or `location`) | `id`, `name`, `cidr`, `isDefault`, `state` |
 | `ec2.regions` | `aws.regions` | Regions this account has enabled | — | `name`, `description`, `endpoint`, `optInStatus` |
+| `ec2.subnets` | `ec2.subnet` | Subnets in one region, optionally narrowed to one VPC | `region` (or `location`), `vpc`/`vpc_id`/`network` | `id`, `name`, `cidr`, `availabilityZone`, `vpcId`, `state` |
+| `iam.groups` | `iam.group` | IAM groups (not region-scoped) | — | `id`, `name`, `arn`, `path` |
+| `iam.users` | `iam.user` | IAM users (not region-scoped) | — | `id`, `name`, `arn`, `path` |
+| `iam.roles` | `iam.role` | IAM roles (not region-scoped) | — | `id`, `name`, `arn`, `path` |
+| `iam.policies` | `iam.policy` | IAM policies, customer-managed by default | `scope` (`local`\|`aws`\|`all`, default `local`) | `id` (the ARN), `name`, `arn`, `path` |
 
-**Two so far, and that is deliberate.** The GCP list above has thirty-six because forty-one modules
-accumulated them one at a time, each written because a real field needed it. Adding AWS handlers
-speculatively would be writing code for fields nobody has declared. If a module you are writing
-needs a lookup that is not here, ask for it — a handler is small, and these two are the worked
+**Seven so far, and that is deliberate.** The GCP list above has thirty-six because forty-one
+modules accumulated them one at a time, each written because a real field needed it. Adding AWS
+handlers speculatively would be writing code for fields nobody has declared. If a module you are
+writing needs a lookup that is not here, ask for it — a handler is small, and these are the worked
 examples to copy.
 
 ###### `ec2.regions`

@@ -10,6 +10,8 @@ variable "iam_user" {
     name                 = optional(string, "iam-user-default")
     path                 = optional(string, "/")
     permissions_boundary = optional(string, null)
+    groups               = optional(list(string), [])
+    managed_policy_arns  = optional(list(string), [])
     tags                 = optional(map(string), {})
   }))
   default = {
@@ -17,6 +19,8 @@ variable "iam_user" {
       name                 = "iam-user-default"
       path                 = "/"
       permissions_boundary = null
+      groups               = []
+      managed_policy_arns  = []
       tags                 = {}
     }
   }

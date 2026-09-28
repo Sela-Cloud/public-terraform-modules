@@ -10,12 +10,14 @@ variable "iam_group" {
     name                = optional(string, "iam-group-default")
     path                = optional(string, "/")
     managed_policy_arns = optional(list(string), [])
+    users               = optional(list(string), [])
   }))
   default = {
     "iam-group-default" = {
       name                = "iam-group-default"
       path                = "/"
       managed_policy_arns = []
+      users               = []
     }
   }
 }
