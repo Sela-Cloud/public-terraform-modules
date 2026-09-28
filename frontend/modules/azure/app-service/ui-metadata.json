@@ -1,0 +1,313 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "app-service",
+  "version": "1.0.0",
+  "display": {
+    "label": "App Service",
+    "icon": "app-service",
+    "description": "Azure App Service (Web App) for building, deploying, and scaling enterprise web applications",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "app_service",
+    "key_field": "name",
+    "key_label": "App Service Name",
+    "key_description": "The unique name for the Azure App Service. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core App Service identity and region settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "App Service Name",
+            "description": "Name of the Azure App Service. Must be globally unique across Azure, 2-60 characters using alphanumerics and hyphens.",
+            "type": "text",
+            "required": true,
+            "placeholder": "app-my-workload-prod",
+            "validation": {
+              "min": 2,
+              "max": 60,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$",
+              "pattern_error": "App Service name must be 2-60 characters, begin and end with an alphanumeric character, and contain only alphanumerics and hyphens."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the App Service.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the App Service should be hosted.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hosting_plan",
+        "label": "App Service Plan & Sizing",
+        "description": "Operating system and hosting tier settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "os_type",
+            "label": "Operating System",
+            "description": "The operating system to run the App Service on.",
+            "type": "select",
+            "required": false,
+            "default": "Linux",
+            "options": [
+              { "value": "Linux", "label": "Linux (Recommended)" },
+              { "value": "Windows", "label": "Windows" }
+            ]
+          },
+          {
+            "id": "create_service_plan",
+            "label": "Create Service Plan",
+            "description": "Automatically provision a new dedicated App Service Plan. Disable if referencing an existing plan.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "service_plan_sku",
+            "label": "Service Plan SKU",
+            "description": "Pricing tier and compute capacity for the new App Service Plan.",
+            "type": "select",
+            "required": false,
+            "default": "B1",
+            "options": [
+              { "value": "F1", "label": "F1 (Free - Dev/Test)" },
+              { "value": "B1", "label": "B1 (Basic 1 Core, 1.75 GB RAM)" },
+              { "value": "B2", "label": "B2 (Basic 2 Cores, 3.5 GB RAM)" },
+              { "value": "B3", "label": "B3 (Basic 4 Cores, 7 GB RAM)" },
+              { "value": "S1", "label": "S1 (Standard 1 Core, 1.75 GB RAM)" },
+              { "value": "S2", "label": "S2 (Standard 2 Cores, 3.5 GB RAM)" },
+              { "value": "S3", "label": "S3 (Standard 4 Cores, 7 GB RAM)" },
+              { "value": "P1v3", "label": "P1v3 (Premium v3 2 Cores, 8 GB RAM)" },
+              { "value": "P2v3", "label": "P2v3 (Premium v3 4 Cores, 16 GB RAM)" },
+              { "value": "P3v3", "label": "P3v3 (Premium v3 8 Cores, 32 GB RAM)" }
+            ]
+          },
+          {
+            "id": "service_plan_name",
+            "label": "Service Plan Name",
+            "description": "Custom name for the new Service Plan. If left empty, defaults to 'asp-<app_name>'.",
+            "type": "text",
+            "required": false,
+            "placeholder": "asp-my-workload-prod"
+          },
+          {
+            "id": "service_plan_id",
+            "label": "Existing Service Plan ID",
+            "description": "Resource ID of an existing App Service Plan to attach to (bypasses plan creation).",
+            "type": "text",
+            "required": false,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Web/serverFarms/asp-shared"
+          },
+          {
+            "id": "zone_balancing_enabled",
+            "label": "Zone Balancing",
+            "description": "Distribute Service Plan instances across Availability Zones (requires Premium SKU).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "networking_security",
+        "label": "Networking & Access Security",
+        "description": "Network integration, HTTPS enforcement, and ingress security.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "https_only",
+            "label": "Enforce HTTPS Only",
+            "description": "Redirect all unencrypted HTTP traffic to HTTPS.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "public_network_access_enabled",
+            "label": "Public Network Access",
+            "description": "Allow ingress traffic from the public internet.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "virtual_network_subnet_id",
+            "label": "VNet Integration Subnet ID",
+            "description": "Resource ID of a delegated subnet for outbound regional VNet integration.",
+            "type": "text",
+            "required": false,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/snet-appservice"
+          },
+          {
+            "id": "client_affinity_enabled",
+            "label": "Client Affinity (Sticky Sessions)",
+            "description": "Enable ARR affinity cookies to route repeated client requests to the same instance.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "client_certificate_enabled",
+            "label": "Client Certificate (Mutual TLS)",
+            "description": "Enable client certificate authentication for incoming requests.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "identity",
+        "label": "Managed Identity",
+        "description": "Azure Managed Identity for passwordless access to Azure resources (Key Vault, SQL, Storage).",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "identity_type",
+            "label": "Identity Type",
+            "description": "Managed identity assignment for the App Service.",
+            "type": "select",
+            "required": false,
+            "default": "SystemAssigned",
+            "options": [
+              { "value": "SystemAssigned", "label": "System-Assigned (Automatic lifecycle tied to app)" },
+              { "value": "UserAssigned", "label": "User-Assigned (Pre-created identity)" },
+              { "value": "SystemAssigned, UserAssigned", "label": "Both System & User-Assigned" }
+            ]
+          },
+          {
+            "id": "identity_ids",
+            "label": "User-Assigned Identity IDs",
+            "description": "List of User-Assigned Identity resource IDs (required if UserAssigned is selected).",
+            "type": "list",
+            "required": false,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.ManagedIdentity/userAssignedIdentities/..."
+          }
+        ]
+      },
+      {
+        "id": "environment",
+        "label": "Application Settings",
+        "description": "Environment variables and configuration values available to the application code at runtime.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "app_settings",
+            "label": "App Settings (Key-Value)",
+            "description": "Application settings exposed as environment variables (e.g. WEBSITE_RUN_FROM_PACKAGE = 1).",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      },
+      {
+        "id": "connections",
+        "label": "Connection Strings",
+        "description": "Database and external service connection strings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "connection_strings",
+            "label": "Connection Strings",
+            "description": "List of database connection strings.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Connection Name",
+                "description": "The name of the connection string.",
+                "type": "text",
+                "required": true,
+                "placeholder": "DefaultDatabase"
+              },
+              {
+                "id": "type",
+                "label": "Connection Type",
+                "description": "The database provider type.",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "SQLAzure", "label": "SQL Azure" },
+                  { "value": "SQLServer", "label": "SQL Server" },
+                  { "value": "PostgreSQL", "label": "PostgreSQL" },
+                  { "value": "MySQL", "label": "MySQL" },
+                  { "value": "Custom", "label": "Custom" }
+                ]
+              },
+              {
+                "id": "value",
+                "label": "Connection String Value",
+                "description": "The connection string value.",
+                "type": "text",
+                "required": true,
+                "sensitive": true,
+                "placeholder": "Server=tcp:...;Database=...;"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Resource Tags",
+        "description": "Key-value pairs to categorize and track this App Service.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Tags assigned to the App Service.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
