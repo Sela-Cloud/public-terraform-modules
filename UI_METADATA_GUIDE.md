@@ -710,6 +710,96 @@ ordinary onboarding state, not a fault, and the dropdown says which one — "no 
 "no verified AWS role yet". An organization with several verified AWS targets is refused rather
 than guessed at, since picking the wrong account would return a plausible, empty list.
 
+##### Supported Azure Data Source Resources & Parameters
+
+From `RESOURCE_HANDLERS` in `applications/api/services/clouds/azure/lookups.py`. Every lookup reads
+the environment's own subscription, taken from its verified target — never from a form field.
+
+| Resource Identifier | Aliases | Returns | Parameters | Response Keys |
+| :--- | :--- | :--- | :--- | :--- |
+| `resources.resourceGroups` | `azure.resourceGroups` | Resource groups in the subscription | `location` (optional) | `name`, `id`, `location` |
+| `network.virtualNetworks` | `network.vnets` | Virtual networks, in one resource group or the whole subscription | `resource_group` (optional), `location` (optional) | `name`, `id`, `resourceGroup`, `location`, `addressSpace` |
+| `network.subnets` | `network.virtualNetworks.subnets` | Subnets of one virtual network | `vnet` (a name **or** a full id), `resource_group` (required when `vnet` is a name) | `name`, `id`, `addressPrefix`, `vnet`, `resourceGroup` |
+
+`resource_group` also accepts `resource_group_name`; `vnet` also accepts `virtual_network`,
+`virtual_network_name` and `network`. `location` accepts the portal's spelling (`East US`) as well
+as the API's (`eastus`).
+
+**Choose `value_key` by what the module's variable takes — this is the Azure-specific decision.**
+AWS is simple: resources are opaque ids, so the value is always `id`. Azure is not. Names are
+meaningful, but they are **not unique** — two resource groups can each hold a vnet called `hub` —
+and ids are long paths that embed the subscription and the resource group:
+
+```
+/subscriptions/<sub>/resourceGroups/network-rg/providers/Microsoft.Network/virtualNetworks/hub
+```
+
+`azurerm` modules take either, depending on the resource. So:
+
+- the variable is a **name** (`virtual_network_name`, `resource_group_name`) → `value_key: "name"`,
+  and the module must also be told the resource group, usually by a field of its own;
+- the variable is an **id** (`subnet_id`, `virtual_network_id`) → `value_key: "id"`. The label can
+  still be `name`; the id is what gets submitted.
+
+Getting it backwards produces a form that looks right and generates Terraform that does not apply —
+the same failure as swapping `id` and `name` on AWS, arrived at from the other direction.
+
+**Chaining the three.** The usual form picks a resource group, then a network in it, then a subnet in
+that — each dropdown fed by the one before:
+
+```json
+[
+  {
+    "id": "resource_group_name",
+    "label": "Resource group",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "resources.resourceGroups",
+      "display": { "value_key": "name", "label_key": "name", "description_key": "location" }
+    }
+  },
+  {
+    "id": "virtual_network_name",
+    "label": "Virtual network",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "network.virtualNetworks",
+      "params": { "resource_group": { "from_field": "resource_group_name" } },
+      "display": { "value_key": "name", "label_key": "name", "description_key": "addressSpace" }
+    }
+  },
+  {
+    "id": "subnet_id",
+    "label": "Subnet",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "network.subnets",
+      "params": {
+        "vnet": { "from_field": "virtual_network_name" },
+        "resource_group": { "from_field": "resource_group_name" }
+      },
+      "display": { "value_key": "id", "label_key": "name", "description_key": "addressPrefix" }
+    }
+  }
+]
+```
+
+Note the last one submits the subnet's **id** while the two above it submit **names** — each follows
+what its variable takes. If the vnet field submits an id instead, drop the subnet's
+`resource_group` param: `network.subnets` reads the resource group out of the id itself.
+
+The subnet dropdown returns an empty list — not an error — until both the network and its resource
+group are known. That is normal: it is asked before the user has chosen a network.
+
+**What the read needs to exist first.** An Azure lookup acts as the organization's own application
+in the customer's tenant, so it needs the application *and* a **verified** Azure target naming the
+tenant and subscription. Either missing is an onboarding state, not a fault, and the dropdown says
+which — "no Azure application yet" or "no verified Azure environment yet". The role the customer
+grants for deploying (`Contributor`) covers reading; `Reader` alone would be enough for lookups.
+
 #### 4. `ui_only` Controls
 
 Every form control must map to **an attribute of the resource object, or a global** — that is R6 in

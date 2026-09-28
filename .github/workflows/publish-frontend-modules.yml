@@ -10,6 +10,15 @@ on:
         description: "Existing release tag to validate and publish, for example v0.3"
         required: true
         type: string
+  # Called by release.yml after it pushes the tag. That push is made with GITHUB_TOKEN, which
+  # GitHub deliberately does not let trigger `push: tags` above — so without this, a release cut
+  # by the workflow would never be published.
+  workflow_call:
+    inputs:
+      release_ref:
+        description: "Release tag to validate and publish"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -31,7 +40,7 @@ jobs:
       - name: Validate release reference
         shell: bash
         env:
-          RELEASE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref_name }}
+          RELEASE_REF: ${{ inputs.release_ref || github.ref_name }}
         run: |
           if [[ ! "${RELEASE_REF}" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
             echo "Release reference must be a version tag such as v0.3 or v0.3.0."
@@ -41,7 +50,7 @@ jobs:
       - name: Check out release
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+          ref: ${{ inputs.release_ref || github.ref }}
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3

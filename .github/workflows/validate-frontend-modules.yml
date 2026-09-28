@@ -1,7 +1,34 @@
 name: Validate Frontend Modules
 
-# The publish workflow only runs on v* tags, so metadata/HCL drift used to surface at
-# release time. This job runs the same catalog checks on every PR and every push to main.
+# Runs on every PR and every push to main. The publish workflow repeats the catalog checks on
+# release tags, with the strictest ref rules; this one is what catches a broken change before it
+# merges.
+#
+# What "the PR is right" means here, check by check:
+#
+#   layout       every module is at <tree>/<provider>/<id>, sources a child of its own cloud,
+#                and requires only its own cloud's providers
+#   metadata     ui-metadata.json is valid JSON, matches the published schema, and agrees with
+#                the wrapper's Terraform (validate_metadata.py)
+#   refs         ?ref= pins are acceptable for where this run sits in the release cycle — see
+#                "Ref policy" below
+#   terraform    every changed module, and every wrapper whose child changed, passes
+#                `terraform init` + `validate` against the code in this PR — not the tag it pins
+#   format       `terraform fmt` over both trees
+#
+# ── Ref policy ────────────────────────────────────────────────────────────────
+# Wrappers reach their child module by git ref of this repo, and the worker deploys from
+# origin/main. While developing, a wrapper pins its own branch — the child it needs is in no tag
+# yet — so refs are judged by context:
+#
+#   pull_request   a wrapper this PR changed may pin this PR's branch or a release tag; any other
+#                  ref (another developer's branch, a typo) is an error. Pins already on main are
+#                  reported but never fail an unrelated PR.
+#   push to main   branch pins awaiting the release bump are warnings; a pin whose branch no
+#                  longer exists is an error, because every deploy of that module now fails.
+#   release tag    one ref, and it exists — enforced by publish-frontend-modules.yml.
+#
+# So: don't delete a feature branch until the release bump has retagged its wrappers.
 
 on:
   pull_request:
@@ -9,6 +36,7 @@ on:
       - "frontend/**"
       - "modules/**"
       - ".github/workflows/validate-frontend-modules.yml"
+      - ".github/scripts/**"
   push:
     branches:
       - main
@@ -16,6 +44,7 @@ on:
       - "frontend/**"
       - "modules/**"
       - ".github/workflows/validate-frontend-modules.yml"
+      - ".github/scripts/**"
   workflow_dispatch:
 
 permissions:
@@ -25,18 +54,30 @@ concurrency:
   group: validate-frontend-modules-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # The version the worker runs. Validating with anything else checks a Terraform nobody deploys.
+  TERRAFORM_VERSION: "1.15.8"
+
 jobs:
+  # Job name kept as it was: branch protection refers to it.
   validate-catalog:
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out
         uses: actions/checkout@v4
+        with:
+          # Full history, so the PR can be diffed against its base with three dots — what the
+          # PR changed, rather than everything main has gained since the branch was cut.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Check module layout
+        run: python3 .github/scripts/check_module_layout.py
 
       - name: Validate metadata JSON
         shell: bash
@@ -44,22 +85,57 @@ jobs:
           jq empty frontend/ui-metadata.schema.json
           find frontend/modules -name ui-metadata.json -print0 | xargs -0 -n1 jq empty
 
-      # jq empty above only proves the files are well-formed JSON. This checks them
-      # against the published schema, which is additionalProperties:false throughout.
+      # jq empty above only proves the files are well-formed JSON. This checks them against the
+      # published schema, which is additionalProperties:false throughout.
       - name: Validate metadata against ui-metadata.schema.json
         shell: bash
         run: |
           pip install jsonschema
           python3 frontend/validate_schema.py
 
-      - name: Validate catalog metadata against Terraform
+      - name: Validate catalog metadata against Terraform, and ref pins
         shell: bash
-        run: python3 frontend/validate_metadata.py
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ "${EVENT}" == "pull_request" ]]; then
+            python3 frontend/validate_metadata.py --ref-mode pr --pr-branch "${PR_BRANCH}" --base "${PR_BASE}"
+          else
+            python3 frontend/validate_metadata.py --ref-mode main
+          fi
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
       - name: Check Terraform formatting
-        run: terraform fmt -check -recursive frontend/modules
+        run: terraform fmt -check -recursive frontend/modules modules
+
+      # Provider downloads dominate `terraform init`; the Google provider alone is a few hundred
+      # megabytes. Cached by Terraform version, and shared across every module in the run.
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: terraform-providers-${{ env.TERRAFORM_VERSION }}-${{ hashFiles('**/versions.tf') }}
+          restore-keys: terraform-providers-${{ env.TERRAFORM_VERSION }}-
+
+      - name: Validate Terraform against this change
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          export TF_PLUGIN_CACHE_DIR="${HOME}/.terraform.d/plugin-cache"
+          mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+          # A PR validates what it changed plus the wrappers of any child it changed. A push to
+          # main validates everything: main is what deploys use, so it is worth the minutes.
+          if [[ "${EVENT}" == "pull_request" ]]; then
+            python3 .github/scripts/validate_terraform.py --changed-since "${PR_BASE}"
+          else
+            python3 .github/scripts/validate_terraform.py
+          fi

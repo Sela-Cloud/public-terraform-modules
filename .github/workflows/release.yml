@@ -1,0 +1,176 @@
+name: Release
+
+# Cut a release: pin every wrapper at the new tag, validate, commit, tag, push — then publish.
+#
+# ── Why bump first, then tag ──────────────────────────────────────────────────
+# Wrappers reach their child modules by `?ref=` of this repo. The tag's own commit must carry
+# wrappers pinning that tag; otherwise the tag points at code that still names the previous
+# release, or a developer's branch left behind by a merge, and publish refuses it. So the bump is
+# committed first and the *bump commit* is tagged. The wrappers then pin their own commit, which
+# works because the child modules they reference are in that same commit.
+#
+# Tagging first and bumping after cannot be repaired afterwards: moving a tag does not update it
+# for anyone who already fetched it.
+#
+# ── Why publish is called, not triggered ──────────────────────────────────────
+# GitHub does not start workflows from events the default GITHUB_TOKEN creates, so the tag pushed
+# here would never trigger publish-frontend-modules.yml's `push: tags` on its own. Publish is
+# invoked directly instead. If this is ever switched to push with a GitHub App token, the tag
+# push *will* trigger publish, and the call below must go — or the catalog is published twice.
+#
+# ── Branch protection ─────────────────────────────────────────────────────────
+# This pushes one commit straight to main. If main requires pull requests, grant the Actions bot a
+# bypass or the push step fails — cleanly, after validation and before anything is tagged.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag to create, e.g. v0.8.0"
+        required: true
+        type: string
+      dry_run:
+        description: "Bump and validate only — commit, tag and publish nothing"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  # For the publish workflow's Google Cloud authentication, which it inherits from this caller.
+  id-token: write
+
+concurrency:
+  # One release at a time, and never cancelled halfway: a release interrupted between pushing the
+  # commit and pushing the tag leaves main bumped with no tag to match.
+  group: release
+  cancel-in-progress: false
+
+env:
+  TERRAFORM_VERSION: "1.15.8"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+
+    steps:
+      - name: Check the request
+        id: check
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+          REF: ${{ github.ref }}
+        run: |
+          if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::'${VERSION}' is not a release version like v0.8.0."
+            exit 1
+          fi
+          # A release is cut from main: it is what deploys use, and what the bump lands on.
+          if [[ "${REF}" != "refs/heads/main" ]]; then
+            echo "::error::Run this from main, not ${REF}."
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Refuse a tag that already exists
+        shell: bash
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${VERSION}" >/dev/null; then
+            echo "::error::${VERSION} already exists. Releases are immutable — pick the next version."
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Pin every wrapper at ${{ steps.check.outputs.version }}
+        run: python3 .github/scripts/bump_refs.py "${{ steps.check.outputs.version }}"
+
+      # The same checks a PR gets, now against the tree the tag will contain — and with the
+      # strictest ref rule: every pin is exactly this version.
+      - name: Check module layout
+        run: python3 .github/scripts/check_module_layout.py
+
+      - name: Validate metadata
+        shell: bash
+        run: |
+          pip install jsonschema
+          python3 frontend/validate_schema.py
+          python3 frontend/validate_metadata.py --ref-mode release \
+            --expect-ref "${{ steps.check.outputs.version }}"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive frontend/modules modules
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: terraform-providers-${{ env.TERRAFORM_VERSION }}-${{ hashFiles('**/versions.tf') }}
+          restore-keys: terraform-providers-${{ env.TERRAFORM_VERSION }}-
+
+      # Every module, against the local tree: the tag cannot be fetched yet, and what matters is
+      # that the code going into it agrees with itself.
+      - name: Validate every module
+        shell: bash
+        run: |
+          export TF_PLUGIN_CACHE_DIR="${HOME}/.terraform.d/plugin-cache"
+          mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+          python3 .github/scripts/validate_terraform.py
+
+      - name: Show the bump
+        run: git --no-pager diff --stat
+
+      - name: Commit, tag and push
+        if: ${{ !inputs.dry_run }}
+        shell: bash
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Nothing to commit is fine — the refs were already bumped by hand. The tag still goes on
+          # main's current commit, which then carries wrappers pinning it.
+          if ! git diff --quiet; then
+            git commit -am "Release ${VERSION}: pin wrappers to ${VERSION}"
+          fi
+          git tag -a "${VERSION}" -m "Release ${VERSION} (cut by ${ACTOR})"
+
+          # Commit before tag. If main has moved since checkout, this push is rejected and nothing
+          # is tagged remotely — re-run the release. Pushing the tag first would publish a tag whose
+          # commit is not on main.
+          git push origin HEAD:main
+          git push origin "refs/tags/${VERSION}"
+
+      - name: Dry run
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "::notice::Dry run — ${{ steps.check.outputs.version }} validated. Nothing was committed, tagged or published."
+
+  publish:
+    needs: prepare
+    if: ${{ !inputs.dry_run }}
+    uses: ./.github/workflows/publish-frontend-modules.yml
+    with:
+      release_ref: ${{ needs.prepare.outputs.version }}
+    secrets: inherit
