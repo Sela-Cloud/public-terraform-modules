@@ -1,0 +1,132 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "dns-a-record",
+  "version": "1.0.0",
+  "display": {
+    "label": "DNS A Record",
+    "icon": "azure-dns",
+    "description": "Azure DNS A Record for mapping domain names to IPv4 addresses or alias target resources",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "dns_a_record",
+    "key_field": "name",
+    "key_label": "Record Name",
+    "key_description": "The name of the DNS A Record (use '@' for zone apex or a subdomain label like 'www'). Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core DNS A Record name, zone, and resource group placement.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Record Name",
+            "description": "The relative name of the DNS A Record. Use '@' for the zone apex or a subdomain label like 'www' or 'api'. Changing this forces a new resource to be created.",
+            "type": "text",
+            "required": true,
+            "default": "@",
+            "placeholder": "@ or www",
+            "locked_after_create": true,
+            "validation": {
+              "min": 1,
+              "max": 63,
+              "pattern": "^(@|[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*)$",
+              "pattern_error": "Must be '@' or between 1 and 63 alphanumeric characters, hyphens, or underscores."
+            }
+          },
+          {
+            "id": "zone_name",
+            "label": "DNS Zone Name",
+            "description": "The name of the parent DNS Zone where the record will be created (e.g., example.com). Changing this forces a new resource to be created.",
+            "type": "text",
+            "required": true,
+            "default": "example.com",
+            "placeholder": "example.com",
+            "locked_after_create": true,
+            "validation": {
+              "min": 1,
+              "max": 253,
+              "pattern": "^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}$",
+              "pattern_error": "Must be a valid domain name (e.g., example.com)."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which the parent DNS Zone exists. Changing this forces a new resource to be created.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-dns",
+            "locked_after_create": true,
+            "validation": {
+              "min": 1,
+              "max": 90,
+              "pattern": "^[-\\w\\._\\(\\)]+[^\\.]$",
+              "pattern_error": "Resource Group name must be 1-90 characters (alphanumerics, underscores, parentheses, hyphens, periods) and cannot end in a period."
+            }
+          }
+        ]
+      },
+      {
+        "id": "record_target",
+        "label": "Routing & Target Configuration",
+        "description": "TTL, IPv4 addresses, or alias target resource configuration.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "ttl",
+            "label": "TTL (seconds)",
+            "description": "The Time To Live (TTL) of the DNS record in seconds.",
+            "type": "number",
+            "required": true,
+            "default": 300,
+            "placeholder": "300",
+            "validation": {
+              "min": 1
+            }
+          },
+          {
+            "id": "records",
+            "label": "IPv4 Addresses",
+            "description": "List of IPv4 addresses for this A record. Mutually exclusive with Target Resource ID.",
+            "type": "list",
+            "required": false,
+            "default": [
+              "10.0.0.1"
+            ],
+            "placeholder": "10.0.0.1"
+          },
+          {
+            "id": "target_resource_id",
+            "label": "Target Resource ID (Alias Record)",
+            "description": "The Azure resource ID of the target resource (such as an Azure Public IP) to create an alias record. Mutually exclusive with IPv4 Addresses.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/publicIPAddresses/..."
+          }
+        ]
+      },
+      {
+        "id": "tags_section",
+        "label": "Tags",
+        "description": "Resource tags for organization, governance, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the DNS A Record for organization and governance.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

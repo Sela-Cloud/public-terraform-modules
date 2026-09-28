@@ -1,0 +1,238 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "bastion-host",
+  "version": "1.0.0",
+  "display": {
+    "label": "Bastion Host",
+    "icon": "azure-bastion",
+    "description": "Azure Bastion Host provides secure and seamless RDP/SSH access to virtual machines directly over SSL without exposing public IPs",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "bastion_host",
+    "key_field": "name",
+    "key_label": "Bastion Host Name",
+    "key_description": "The unique name for the Azure Bastion Host. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Bastion Host settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Bastion Host Name",
+            "description": "Name of the Azure Bastion Host. Must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, underscores, hyphens, or periods.",
+            "type": "text",
+            "required": true,
+            "placeholder": "bastion-prod-01",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,78}[a-zA-Z0-9_]$",
+              "pattern_error": "Bastion Host name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, underscores, hyphens, or periods."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Bastion Host.",
+            "type": "text",
+            "required": true,
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Bastion Host should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (Sydney)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo)" },
+              { "value": "centralindia", "label": "Central India (Pune)" }
+            ]
+          },
+          {
+            "id": "sku",
+            "label": "SKU Tier",
+            "description": "The SKU tier of the Bastion Host. Standard enables scaling, native client tunneling, and file copy. Premium enables session recording.",
+            "type": "select",
+            "required": false,
+            "default": "Standard",
+            "options": [
+              { "value": "Basic", "label": "Basic (Essential browser-based RDP/SSH)" },
+              { "value": "Standard", "label": "Standard (Adds Native Client, File Copy, Scaling)" },
+              { "value": "Premium", "label": "Premium (Adds Session Recording and Private-Only)" },
+              { "value": "Developer", "label": "Developer (Lightweight entry tier)" }
+            ]
+          },
+          {
+            "id": "scale_units",
+            "label": "Scale Units",
+            "description": "The number of scale units for the Bastion Host (between 2 and 50). Fixed at 2 for Basic SKU.",
+            "type": "number",
+            "required": false,
+            "default": 2,
+            "validation": {
+              "min": 2,
+              "max": 50
+            }
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Networking & IP Configuration",
+        "description": "Network configuration linking the Bastion Host to AzureBastionSubnet.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "ip_configuration",
+            "label": "IP Configuration",
+            "description": "Network IP configuration block for the Bastion Host.",
+            "type": "object",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Configuration Name",
+                "description": "Name of the IP configuration.",
+                "type": "text",
+                "required": false,
+                "default": "configuration",
+                "placeholder": "configuration"
+              },
+              {
+                "id": "subnet_id",
+                "label": "Bastion Subnet ID",
+                "description": "Resource ID of the subnet. Must be named AzureBastionSubnet with at least a /26 CIDR prefix.",
+                "type": "text",
+                "required": true,
+                "placeholder": "/subscriptions/.../subnets/AzureBastionSubnet"
+              },
+              {
+                "id": "public_ip_address_id",
+                "label": "Public IP Address ID",
+                "description": "Resource ID of the Standard SKU Static Public IP address for the Bastion Host.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../publicIPAddresses/pip-bastion"
+              }
+            ]
+          },
+          {
+            "id": "zones",
+            "label": "Availability Zones",
+            "description": "List of Availability Zones in which the Bastion Host should be located (e.g. 1, 2, 3).",
+            "type": "list",
+            "required": false,
+            "default": null,
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "features",
+        "label": "Bastion Features",
+        "description": "Feature toggles for Azure Bastion Host capabilities.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "copy_paste_enabled",
+            "label": "Copy / Paste Enabled",
+            "description": "Specifies whether the Copy/Paste feature is enabled for the Bastion Host.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "file_copy_enabled",
+            "label": "File Copy Enabled",
+            "description": "Specifies whether File Copy is enabled. Supported on Standard and Premium SKUs.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "shareable_link_enabled",
+            "label": "Shareable Link Enabled",
+            "description": "Specifies whether Shareable Links are enabled. Supported on Standard and Premium SKUs.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "tunneling_enabled",
+            "label": "Native Client Tunneling Enabled",
+            "description": "Specifies whether Native Client Tunneling is enabled (e.g. connecting via native SSH/RDP clients). Supported on Standard and Premium SKUs.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "ip_connect_enabled",
+            "label": "IP Connect Enabled",
+            "description": "Specifies whether IP Connect is enabled to connect directly via IP. Supported on Standard and Premium SKUs.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "session_recording_enabled",
+            "label": "Session Recording Enabled",
+            "description": "Specifies whether Session Recording is enabled. Only supported on Premium SKU.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "kerberos_enabled",
+            "label": "Kerberos Enabled",
+            "description": "Specifies whether Kerberos authentication is enabled. Supported on Standard and Premium SKUs.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tagging",
+        "description": "Resource tags for governance and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to assign to the Bastion Host.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

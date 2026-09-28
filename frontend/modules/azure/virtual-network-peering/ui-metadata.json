@@ -1,0 +1,168 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "virtual-network-peering",
+  "version": "1.0.0",
+  "display": {
+    "label": "Virtual Network Peering",
+    "icon": "virtual-network-peering",
+    "description": "Azure Virtual Network Peering for connecting virtual networks with high-bandwidth, low-latency communication",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "virtual_network_peering",
+    "key_field": "name",
+    "key_label": "Peering Name",
+    "key_description": "The unique name for the Virtual Network Peering. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Virtual Network Peering settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Peering Name",
+            "description": "Name of the Virtual Network Peering. Must be 1-80 characters using alphanumeric, underscores, hyphens, and periods.",
+            "type": "text",
+            "required": true,
+            "default": "peer-default",
+            "placeholder": "peer-hub-to-spoke",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "Virtual Network Peering name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which the Virtual Network Peering should exist.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "virtual_network_name",
+            "label": "Local Virtual Network Name",
+            "description": "The name of the local Virtual Network from which peering originates.",
+            "type": "text",
+            "required": true,
+            "default": "vnet-default",
+            "placeholder": "vnet-my-workload"
+          },
+          {
+            "id": "remote_virtual_network_id",
+            "label": "Remote Virtual Network Resource ID",
+            "description": "The full Azure resource ID of the remote Virtual Network to be peered.",
+            "type": "text",
+            "required": true,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/..."
+          }
+        ]
+      },
+      {
+        "id": "traffic",
+        "label": "Traffic and Gateway Settings",
+        "description": "Configure virtual network access, forwarded traffic, and gateway transit.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "allow_virtual_network_access",
+            "label": "Allow Virtual Network Access",
+            "description": "Controls whether VMs in the local virtual network can access VMs in the remote virtual network.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "allow_forwarded_traffic",
+            "label": "Allow Forwarded Traffic",
+            "description": "Controls whether forwarded traffic from VMs in the remote virtual network will be allowed.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "allow_gateway_transit",
+            "label": "Allow Gateway Transit",
+            "description": "Controls whether gateway links can be used in the remote virtual network's link to the local virtual network.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "use_remote_gateways",
+            "label": "Use Remote Gateways",
+            "description": "Controls if remote gateways can be used on the local virtual network. Requires allow_gateway_transit to be false.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "subnet_peering",
+        "label": "Subnet Peering Settings",
+        "description": "Configure granular subnet-level peering options.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "peer_complete_virtual_networks_enabled",
+            "label": "Peer Complete Virtual Networks",
+            "description": "Specifies whether the complete Virtual Network address space is peered. Set to false to enable subnet-specific peering.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "local_subnet_names",
+            "label": "Local Subnet Names",
+            "description": "A list of local Subnet names that are Subnet peered with the remote Virtual Network.",
+            "type": "list",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "snet-web"
+          },
+          {
+            "id": "remote_subnet_names",
+            "label": "Remote Subnet Names",
+            "description": "A list of remote Subnet names from the remote Virtual Network that are Subnet peered.",
+            "type": "list",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "snet-db"
+          },
+          {
+            "id": "only_ipv6_peering_enabled",
+            "label": "Only IPv6 Peering Enabled",
+            "description": "Specifies whether only IPv6 address space is peered for Subnet peering.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "triggers",
+        "label": "Triggers",
+        "description": "Custom triggers to force recreation on external changes.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "triggers",
+            "label": "Triggers",
+            "description": "A mapping of key-value pairs that forces recreation of the peering when external dependencies change (e.g. remote address space).",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "nat-gateway",
+  "version": "1.0.0",
+  "display": {
+    "label": "NAT Gateway",
+    "icon": "nat-gateway",
+    "description": "Azure NAT Gateway providing outbound internet connectivity for virtual network subnets",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "nat_gateway",
+    "key_field": "name",
+    "key_label": "NAT Gateway Name",
+    "key_description": "The unique name for the Azure NAT Gateway. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core NAT Gateway settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "NAT Gateway Name",
+            "description": "Name of the Azure NAT Gateway. Must be between 1 and 80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores.",
+            "type": "text",
+            "required": true,
+            "default": "ng-default",
+            "placeholder": "ng-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "NAT Gateway name must be between 1 and 80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the NAT Gateway.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the NAT Gateway should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "settings",
+        "label": "NAT Gateway Settings",
+        "description": "SKU, connection timeout, availability zones, and tags.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "sku_name",
+            "label": "SKU Name",
+            "description": "The SKU to be used for the NAT Gateway. Currently, only Standard is supported by Azure.",
+            "type": "select",
+            "required": false,
+            "default": "Standard",
+            "options": [
+              { "value": "Standard", "label": "Standard" }
+            ]
+          },
+          {
+            "id": "idle_timeout_in_minutes",
+            "label": "Idle Timeout (Minutes)",
+            "description": "The idle timeout in minutes for TCP connections (between 4 and 120 minutes).",
+            "type": "number",
+            "required": false,
+            "default": 4,
+            "placeholder": "4",
+            "validation": {
+              "min": 4,
+              "max": 120
+            }
+          },
+          {
+            "id": "zones",
+            "label": "Availability Zones",
+            "description": "List of Availability Zones in which this NAT Gateway should be located (e.g. 1). Standard NAT Gateway can be assigned to at most one zone, or leave empty for a regional gateway.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "placeholder": "1"
+          },
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the NAT Gateway for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

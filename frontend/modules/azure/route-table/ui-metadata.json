@@ -1,0 +1,194 @@
+{
+  "$schema": "../../ui-metadata.schema.json",
+  "module": "route-table",
+  "version": "1.0.0",
+  "display": {
+    "label": "Route Table",
+    "icon": "route-table",
+    "description": "Azure Route Table for controlling network traffic routing between subnets, virtual networks, and the internet",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "route_table",
+    "key_field": "name",
+    "key_label": "Route Table Name",
+    "key_description": "The unique name for the Azure Route Table. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Route Table settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Route Table Name",
+            "description": "Name of the Azure Route Table. Must be 1-80 characters using alphanumeric, underscores, hyphens, and periods.",
+            "type": "text",
+            "required": true,
+            "default": "rt-default",
+            "placeholder": "rt-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "Route Table name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Route Table.",
+            "type": "text",
+            "required": true,
+            "default": "rg-default",
+            "placeholder": "rg-my-workload"
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Route Table should be created.",
+            "type": "select",
+            "required": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          },
+          {
+            "id": "bgp_route_propagation_enabled",
+            "label": "BGP Route Propagation Enabled",
+            "description": "Controls propagation of routes learned by BGP on that route table. Set to false to disable BGP route propagation.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "routes",
+        "label": "Routes",
+        "description": "User-defined routes (UDRs) for managing network traffic.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "routes",
+            "label": "Routes",
+            "description": "List of route objects representing inline routes configured in the Route Table.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Route Name",
+                "description": "The name of the route.",
+                "type": "text",
+                "required": true,
+                "default": "route-default",
+                "placeholder": "route-to-firewall",
+                "validation": {
+                  "min": 1,
+                  "max": 80,
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+                  "pattern_error": "Route name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+                }
+              },
+              {
+                "id": "address_prefix",
+                "label": "Address Prefix",
+                "description": "Destination CIDR (e.g. '10.0.0.0/16', '0.0.0.0/0') or Azure Service Tag (e.g. 'Internet', 'VirtualNetwork').",
+                "type": "text",
+                "required": true,
+                "default": "0.0.0.0/0",
+                "placeholder": "0.0.0.0/0"
+              },
+              {
+                "id": "next_hop_type",
+                "label": "Next Hop Type",
+                "description": "The type of Azure hop the packet should be sent to.",
+                "type": "select",
+                "required": true,
+                "default": "Internet",
+                "options": [
+                  { "value": "VirtualNetworkGateway", "label": "Virtual Network Gateway" },
+                  { "value": "VnetLocal", "label": "Virtual Network (VnetLocal)" },
+                  { "value": "Internet", "label": "Internet" },
+                  { "value": "VirtualAppliance", "label": "Virtual Appliance" },
+                  { "value": "None", "label": "None (Drop)" }
+                ]
+              },
+              {
+                "id": "next_hop_in_ip_address",
+                "label": "Next Hop IP Address",
+                "description": "The IP address packets should be forwarded to. Required and only allowed when Next Hop Type is 'VirtualAppliance'.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "10.0.1.4"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "associations",
+        "label": "Subnet Associations",
+        "description": "Associate subnets with this Route Table.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "subnet_ids",
+            "label": "Subnet IDs",
+            "description": "List of Azure Subnet resource IDs to associate with this Route Table.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/..."
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tags",
+        "description": "Resource tagging for organization, governance, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Route Table for organization, governance, and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
