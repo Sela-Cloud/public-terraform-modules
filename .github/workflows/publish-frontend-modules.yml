@@ -1,9 +1,10 @@
 name: Validate and Publish Frontend Modules
 
 on:
-  push:
-    tags:
-      - "v*"
+  # No `push: tags`. Every release now goes through release.yml, which bumps the wrappers on main,
+  # places the tag on that commit, and then calls this. Running on the tag push itself would
+  # validate the tag where the Releases button first put it — before the bump — and fail, which is
+  # what v0.8.0 and v0.8.1 did.
   workflow_dispatch:
     inputs:
       release_ref:

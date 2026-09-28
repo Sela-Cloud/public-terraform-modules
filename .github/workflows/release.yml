@@ -1,32 +1,47 @@
 name: Release
 
-# Cut a release: pin every wrapper at the new tag, validate, commit, tag, push — then publish.
+# Cut a release: pin every wrapper at the release tag, validate, commit to main, point the tag at
+# that commit — then publish.
 #
-# ── Why bump first, then tag ──────────────────────────────────────────────────
-# Wrappers reach their child modules by `?ref=` of this repo. The tag's own commit must carry
-# wrappers pinning that tag; otherwise the tag points at code that still names the previous
-# release, or a developer's branch left behind by a merge, and publish refuses it. So the bump is
-# committed first and the *bump commit* is tagged. The wrappers then pin their own commit, which
-# works because the child modules they reference are in that same commit.
+# Two ways in, one result:
 #
-# Tagging first and bumping after cannot be repaired afterwards: moving a tag does not update it
-# for anyone who already fetched it.
+#   GitHub Releases → "Draft a new release" → publish it
+#       The usual way. GitHub creates the tag on main's current commit; this workflow then bumps
+#       the pins, commits, and MOVES the tag onto the bump commit.
+#
+#   Actions → Release → Run workflow → version
+#       The tag does not exist yet; this workflow bumps, commits, and CREATES it. Has a dry run.
+#
+# ── Why the tag must end up on the bump commit ─────────────────────────────────
+# Wrappers reach their child modules by `?ref=` of this repo, and publish only uploads the form
+# (ui-metadata.json) — the Terraform that deploys is read from main. So the pins have to be bumped
+# *on main*, and the tag has to point at that commit. A tag left where the Releases button put it
+# carries wrappers pinning the previous release; publish refuses it, and if it did not, the new
+# form would go live while every deploy used the old child module. That is what happened to
+# v0.8.0 and v0.8.1, both cut with the button before this workflow listened for it.
+#
+# ── Moving a tag ──────────────────────────────────────────────────────────────
+# Moving a tag is normally wrong: anyone who fetched it keeps the old one. It is safe here only
+# because it happens within the minute the tag was created, before anything consumed it — publish
+# no longer runs on tag pushes, so nothing else reads the tag in between. If GitHub's "immutable
+# releases" setting is ever enabled, the move is refused and releases must be cut from the Actions
+# tab instead.
 #
 # ── Why publish is called, not triggered ──────────────────────────────────────
 # GitHub does not start workflows from events the default GITHUB_TOKEN creates, so the tag pushed
-# here would never trigger publish-frontend-modules.yml's `push: tags` on its own. Publish is
-# invoked directly instead. If this is ever switched to push with a GitHub App token, the tag
-# push *will* trigger publish, and the call below must go — or the catalog is published twice.
+# here would not trigger publish. It is invoked directly instead.
 #
 # ── Branch protection ─────────────────────────────────────────────────────────
 # This pushes one commit straight to main. If main requires pull requests, grant the Actions bot a
-# bypass or the push step fails — cleanly, after validation and before anything is tagged.
+# bypass or the push step fails — cleanly, after validation and before any tag is created or moved.
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       version:
-        description: "Release tag to create, e.g. v0.8.0"
+        description: "Release tag to create, e.g. v0.8.2"
         required: true
         type: string
       dry_run:
@@ -42,7 +57,7 @@ permissions:
 
 concurrency:
   # One release at a time, and never cancelled halfway: a release interrupted between pushing the
-  # commit and pushing the tag leaves main bumped with no tag to match.
+  # commit and placing the tag leaves main bumped with no tag to match.
   group: release
   cancel-in-progress: false
 
@@ -54,25 +69,37 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.check.outputs.version }}
+      dry_run: ${{ steps.check.outputs.dry_run }}
 
     steps:
       - name: Check the request
         id: check
         shell: bash
         env:
-          VERSION: ${{ inputs.version }}
+          EVENT: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
           REF: ${{ github.ref }}
         run: |
-          if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-            echo "::error::'${VERSION}' is not a release version like v0.8.0."
-            exit 1
+          if [[ "${EVENT}" == "release" ]]; then
+            VERSION="${RELEASE_TAG}"
+            DRY_RUN=false
+          else
+            VERSION="${INPUT_VERSION}"
+            DRY_RUN="${INPUT_DRY_RUN:-false}"
+            # A release is cut from main: it is what deploys use, and what the bump lands on.
+            if [[ "${REF}" != "refs/heads/main" ]]; then
+              echo "::error::Run this from main, not ${REF}."
+              exit 1
+            fi
           fi
-          # A release is cut from main: it is what deploys use, and what the bump lands on.
-          if [[ "${REF}" != "refs/heads/main" ]]; then
-            echo "::error::Run this from main, not ${REF}."
+          if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::'${VERSION}' is not a release version like v0.8.2."
             exit 1
           fi
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "dry_run=${DRY_RUN}" >> "${GITHUB_OUTPUT}"
 
       - name: Check out main
         uses: actions/checkout@v4
@@ -80,12 +107,28 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Refuse a tag that already exists
+      # From the Actions tab the tag must not exist yet — releases are immutable. From the Releases
+      # button it exists by construction, and must sit on main: the bump lands on main, and moving a
+      # tag off a commit someone deliberately chose elsewhere would change what they released.
+      - name: Check the tag
         shell: bash
         env:
+          EVENT: ${{ github.event_name }}
           VERSION: ${{ steps.check.outputs.version }}
         run: |
-          if git ls-remote --exit-code --tags origin "refs/tags/${VERSION}" >/dev/null; then
+          git fetch --quiet --tags --force origin
+          if [[ "${EVENT}" == "release" ]]; then
+            if ! git merge-base --is-ancestor "refs/tags/${VERSION}" origin/main; then
+              echo "::error::${VERSION} points at a commit that is not on main. Create the release from main."
+              exit 1
+            fi
+            # Tagged, then more merged before this ran: say what the release will also contain.
+            extra="$(git log --oneline "refs/tags/${VERSION}..origin/main")"
+            if [[ -n "${extra}" ]]; then
+              echo "::notice::main moved after ${VERSION} was created; the release will also include:"
+              echo "${extra}"
+            fi
+          elif git rev-parse --quiet --verify "refs/tags/${VERSION}" >/dev/null; then
             echo "::error::${VERSION} already exists. Releases are immutable — pick the next version."
             exit 1
           fi
@@ -127,8 +170,8 @@ jobs:
           key: terraform-providers-${{ env.TERRAFORM_VERSION }}-${{ hashFiles('**/versions.tf') }}
           restore-keys: terraform-providers-${{ env.TERRAFORM_VERSION }}-
 
-      # Every module, against the local tree: the tag cannot be fetched yet, and what matters is
-      # that the code going into it agrees with itself.
+      # Every module, against the local tree: what matters is that the code going into the tag
+      # agrees with itself.
       - name: Validate every module
         shell: bash
         run: |
@@ -139,37 +182,45 @@ jobs:
       - name: Show the bump
         run: git --no-pager diff --stat
 
-      - name: Commit, tag and push
-        if: ${{ !inputs.dry_run }}
+      - name: Commit, push, and place the tag
+        if: ${{ steps.check.outputs.dry_run != 'true' }}
         shell: bash
         env:
+          EVENT: ${{ github.event_name }}
           VERSION: ${{ steps.check.outputs.version }}
           ACTOR: ${{ github.actor }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Nothing to commit is fine — the refs were already bumped by hand. The tag still goes on
-          # main's current commit, which then carries wrappers pinning it.
+          # Nothing to commit is fine — the pins were already bumped. The tag still goes on main's
+          # current commit, which then carries wrappers pinning it.
           if ! git diff --quiet; then
             git commit -am "Release ${VERSION}: pin wrappers to ${VERSION}"
           fi
-          git tag -a "${VERSION}" -m "Release ${VERSION} (cut by ${ACTOR})"
 
-          # Commit before tag. If main has moved since checkout, this push is rejected and nothing
-          # is tagged remotely — re-run the release. Pushing the tag first would publish a tag whose
-          # commit is not on main.
+          # Main before the tag, always. If main has moved since checkout this push is rejected and
+          # no tag is created or moved — re-run the workflow.
           git push origin HEAD:main
-          git push origin "refs/tags/${VERSION}"
+
+          if [[ "${EVENT}" == "release" ]]; then
+            # Move the tag the Releases button created onto the bump commit. See "Moving a tag"
+            # above for why this is safe here and nowhere else.
+            git tag --force -a "${VERSION}" -m "Release ${VERSION} (created by ${ACTOR})"
+            git push --force origin "refs/tags/${VERSION}"
+          else
+            git tag -a "${VERSION}" -m "Release ${VERSION} (cut by ${ACTOR})"
+            git push origin "refs/tags/${VERSION}"
+          fi
 
       - name: Dry run
-        if: ${{ inputs.dry_run }}
+        if: ${{ steps.check.outputs.dry_run == 'true' }}
         run: |
           echo "::notice::Dry run — ${{ steps.check.outputs.version }} validated. Nothing was committed, tagged or published."
 
   publish:
     needs: prepare
-    if: ${{ !inputs.dry_run }}
+    if: ${{ needs.prepare.outputs.dry_run != 'true' }}
     uses: ./.github/workflows/publish-frontend-modules.yml
     with:
       release_ref: ${{ needs.prepare.outputs.version }}
