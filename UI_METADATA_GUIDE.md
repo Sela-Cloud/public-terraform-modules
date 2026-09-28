@@ -797,8 +797,14 @@ group are known. That is normal: it is asked before the user has chosen a networ
 **What the read needs to exist first.** An Azure lookup acts as the organization's own application
 in the customer's tenant, so it needs the application *and* a **verified** Azure target naming the
 tenant and subscription. Either missing is an onboarding state, not a fault, and the dropdown says
-which — "no Azure application yet" or "no verified Azure environment yet". The role the customer
-grants for deploying (`Contributor`) covers reading; `Reader` alone would be enough for lookups.
+which — "no Azure application yet" or "no verified Azure environment yet".
+
+**Lookups need a read role the onboarding does not grant.** The Cloud access screen asks the
+customer only for access to their Terraform state; permission to create resources comes from each
+module's own IAM guidance. So a dropdown works once the application holds *some* role that can read
+those resources — `Reader` on the subscription is the simplest, and any module role that covers the
+resource type does too. Until then the dropdown answers with an access error naming `Reader`, not an
+empty list that looks like "you have no networks".
 
 #### 4. `ui_only` Controls
 

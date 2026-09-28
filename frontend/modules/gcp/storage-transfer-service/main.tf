@@ -17,6 +17,7 @@ locals {
               secret_access_key = j.secret_access_key
             }
             azure_blob                                = null
+            gcs                                       = null
             dest_gcs_bucket                           = j.dest_gcs_bucket
             dest_path                                 = j.dest_path
             include_prefixes                          = j.include_prefixes
@@ -24,6 +25,8 @@ locals {
             overwrite_when                            = j.overwrite_when
             delete_objects_from_source_after_transfer = j.delete_objects_from_source_after_transfer
             delete_objects_unique_in_sink             = j.delete_objects_unique_in_sink
+            trigger                                   = j.trigger
+            event_stream                              = j.event_stream
             schedule                                  = j.schedule
           }
         },
@@ -40,6 +43,7 @@ locals {
               path            = j.path
               sas_token       = j.sas_token
             }
+            gcs                                       = null
             dest_gcs_bucket                           = j.dest_gcs_bucket
             dest_path                                 = j.dest_path
             include_prefixes                          = j.include_prefixes
@@ -47,6 +51,32 @@ locals {
             overwrite_when                            = j.overwrite_when
             delete_objects_from_source_after_transfer = j.delete_objects_from_source_after_transfer
             delete_objects_unique_in_sink             = j.delete_objects_unique_in_sink
+            trigger                                   = j.trigger
+            event_stream                              = j.event_stream
+            schedule                                  = j.schedule
+          }
+        },
+        {
+          for j in sts.gcs_jobs : j.job_name => {
+            job_name    = j.job_name
+            description = j.description
+            enabled     = j.enabled
+            source_type = "gcs"
+            aws_s3      = null
+            azure_blob  = null
+            gcs = {
+              bucket_name = j.bucket_name
+              path        = j.path
+            }
+            dest_gcs_bucket                           = j.dest_gcs_bucket
+            dest_path                                 = j.dest_path
+            include_prefixes                          = j.include_prefixes
+            exclude_prefixes                          = j.exclude_prefixes
+            overwrite_when                            = j.overwrite_when
+            delete_objects_from_source_after_transfer = j.delete_objects_from_source_after_transfer
+            delete_objects_unique_in_sink             = j.delete_objects_unique_in_sink
+            trigger                                   = j.trigger
+            event_stream                              = j.event_stream
             schedule                                  = j.schedule
           }
         }
@@ -61,5 +91,6 @@ module "storage_transfer_service" {
 
   project_id                      = var.project_id
   grant_destination_bucket_access = each.value.grant_destination_bucket_access
+  grant_source_access             = each.value.grant_source_access
   jobs                            = each.value.jobs
 }
