@@ -43,7 +43,7 @@ Terraform module to provision an [Azure Resource Group](https://registry.terrafo
 
 ```hcl
 module "resource_group" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/resource-group?ref=v0.7.6"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/resource-group?ref=v0.7.9"
 
   name     = "rg-workload-prod"
   location = "eastus"

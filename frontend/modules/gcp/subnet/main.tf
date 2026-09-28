@@ -1,5 +1,5 @@
 module "subnet" {
-  source                         = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/subnet?ref=v0.7.8"
+  source                         = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/subnet?ref=v0.7.9"
   for_each                       = var.subnet
   project_id                     = var.project_id
   name                           = each.value.name

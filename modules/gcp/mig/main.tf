@@ -70,7 +70,7 @@ resource "google_compute_region_instance_group_manager" "mig" {
   dynamic "instance_lifecycle_policy" {
     for_each = var.lifecycle_policy
     content {
-      force_update_on_repair    = var.lifecycle_policy["force_update_on_repair"]
+      force_update_on_repair = var.lifecycle_policy["force_update_on_repair"]
     }
   }
   dynamic "stateful_disk" {
