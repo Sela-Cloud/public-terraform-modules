@@ -1,0 +1,10 @@
+name                 = "my-container-repo"
+image_tag_mutability = "MUTABLE"
+force_delete         = false
+scan_on_push         = true
+encryption_type      = "AES256"
+kms_key              = null
+tags = {
+  Environment = "dev"
+  Terraform   = "true"
+}
