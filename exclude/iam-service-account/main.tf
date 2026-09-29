@@ -1,5 +1,5 @@
 module "iam_service_account" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/iam/service-account?ref=v0.7.9"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/iam/service-account?ref=v0.8.3"
   for_each = var.iam_service_account
 
   project_id           = var.project_id

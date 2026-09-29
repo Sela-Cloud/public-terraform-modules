@@ -76,6 +76,11 @@ resource "google_compute_health_check" "this" {
   project = local.backend_project_id
   name    = "${each.value.service_name}-hc"
 
+  check_interval_sec  = each.value.health_check_interval_sec
+  timeout_sec         = each.value.health_check_timeout_sec
+  healthy_threshold   = each.value.health_check_healthy_threshold
+  unhealthy_threshold = each.value.health_check_unhealthy_threshold
+
   # One block or the other, never both: google_compute_health_check accepts exactly one
   # protocol block, so these are mutually exclusive by construction rather than by validation.
   dynamic "tcp_health_check" {

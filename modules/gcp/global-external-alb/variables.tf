@@ -91,6 +91,13 @@ variable "backend_services" {
     health_check_port   = optional(number, 80)
     # HTTP only; ignored by a TCP check.
     health_check_request_path = optional(string, "/")
+    # Timing, in the provider's own defaults. How often to probe, how long to wait for each
+    # probe, and how many consecutive results flip a backend's state. The timeout may not exceed
+    # the interval — see the validation below.
+    health_check_interval_sec        = optional(number, 5)
+    health_check_timeout_sec         = optional(number, 5)
+    health_check_healthy_threshold   = optional(number, 2)
+    health_check_unhealthy_threshold = optional(number, 2)
 
     enable_cdn = optional(bool, false)
     cdn_policy = optional(object({
@@ -149,6 +156,28 @@ variable "backend_services" {
       for svc in values(var.backend_services) : contains(["tcp", "http"], svc.health_check_type)
     ])
     error_message = "backend_services health_check_type must be 'tcp' or 'http'."
+  }
+
+  # The API rejects a timeout longer than the interval, but only at apply time and without naming
+  # the backend. The case that trips people: shortening the interval below the 5-second default
+  # timeout without lowering the timeout too.
+  validation {
+    condition = alltrue([
+      for svc in values(var.backend_services) :
+      !svc.enable_health_check || svc.health_check_timeout_sec <= svc.health_check_interval_sec
+    ])
+    error_message = "backend_services health_check_timeout_sec cannot exceed health_check_interval_sec — a probe cannot wait longer than the gap before the next one. Lower the timeout along with the interval."
+  }
+
+  validation {
+    condition = alltrue([
+      for svc in values(var.backend_services) :
+      !svc.enable_health_check || (
+        svc.health_check_interval_sec >= 1 && svc.health_check_timeout_sec >= 1 &&
+        svc.health_check_healthy_threshold >= 1 && svc.health_check_unhealthy_threshold >= 1
+      )
+    ])
+    error_message = "backend_services health check interval, timeout and thresholds must each be at least 1."
   }
 
   validation {

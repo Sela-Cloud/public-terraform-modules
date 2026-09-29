@@ -1,5 +1,5 @@
 module "external_ip_address" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/external-ip-address?ref=v0.8.2"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/external-ip-address?ref=v0.8.3"
   for_each = var.external_ip_address
 
   project_id           = var.project_id

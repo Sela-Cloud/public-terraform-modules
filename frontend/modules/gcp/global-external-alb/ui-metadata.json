@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "global-external-alb",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "display": {
     "label": "Global External Load Balancer",
     "icon": "load-balancer",
@@ -33,7 +33,12 @@
             "type": "text",
             "required": true,
             "placeholder": "public-web",
-            "validation": { "min": 1, "max": 50, "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter." }
+            "validation": {
+              "min": 1,
+              "max": 50,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter."
+            }
           },
           {
             "id": "backend_project_id",
@@ -50,8 +55,16 @@
             "required": true,
             "data_source": {
               "resource": "certificatemanager.certificateMaps",
-              "params": { "project_id": { "from_field": "project_id" } },
-              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -77,8 +90,16 @@
             "nullable": true,
             "data_source": {
               "resource": "compute.globalAddresses",
-              "params": { "project_id": { "from_field": "project_id" } },
-              "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -96,7 +117,16 @@
             "label": "Backend buckets",
             "type": "repeatable",
             "fields": [
-              { "id": "bucket_name", "label": "Backend name", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
+              {
+                "id": "bucket_name",
+                "label": "Backend name",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "pattern": "^[a-z][a-z0-9-]*$",
+                  "pattern_error": "Use lowercase letters, numbers, and hyphens."
+                }
+              },
               {
                 "id": "gcs_bucket_name",
                 "label": "Cloud Storage bucket name",
@@ -104,37 +134,105 @@
                 "required": true,
                 "data_source": {
                   "resource": "storage.buckets",
-                  "params": { "project_id": { "from_field": "project_id" } },
-                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
               },
-              { "id": "description", "label": "Description", "type": "text" },
-              { "id": "enable_cdn", "label": "Enable Cloud CDN", "type": "boolean", "default": false },
+              {
+                "id": "description",
+                "label": "Description",
+                "type": "text"
+              },
+              {
+                "id": "enable_cdn",
+                "label": "Enable Cloud CDN",
+                "type": "boolean",
+                "default": false
+              },
               {
                 "id": "cdn_policy",
                 "label": "CDN policy",
                 "type": "object",
                 "nullable": true,
-                "depends_on": { "field": "enable_cdn", "value": true },
+                "depends_on": {
+                  "field": "enable_cdn",
+                  "value": true
+                },
                 "fields": [
-                  { "id": "cache_mode", "label": "Cache mode", "type": "select", "default": "CACHE_ALL_STATIC", "options": [
-                    { "value": "USE_ORIGIN_HEADERS", "label": "Use origin headers" },
-                    { "value": "CACHE_ALL_STATIC", "label": "Cache all static content" },
-                    { "value": "FORCE_CACHE_ALL", "label": "Force cache everything" }
-                  ] },
-                  { "id": "default_ttl", "label": "Default TTL (seconds)", "type": "number", "validation": { "min": 0 } },
-                  { "id": "max_ttl", "label": "Max TTL (seconds)", "type": "number", "validation": { "min": 0 } },
-                  { "id": "client_ttl", "label": "Client TTL (seconds)", "type": "number", "validation": { "min": 0 } },
-                  { "id": "negative_caching", "label": "Enable negative caching", "type": "boolean" },
+                  {
+                    "id": "cache_mode",
+                    "label": "Cache mode",
+                    "type": "select",
+                    "default": "CACHE_ALL_STATIC",
+                    "options": [
+                      {
+                        "value": "USE_ORIGIN_HEADERS",
+                        "label": "Use origin headers"
+                      },
+                      {
+                        "value": "CACHE_ALL_STATIC",
+                        "label": "Cache all static content"
+                      },
+                      {
+                        "value": "FORCE_CACHE_ALL",
+                        "label": "Force cache everything"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "default_ttl",
+                    "label": "Default TTL (seconds)",
+                    "type": "number",
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "max_ttl",
+                    "label": "Max TTL (seconds)",
+                    "type": "number",
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "client_ttl",
+                    "label": "Client TTL (seconds)",
+                    "type": "number",
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "negative_caching",
+                    "label": "Enable negative caching",
+                    "type": "boolean"
+                  },
                   {
                     "id": "cache_key_policy",
                     "label": "Cache key policy",
                     "type": "object",
                     "fields": [
-                      { "id": "include_http_headers", "label": "Include HTTP headers in cache key", "type": "list" },
-                      { "id": "query_string_whitelist", "label": "Query string parameters to include in cache key", "type": "list" }
+                      {
+                        "id": "include_http_headers",
+                        "label": "Include HTTP headers in cache key",
+                        "type": "list"
+                      },
+                      {
+                        "id": "query_string_whitelist",
+                        "label": "Query string parameters to include in cache key",
+                        "type": "list"
+                      }
                     ]
                   }
                 ]
@@ -154,7 +252,16 @@
             "label": "Backend services",
             "type": "repeatable",
             "fields": [
-              { "id": "service_name", "label": "Backend name", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
+              {
+                "id": "service_name",
+                "label": "Backend name",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "pattern": "^[a-z][a-z0-9-]*$",
+                  "pattern_error": "Use lowercase letters, numbers, and hyphens."
+                }
+              },
               {
                 "id": "target_type",
                 "label": "Backend target type",
@@ -162,21 +269,47 @@
                 "required": true,
                 "default": "umig",
                 "options": [
-                  { "value": "umig", "label": "Unmanaged instance group" },
-                  { "value": "cloud_run", "label": "Cloud Run service (network endpoint group created for you)" },
-                  { "value": "neg", "label": "Existing serverless network endpoint group" },
-                  { "value": "mig", "label": "Managed instance group" }
+                  {
+                    "value": "umig",
+                    "label": "Unmanaged instance group"
+                  },
+                  {
+                    "value": "cloud_run",
+                    "label": "Cloud Run service (network endpoint group created for you)"
+                  },
+                  {
+                    "value": "neg",
+                    "label": "Existing serverless network endpoint group"
+                  },
+                  {
+                    "value": "mig",
+                    "label": "Managed instance group"
+                  }
                 ]
               },
               {
                 "id": "umig_name",
                 "label": "Instance group",
                 "type": "select",
-                "depends_on": { "field": "target_type", "value": "umig" },
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "umig"
+                },
                 "data_source": {
                   "resource": "compute.unmanagedInstanceGroups",
-                  "params": { "project_id": { "from_field": "project_id" }, "zone": { "from_field": "umig_zone" } },
-                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "zone": {
+                      "from_field": "umig_zone"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -185,11 +318,21 @@
                 "id": "umig_zone",
                 "label": "Instance group zone",
                 "type": "select",
-                "depends_on": { "field": "target_type", "value": "umig" },
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "umig"
+                },
                 "data_source": {
                   "resource": "compute.zones",
-                  "params": { "project_id": { "from_field": "project_id" } },
-                  "display": { "value_key": "name", "label_key": "name" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -198,11 +341,25 @@
                 "id": "mig_name",
                 "label": "Managed instance group",
                 "type": "select",
-                "depends_on": { "field": "target_type", "value": "mig" },
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "mig"
+                },
                 "data_source": {
                   "resource": "compute.managedInstanceGroups",
-                  "params": { "project_id": { "from_field": "project_id" }, "region": { "from_field": "mig_region" } },
-                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "region": {
+                      "from_field": "mig_region"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -211,11 +368,22 @@
                 "id": "mig_region",
                 "label": "Managed instance group region",
                 "type": "select",
-                "depends_on": { "field": "target_type", "value": "mig" },
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "mig"
+                },
                 "data_source": {
                   "resource": "compute.regions",
-                  "params": { "project_id": { "from_field": "project_id" } },
-                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -225,18 +393,39 @@
                 "label": "Named port",
                 "type": "text",
                 "default": "http",
-                "depends_on": { "field": "target_type", "value": ["umig", "mig"], "operator": "in" }
+                "depends_on": {
+                  "field": "target_type",
+                  "value": [
+                    "umig",
+                    "mig"
+                  ],
+                  "operator": "in"
+                }
               },
               {
                 "id": "neg_name",
                 "label": "Network endpoint group",
                 "description": "An existing serverless NEG, created and owned outside this load balancer.",
                 "type": "select",
-                "depends_on": { "field": "target_type", "value": "neg" },
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "neg"
+                },
                 "data_source": {
                   "resource": "compute.networkEndpointGroups",
-                  "params": { "project_id": { "from_field": "project_id" }, "region": { "from_field": "neg_region" } },
-                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "region": {
+                      "from_field": "neg_region"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -245,11 +434,22 @@
                 "id": "neg_region",
                 "label": "Network endpoint group region",
                 "type": "select",
-                "depends_on": { "field": "target_type", "value": "neg" },
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "neg"
+                },
                 "data_source": {
                   "resource": "compute.regions",
-                  "params": { "project_id": { "from_field": "project_id" } },
-                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -259,11 +459,25 @@
                 "label": "Cloud Run service",
                 "description": "The load balancer builds the serverless network endpoint group for this service itself.",
                 "type": "select",
-                "depends_on": { "field": "target_type", "value": "cloud_run" },
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "cloud_run"
+                },
                 "data_source": {
                   "resource": "run.services",
-                  "params": { "project_id": { "from_field": "project_id" }, "region": { "from_field": "cloud_run_region" } },
-                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "region": {
+                      "from_field": "cloud_run_region"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -273,51 +487,246 @@
                 "label": "Cloud Run region",
                 "description": "Region of the service above. The serverless NEG is created here too, as Google requires them to match.",
                 "type": "select",
-                "depends_on": { "field": "target_type", "value": "cloud_run" },
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "cloud_run"
+                },
                 "data_source": {
                   "resource": "compute.regions",
-                  "params": { "project_id": { "from_field": "project_id" } },
-                  "display": { "value_key": "name", "label_key": "name", "description_key": "description" },
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
               },
-              { "id": "enable_health_check", "label": "Enable health check", "type": "boolean", "default": false, "depends_on": { "field": "target_type", "value": ["cloud_run"], "operator": "not_in" } },
-              { "id": "health_check_type", "label": "Health check protocol", "type": "select", "default": "tcp", "depends_on": { "field": "enable_health_check", "value": true }, "options": [
-                { "value": "tcp", "label": "TCP (connection succeeds)" },
-                { "value": "http", "label": "HTTP (path returns 200)" }
-              ] },
-              { "id": "health_check_port", "label": "Health check port", "type": "number", "default": 80, "validation": { "min": 1, "max": 65535 }, "depends_on": { "field": "enable_health_check", "value": true } },
-              { "id": "health_check_request_path", "label": "Health check path", "description": "Path the HTTP check requests; it must return 200.", "type": "text", "default": "/", "placeholder": "/healthz", "depends_on": { "field": "health_check_type", "value": "http" } },
-              { "id": "enable_cdn", "label": "Enable Cloud CDN", "type": "boolean", "default": false },
+              {
+                "id": "enable_health_check",
+                "label": "Enable health check",
+                "type": "boolean",
+                "default": false,
+                "depends_on": {
+                  "field": "target_type",
+                  "value": [
+                    "cloud_run"
+                  ],
+                  "operator": "not_in"
+                }
+              },
+              {
+                "id": "health_check_type",
+                "label": "Health check protocol",
+                "type": "select",
+                "default": "tcp",
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                },
+                "options": [
+                  {
+                    "value": "tcp",
+                    "label": "TCP (connection succeeds)"
+                  },
+                  {
+                    "value": "http",
+                    "label": "HTTP (path returns 200)"
+                  }
+                ]
+              },
+              {
+                "id": "health_check_port",
+                "label": "Health check port",
+                "type": "number",
+                "default": 80,
+                "validation": {
+                  "min": 1,
+                  "max": 65535
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              },
+              {
+                "id": "health_check_request_path",
+                "label": "Health check path",
+                "description": "Path the HTTP check requests; it must return 200.",
+                "type": "text",
+                "default": "/",
+                "placeholder": "/healthz",
+                "depends_on": {
+                  "field": "health_check_type",
+                  "value": "http"
+                }
+              },
+              {
+                "id": "health_check_interval_sec",
+                "label": "Check interval (seconds)",
+                "description": "How often each backend is probed.",
+                "type": "number",
+                "default": 5,
+                "validation": {
+                  "min": 1
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              },
+              {
+                "id": "health_check_timeout_sec",
+                "label": "Timeout (seconds)",
+                "description": "How long to wait for a probe before counting it as failed. Cannot exceed the check interval.",
+                "type": "number",
+                "default": 5,
+                "validation": {
+                  "min": 1
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              },
+              {
+                "id": "health_check_healthy_threshold",
+                "label": "Healthy threshold",
+                "description": "Consecutive successes before an unhealthy backend receives traffic again.",
+                "type": "number",
+                "default": 2,
+                "validation": {
+                  "min": 1
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              },
+              {
+                "id": "health_check_unhealthy_threshold",
+                "label": "Unhealthy threshold",
+                "description": "Consecutive failures before a healthy backend stops receiving traffic.",
+                "type": "number",
+                "default": 2,
+                "validation": {
+                  "min": 1
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              },
+              {
+                "id": "enable_cdn",
+                "label": "Enable Cloud CDN",
+                "type": "boolean",
+                "default": false
+              },
               {
                 "id": "cdn_policy",
                 "label": "CDN policy",
                 "type": "object",
                 "nullable": true,
-                "depends_on": { "field": "enable_cdn", "value": true },
+                "depends_on": {
+                  "field": "enable_cdn",
+                  "value": true
+                },
                 "fields": [
-                  { "id": "cache_mode", "label": "Cache mode", "type": "select", "default": "CACHE_ALL_STATIC", "options": [
-                    { "value": "USE_ORIGIN_HEADERS", "label": "Use origin headers" },
-                    { "value": "CACHE_ALL_STATIC", "label": "Cache all static content" },
-                    { "value": "FORCE_CACHE_ALL", "label": "Force cache everything" }
-                  ] },
-                  { "id": "default_ttl", "label": "Default TTL (seconds)", "type": "number", "validation": { "min": 0 } },
-                  { "id": "max_ttl", "label": "Max TTL (seconds)", "type": "number", "validation": { "min": 0 } },
-                  { "id": "client_ttl", "label": "Client TTL (seconds)", "type": "number", "validation": { "min": 0 } },
-                  { "id": "negative_caching", "label": "Enable negative caching", "type": "boolean" },
+                  {
+                    "id": "cache_mode",
+                    "label": "Cache mode",
+                    "type": "select",
+                    "default": "CACHE_ALL_STATIC",
+                    "options": [
+                      {
+                        "value": "USE_ORIGIN_HEADERS",
+                        "label": "Use origin headers"
+                      },
+                      {
+                        "value": "CACHE_ALL_STATIC",
+                        "label": "Cache all static content"
+                      },
+                      {
+                        "value": "FORCE_CACHE_ALL",
+                        "label": "Force cache everything"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "default_ttl",
+                    "label": "Default TTL (seconds)",
+                    "type": "number",
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "max_ttl",
+                    "label": "Max TTL (seconds)",
+                    "type": "number",
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "client_ttl",
+                    "label": "Client TTL (seconds)",
+                    "type": "number",
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "negative_caching",
+                    "label": "Enable negative caching",
+                    "type": "boolean"
+                  },
                   {
                     "id": "cache_key_policy",
                     "label": "Cache key policy",
                     "type": "object",
                     "fields": [
-                      { "id": "include_host", "label": "Include host in cache key", "type": "boolean" },
-                      { "id": "include_protocol", "label": "Include protocol in cache key", "type": "boolean" },
-                      { "id": "include_query_string", "label": "Include query string in cache key", "type": "boolean" },
-                      { "id": "query_string_whitelist", "label": "Query string parameters to include", "type": "list" },
-                      { "id": "query_string_blacklist", "label": "Query string parameters to exclude", "type": "list" },
-                      { "id": "include_http_headers", "label": "Include HTTP headers in cache key", "type": "list" },
-                      { "id": "include_named_cookies", "label": "Include named cookies in cache key", "type": "list" }
+                      {
+                        "id": "include_host",
+                        "label": "Include host in cache key",
+                        "type": "boolean"
+                      },
+                      {
+                        "id": "include_protocol",
+                        "label": "Include protocol in cache key",
+                        "type": "boolean"
+                      },
+                      {
+                        "id": "include_query_string",
+                        "label": "Include query string in cache key",
+                        "type": "boolean"
+                      },
+                      {
+                        "id": "query_string_whitelist",
+                        "label": "Query string parameters to include",
+                        "type": "list"
+                      },
+                      {
+                        "id": "query_string_blacklist",
+                        "label": "Query string parameters to exclude",
+                        "type": "list"
+                      },
+                      {
+                        "id": "include_http_headers",
+                        "label": "Include HTTP headers in cache key",
+                        "type": "list"
+                      },
+                      {
+                        "id": "include_named_cookies",
+                        "label": "Include named cookies in cache key",
+                        "type": "list"
+                      }
                     ]
                   }
                 ]
@@ -336,11 +745,30 @@
             "label": "Default backend (used when no domain matches)",
             "type": "object",
             "fields": [
-              { "id": "type", "label": "Backend type", "type": "select", "required": true, "default": "service", "options": [
-                { "value": "service", "label": "Backend service" },
-                { "value": "bucket", "label": "Backend bucket" }
-              ] },
-              { "id": "key", "label": "Backend name", "description": "Must match a backend service or backend bucket name defined above.", "type": "text", "required": true }
+              {
+                "id": "type",
+                "label": "Backend type",
+                "type": "select",
+                "required": true,
+                "default": "service",
+                "options": [
+                  {
+                    "value": "service",
+                    "label": "Backend service"
+                  },
+                  {
+                    "value": "bucket",
+                    "label": "Backend bucket"
+                  }
+                ]
+              },
+              {
+                "id": "key",
+                "label": "Backend name",
+                "description": "Must match a backend service or backend bucket name defined above.",
+                "type": "text",
+                "required": true
+              }
             ]
           },
           {
@@ -348,18 +776,50 @@
             "label": "Domains",
             "type": "repeatable",
             "fields": [
-              { "id": "matcher_key", "label": "Domain identifier", "type": "text", "required": true, "validation": { "pattern": "^[a-z][a-z0-9-]*$", "pattern_error": "Use lowercase letters, numbers, and hyphens." } },
-              { "id": "hosts", "label": "Hostnames", "type": "list", "required": true },
+              {
+                "id": "matcher_key",
+                "label": "Domain identifier",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "pattern": "^[a-z][a-z0-9-]*$",
+                  "pattern_error": "Use lowercase letters, numbers, and hyphens."
+                }
+              },
+              {
+                "id": "hosts",
+                "label": "Hostnames",
+                "type": "list",
+                "required": true
+              },
               {
                 "id": "default_service",
                 "label": "Default backend for this domain",
                 "type": "object",
                 "fields": [
-                  { "id": "type", "label": "Backend type", "type": "select", "required": true, "default": "service", "options": [
-                    { "value": "service", "label": "Backend service" },
-                    { "value": "bucket", "label": "Backend bucket" }
-                  ] },
-                  { "id": "key", "label": "Backend name", "type": "text", "required": true }
+                  {
+                    "id": "type",
+                    "label": "Backend type",
+                    "type": "select",
+                    "required": true,
+                    "default": "service",
+                    "options": [
+                      {
+                        "value": "service",
+                        "label": "Backend service"
+                      },
+                      {
+                        "value": "bucket",
+                        "label": "Backend bucket"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "key",
+                    "label": "Backend name",
+                    "type": "text",
+                    "required": true
+                  }
                 ]
               },
               {
@@ -367,34 +827,87 @@
                 "label": "Path routing rules",
                 "type": "repeatable",
                 "fields": [
-                  { "id": "priority", "label": "Priority", "description": "Lower values are evaluated first.", "type": "number", "required": true, "default": 100, "validation": { "min": 0 } },
+                  {
+                    "id": "priority",
+                    "label": "Priority",
+                    "description": "Lower values are evaluated first.",
+                    "type": "number",
+                    "required": true,
+                    "default": 100,
+                    "validation": {
+                      "min": 0
+                    }
+                  },
                   {
                     "id": "service",
                     "label": "Backend",
                     "type": "object",
                     "fields": [
-                      { "id": "type", "label": "Backend type", "type": "select", "required": true, "default": "service", "options": [
-                        { "value": "service", "label": "Backend service" },
-                        { "value": "bucket", "label": "Backend bucket" }
-                      ] },
-                      { "id": "key", "label": "Backend name", "type": "text", "required": true }
+                      {
+                        "id": "type",
+                        "label": "Backend type",
+                        "type": "select",
+                        "required": true,
+                        "default": "service",
+                        "options": [
+                          {
+                            "value": "service",
+                            "label": "Backend service"
+                          },
+                          {
+                            "value": "bucket",
+                            "label": "Backend bucket"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "key",
+                        "label": "Backend name",
+                        "type": "text",
+                        "required": true
+                      }
                     ]
                   },
-                  { "id": "paths", "label": "Paths", "type": "list", "required": true },
+                  {
+                    "id": "paths",
+                    "label": "Paths",
+                    "type": "list",
+                    "required": true
+                  },
                   {
                     "id": "match_mode",
                     "label": "Match mode",
                     "type": "select",
                     "nullable": true,
                     "options": [
-                      { "value": "PREFIX_MATCH", "label": "Prefix match" },
-                      { "value": "PATH_TEMPLATE_MATCH", "label": "Path template match" },
-                      { "value": "FULL_PATH_MATCH", "label": "Full path match" },
-                      { "value": "REGEX_MATCH", "label": "Regex match" }
+                      {
+                        "value": "PREFIX_MATCH",
+                        "label": "Prefix match"
+                      },
+                      {
+                        "value": "PATH_TEMPLATE_MATCH",
+                        "label": "Path template match"
+                      },
+                      {
+                        "value": "FULL_PATH_MATCH",
+                        "label": "Full path match"
+                      },
+                      {
+                        "value": "REGEX_MATCH",
+                        "label": "Regex match"
+                      }
                     ]
                   },
-                  { "id": "path_rewrite", "label": "Path prefix rewrite", "type": "text" },
-                  { "id": "path_template_rewrite", "label": "Path template rewrite", "type": "text" }
+                  {
+                    "id": "path_rewrite",
+                    "label": "Path prefix rewrite",
+                    "type": "text"
+                  },
+                  {
+                    "id": "path_template_rewrite",
+                    "label": "Path template rewrite",
+                    "type": "text"
+                  }
                 ]
               }
             ]

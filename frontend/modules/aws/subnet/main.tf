@@ -3,7 +3,7 @@
  *****************************************/
 
 module "subnet" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/subnet?ref=v0.8.2"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/subnet?ref=v0.8.3"
   for_each = var.subnet
 
   name                                           = coalesce(each.value.name, each.key)

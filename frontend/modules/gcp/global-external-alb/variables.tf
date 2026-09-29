@@ -49,7 +49,12 @@ variable "global_external_alb" {
       health_check_type         = optional(string, "tcp")
       health_check_port         = optional(number, 80)
       health_check_request_path = optional(string, "/")
-      enable_cdn                = optional(bool, false)
+      # The provider's own defaults; see the child module for what each one controls.
+      health_check_interval_sec        = optional(number, 5)
+      health_check_timeout_sec         = optional(number, 5)
+      health_check_healthy_threshold   = optional(number, 2)
+      health_check_unhealthy_threshold = optional(number, 2)
+      enable_cdn                       = optional(bool, false)
       cdn_policy = optional(object({
         cache_mode        = optional(string, "CACHE_ALL_STATIC")
         default_ttl       = optional(number)
