@@ -42,6 +42,7 @@
             "required": true,
             "data_source": {
               "resource": "resources.resourceGroups",
+              "params": {},
               "display": {
                 "value_key": "name",
                 "label_key": "name",
@@ -56,31 +57,106 @@
             "type": "select",
             "required": true,
             "options": [
-              { "value": "eastus", "label": "East US (Virginia)" },
-              { "value": "eastus2", "label": "East US 2 (Virginia)" },
-              { "value": "westus", "label": "West US (California)" },
-              { "value": "westus2", "label": "West US 2 (Washington)" },
-              { "value": "westus3", "label": "West US 3 (Phoenix)" },
-              { "value": "centralus", "label": "Central US (Iowa)" },
-              { "value": "northcentralus", "label": "North Central US (Illinois)" },
-              { "value": "southcentralus", "label": "South Central US (Texas)" },
-              { "value": "westeurope", "label": "West Europe (Netherlands)" },
-              { "value": "northeurope", "label": "North Europe (Ireland)" },
-              { "value": "uksouth", "label": "UK South (London)" },
-              { "value": "ukwest", "label": "UK West (Cardiff)" },
-              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
-              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
-              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
-              { "value": "centralindia", "label": "Central India (Pune)" },
-              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
-              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
-              { "value": "francecentral", "label": "France Central (Paris)" },
-              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
-              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
-              { "value": "uaenorth", "label": "UAE North (Dubai)" },
-              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
-              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
-              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+              {
+                "value": "eastus",
+                "label": "East US (Virginia)"
+              },
+              {
+                "value": "eastus2",
+                "label": "East US 2 (Virginia)"
+              },
+              {
+                "value": "westus",
+                "label": "West US (California)"
+              },
+              {
+                "value": "westus2",
+                "label": "West US 2 (Washington)"
+              },
+              {
+                "value": "westus3",
+                "label": "West US 3 (Phoenix)"
+              },
+              {
+                "value": "centralus",
+                "label": "Central US (Iowa)"
+              },
+              {
+                "value": "northcentralus",
+                "label": "North Central US (Illinois)"
+              },
+              {
+                "value": "southcentralus",
+                "label": "South Central US (Texas)"
+              },
+              {
+                "value": "westeurope",
+                "label": "West Europe (Netherlands)"
+              },
+              {
+                "value": "northeurope",
+                "label": "North Europe (Ireland)"
+              },
+              {
+                "value": "uksouth",
+                "label": "UK South (London)"
+              },
+              {
+                "value": "ukwest",
+                "label": "UK West (Cardiff)"
+              },
+              {
+                "value": "southeastasia",
+                "label": "Southeast Asia (Singapore)"
+              },
+              {
+                "value": "eastasia",
+                "label": "East Asia (Hong Kong)"
+              },
+              {
+                "value": "australiaeast",
+                "label": "Australia East (New South Wales)"
+              },
+              {
+                "value": "centralindia",
+                "label": "Central India (Pune)"
+              },
+              {
+                "value": "canadacentral",
+                "label": "Canada Central (Toronto)"
+              },
+              {
+                "value": "germanywestcentral",
+                "label": "Germany West Central (Frankfurt)"
+              },
+              {
+                "value": "francecentral",
+                "label": "France Central (Paris)"
+              },
+              {
+                "value": "japaneast",
+                "label": "Japan East (Tokyo, Saitama)"
+              },
+              {
+                "value": "brazilsouth",
+                "label": "Brazil South (Sao Paulo State)"
+              },
+              {
+                "value": "uaenorth",
+                "label": "UAE North (Dubai)"
+              },
+              {
+                "value": "southafricanorth",
+                "label": "South Africa North (Johannesburg)"
+              },
+              {
+                "value": "switzerlandnorth",
+                "label": "Switzerland North (Zurich)"
+              },
+              {
+                "value": "swedencentral",
+                "label": "Sweden Central (Gavle)"
+              }
             ]
           }
         ]
@@ -124,8 +200,14 @@
                 "required": true,
                 "default": "Dynamic",
                 "options": [
-                  { "value": "Dynamic", "label": "Dynamic" },
-                  { "value": "Static", "label": "Static" }
+                  {
+                    "value": "Dynamic",
+                    "label": "Dynamic"
+                  },
+                  {
+                    "value": "Static",
+                    "label": "Static"
+                  }
                 ]
               },
               {
@@ -146,8 +228,14 @@
                 "required": true,
                 "default": "IPv4",
                 "options": [
-                  { "value": "IPv4", "label": "IPv4" },
-                  { "value": "IPv6", "label": "IPv6" }
+                  {
+                    "value": "IPv4",
+                    "label": "IPv4"
+                  },
+                  {
+                    "value": "IPv6",
+                    "label": "IPv6"
+                  }
                 ]
               },
               {
@@ -251,9 +339,18 @@
             "default": null,
             "nullable": true,
             "options": [
-              { "value": "None", "label": "None" },
-              { "value": "AcceleratedConnections", "label": "AcceleratedConnections" },
-              { "value": "Floating", "label": "Floating" }
+              {
+                "value": "None",
+                "label": "None"
+              },
+              {
+                "value": "AcceleratedConnections",
+                "label": "AcceleratedConnections"
+              },
+              {
+                "value": "Floating",
+                "label": "Floating"
+              }
             ]
           },
           {
@@ -265,9 +362,18 @@
             "default": null,
             "nullable": true,
             "options": [
-              { "value": "None", "label": "None" },
-              { "value": "A8", "label": "A8" },
-              { "value": "A4", "label": "A4" }
+              {
+                "value": "None",
+                "label": "None"
+              },
+              {
+                "value": "A8",
+                "label": "A8"
+              },
+              {
+                "value": "A4",
+                "label": "A4"
+              }
             ]
           }
         ]
