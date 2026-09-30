@@ -86,7 +86,7 @@ locals {
 }
 
 module "storage_transfer_service" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/storage-transfer-service?ref=v0.8.3"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/storage-transfer-service?ref=v0.8.4"
   for_each = local.deployments
 
   project_id                      = var.project_id
