@@ -9,7 +9,8 @@ frontend/modules/aws/vpc (Root Wrapper Module)
   │ (for_each = var.vpc)
   ▼
 modules/aws/vpc (Child Module)
-  └── aws_vpc
+  ├── aws_vpc
+  └── aws_internet_gateway (optional, enabled by default)
 ```
 
 ## Quick Start

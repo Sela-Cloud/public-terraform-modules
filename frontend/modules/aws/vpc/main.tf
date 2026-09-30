@@ -3,7 +3,7 @@
  *****************************************/
 
 module "vpc" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/vpc?ref=v0.7.8"
+  source   = "../../../../modules/aws/vpc"
   for_each = var.vpc
 
   name                                 = coalesce(each.value.name, each.key)
@@ -14,5 +14,8 @@ module "vpc" {
   enable_network_address_usage_metrics = each.value.enable_network_address_usage_metrics
   assign_generated_ipv6_cidr_block     = each.value.assign_generated_ipv6_cidr_block
   ipv6_cidr_block_network_border_group = each.value.ipv6_cidr_block_network_border_group
+  create_igw                           = each.value.create_igw
+  igw_name                             = each.value.igw_name
+  igw_tags                             = each.value.igw_tags
   tags                                 = each.value.tags
 }

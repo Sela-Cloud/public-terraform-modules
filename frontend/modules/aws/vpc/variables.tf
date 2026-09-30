@@ -15,6 +15,9 @@ variable "vpc" {
     enable_network_address_usage_metrics = optional(bool, false)
     assign_generated_ipv6_cidr_block     = optional(bool, false)
     ipv6_cidr_block_network_border_group = optional(string, null)
+    create_igw                           = optional(bool, true)
+    igw_name                             = optional(string, null)
+    igw_tags                             = optional(map(string), {})
     tags                                 = optional(map(string), {})
   }))
   default = {
@@ -27,6 +30,9 @@ variable "vpc" {
       enable_network_address_usage_metrics = false
       assign_generated_ipv6_cidr_block     = false
       ipv6_cidr_block_network_border_group = null
+      create_igw                           = true
+      igw_name                             = null
+      igw_tags                             = {}
       tags                                 = {}
     }
   }

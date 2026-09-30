@@ -140,6 +140,37 @@
         ]
       },
       {
+        "id": "internet_gateway",
+        "label": "Internet Gateway",
+        "description": "Configure Amazon Internet Gateway attachment for public internet connectivity.",
+        "fields": [
+          {
+            "id": "create_igw",
+            "label": "Create Internet Gateway",
+            "description": "Controls if an Internet Gateway should be created and attached to the VPC.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "igw_name",
+            "label": "Internet Gateway Name",
+            "description": "Custom name for the Internet Gateway, applied as the 'Name' tag. Defaults to '<vpc-name>-igw' if not specified.",
+            "type": "text",
+            "required": false,
+            "placeholder": "vpc-default-igw"
+          },
+          {
+            "id": "igw_tags",
+            "label": "Internet Gateway Tags",
+            "description": "Additional key-value tags specifically assigned to the Internet Gateway.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      },
+      {
         "id": "tags",
         "label": "Tags",
         "description": "Resource tags for organizational and cost allocation purposes.",
