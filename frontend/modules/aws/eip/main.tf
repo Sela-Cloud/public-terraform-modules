@@ -16,5 +16,6 @@ module "eip" {
   customer_owned_ipv4_pool  = each.value.customer_owned_ipv4_pool
   ipam_pool_id              = each.value.ipam_pool_id
   address                   = each.value.address
+  timeouts                  = each.value.timeouts
   tags                      = each.value.tags
 }

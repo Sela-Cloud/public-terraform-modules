@@ -180,6 +180,46 @@
             "default": {}
           }
         ]
+      },
+      {
+        "id": "timeouts",
+        "label": "Timeouts",
+        "description": "Custom timeout durations for Elastic IP operations.",
+        "fields": [
+          {
+            "id": "timeouts",
+            "label": "Operation Timeouts",
+            "description": "Custom timeout durations for read, update, and delete actions.",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "read",
+                "label": "Read Timeout",
+                "description": "Timeout duration for reading EIP state (e.g., 15m).",
+                "type": "text",
+                "required": false,
+                "placeholder": "15m"
+              },
+              {
+                "id": "update",
+                "label": "Update Timeout",
+                "description": "Timeout duration for updating EIP configuration (e.g., 5m).",
+                "type": "text",
+                "required": false,
+                "placeholder": "5m"
+              },
+              {
+                "id": "delete",
+                "label": "Delete Timeout",
+                "description": "Timeout duration for releasing/deleting EIP (e.g., 3m).",
+                "type": "text",
+                "required": false,
+                "placeholder": "3m"
+              }
+            ]
+          }
+        ]
       }
     ]
   }

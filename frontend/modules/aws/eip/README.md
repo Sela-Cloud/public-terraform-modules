@@ -55,6 +55,7 @@ modules/aws/eip (Child Module)
 | `customer_owned_ipv4_pool` | `string` | `null` | ID of a customer-owned address pool for AWS Outposts. |
 | `ipam_pool_id` | `string` | `null` | The ID of an IPAM pool which has an Amazon-provided or BYOIP public IPv4 CIDR provisioned to it. |
 | `address` | `string` | `null` | IP address from an EC2 BYOIP pool. |
+| `timeouts` | `object({...})` | `{}` | Custom timeout durations (`read`, `update`, `delete`). |
 | `tags` | `map(string)` | `{}` | Key-value tags assigned to the Elastic IP. |
 
 ## Outputs

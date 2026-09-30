@@ -72,3 +72,14 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "timeouts" {
+  description = "Custom timeout durations for EIP operations."
+  type = object({
+    read   = optional(string, null)
+    update = optional(string, null)
+    delete = optional(string, null)
+  })
+  default = {}
+}
+

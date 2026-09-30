@@ -17,8 +17,21 @@ variable "eip" {
     customer_owned_ipv4_pool  = optional(string, null)
     ipam_pool_id              = optional(string, null)
     address                   = optional(string, null)
-    tags                      = optional(map(string), {})
+    timeouts = optional(object({
+      read   = optional(string, null)
+      update = optional(string, null)
+      delete = optional(string, null)
+    }), {})
+    tags = optional(map(string), {})
   }))
+
+  validation {
+    condition = alltrue([
+      for k, v in var.eip : !(v.instance != null && v.network_interface != null)
+    ])
+    error_message = "Each Elastic IP configuration can specify either 'instance' or 'network_interface', not both."
+  }
+
   default = {
     "eip-default" = {
       name                      = "eip-default"
@@ -31,6 +44,7 @@ variable "eip" {
       customer_owned_ipv4_pool  = null
       ipam_pool_id              = null
       address                   = null
+      timeouts                  = {}
       tags                      = {}
     }
   }

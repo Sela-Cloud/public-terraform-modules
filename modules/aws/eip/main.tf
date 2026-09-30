@@ -13,6 +13,19 @@ resource "aws_eip" "this" {
   ipam_pool_id              = var.ipam_pool_id
   address                   = var.address
 
+  timeouts {
+    read   = var.timeouts.read
+    update = var.timeouts.update
+    delete = var.timeouts.delete
+  }
+
+  lifecycle {
+    precondition {
+      condition     = !(var.instance != null && var.network_interface != null)
+      error_message = "Only one of 'instance' or 'network_interface' can be specified, not both."
+    }
+  }
+
   tags = merge(
     var.tags,
     {
@@ -20,3 +33,4 @@ resource "aws_eip" "this" {
     }
   )
 }
+

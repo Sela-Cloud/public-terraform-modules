@@ -95,6 +95,7 @@ module "eip" {
 | customer_owned_ipv4_pool | ID of a customer-owned address pool for AWS Outposts. | `string` | `null` | no |
 | ipam_pool_id | The ID of an IPAM pool which has an Amazon-provided or BYOIP public IPv4 CIDR provisioned to it. | `string` | `null` | no |
 | address | IP address from an EC2 BYOIP pool. This option is only available for VPC EIPs. | `string` | `null` | no |
+| timeouts | Custom timeout durations for EIP operations (`read`, `update`, `delete`). | `object({...})` | `{}` | no |
 | tags | A map of tags to assign to the resource. | `map(string)` | `{}` | no |
 
 ## Outputs
