@@ -1,0 +1,43 @@
+region = "us-east-1"
+
+nat_gateway = {
+  "public-zonal-nat-gw" = {
+    name                                = "public-zonal-nat-gw"
+    availability_mode                   = "zonal"
+    connectivity_type                   = "public"
+    subnet_id                           = "subnet-0123456789abcdef0"
+    allocation_id                       = "eipalloc-0123456789abcdef0"
+    vpc_id                              = null
+    private_ip                          = null
+    secondary_allocation_ids            = []
+    secondary_private_ip_addresses      = []
+    secondary_private_ip_address_count  = null
+    availability_zone_address           = []
+
+    tags = {
+      Environment = "production"
+      Tier        = "public"
+      ManagedBy   = "Terraform"
+    }
+  },
+
+  "regional-nat-gw" = {
+    name                                = "regional-nat-gw"
+    availability_mode                   = "regional"
+    connectivity_type                   = "public"
+    subnet_id                           = null
+    allocation_id                       = null
+    vpc_id                              = "vpc-0123456789abcdef0"
+    private_ip                          = null
+    secondary_allocation_ids            = []
+    secondary_private_ip_addresses      = []
+    secondary_private_ip_address_count  = null
+    availability_zone_address           = []
+
+    tags = {
+      Environment = "production"
+      Tier        = "regional"
+      ManagedBy   = "Terraform"
+    }
+  }
+}
