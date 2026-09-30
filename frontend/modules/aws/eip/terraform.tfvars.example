@@ -1,0 +1,39 @@
+region = "us-east-1"
+
+eip = {
+  "eip-web-server" = {
+    name                      = "eip-web-server"
+    domain                    = "vpc"
+    instance                  = "i-0123456789abcdef0"
+    network_interface         = null
+    associate_with_private_ip = "10.0.1.50"
+    public_ipv4_pool          = null
+    network_border_group      = null
+    customer_owned_ipv4_pool  = null
+    ipam_pool_id              = null
+    address                   = null
+    tags = {
+      Environment = "production"
+      Role        = "web-server"
+      ManagedBy   = "Terraform"
+    }
+  },
+
+  "eip-nat-gateway" = {
+    name                      = "eip-nat-gateway"
+    domain                    = "vpc"
+    instance                  = null
+    network_interface         = null
+    associate_with_private_ip = null
+    public_ipv4_pool          = null
+    network_border_group      = "us-east-1"
+    customer_owned_ipv4_pool  = null
+    ipam_pool_id              = null
+    address                   = null
+    tags = {
+      Environment = "production"
+      Role        = "nat-gateway"
+      ManagedBy   = "Terraform"
+    }
+  }
+}
