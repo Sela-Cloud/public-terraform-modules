@@ -56,3 +56,34 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+################################################################################
+# AWS Internet Gateway Variables
+################################################################################
+
+variable "create_igw" {
+  description = "Controls if an Internet Gateway should be created and attached to the VPC."
+  type        = bool
+  default     = true
+}
+
+variable "igw_name" {
+  description = "Custom name for the Internet Gateway, applied as the 'Name' tag. Defaults to '<name>-igw' if null."
+  type        = string
+  default     = null
+}
+
+variable "igw_tags" {
+  description = "Additional tags to assign specifically to the Internet Gateway."
+  type        = map(string)
+  default     = {}
+}
+
+variable "igw_timeouts" {
+  description = "Custom timeouts for Internet Gateway create and delete operations."
+  type = object({
+    create = optional(string)
+    delete = optional(string)
+  })
+  default = null
+}

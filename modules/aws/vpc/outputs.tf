@@ -82,3 +82,37 @@ output "ipv6_cidr_block_network_border_group" {
   description = "The Network Border Group Zone name."
   value       = aws_vpc.this.ipv6_cidr_block_network_border_group
 }
+
+################################################################################
+# AWS Internet Gateway Outputs
+################################################################################
+
+output "igw_id" {
+  description = "The ID of the Internet Gateway."
+  value       = try(aws_internet_gateway.this[0].id, null)
+}
+
+output "igw_arn" {
+  description = "The ARN of the Internet Gateway."
+  value       = try(aws_internet_gateway.this[0].arn, null)
+}
+
+output "igw_owner_id" {
+  description = "The ID of the AWS account that owns the Internet Gateway."
+  value       = try(aws_internet_gateway.this[0].owner_id, null)
+}
+
+output "igw_tags_all" {
+  description = "A map of tags assigned to the Internet Gateway, including those inherited from the provider default_tags."
+  value       = try(aws_internet_gateway.this[0].tags_all, {})
+}
+
+output "internet_gateway_id" {
+  description = "The ID of the Internet Gateway (alias for igw_id)."
+  value       = try(aws_internet_gateway.this[0].id, null)
+}
+
+output "internet_gateway_arn" {
+  description = "The ARN of the Internet Gateway (alias for igw_arn)."
+  value       = try(aws_internet_gateway.this[0].arn, null)
+}
