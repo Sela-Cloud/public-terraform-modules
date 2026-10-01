@@ -48,9 +48,23 @@ modules/aws/network-acl (Child Module)
 | `name` | `string` | `"network-acl-default"` | Name applied to the Network ACL as an identifier and 'Name' tag. |
 | `vpc_id` | `string` | - | The ID of the associated VPC. |
 | `subnet_ids` | `list(string)` | `[]` | List of Subnet IDs to associate with this Network ACL. |
-| `ingress` | `list(object)` | `[]` | Inbound traffic filtering rules. |
-| `egress` | `list(object)` | `[]` | Outbound traffic filtering rules. |
+| `ingress` | `list(object)` | `[]` | Inbound traffic filtering rules (see schema below). |
+| `egress` | `list(object)` | `[]` | Outbound traffic filtering rules (see schema below). |
 | `tags` | `map(string)` | `{}` | Key-value tags assigned to the Network ACL. |
+
+#### Ingress / Egress Rule Object Schema
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `rule_no` | `number` | - | Rule number for ordering evaluation (1 to 32766). Lower numbers evaluated first. |
+| `action` | `string` | `"allow"` | Action to take: `"allow"` or `"deny"`. |
+| `protocol` | `string` | `"-1"` | Protocol to match: `"tcp"`, `"udp"`, `"icmp"`, or `"-1"` (all). |
+| `from_port` | `number` | `0` | Start of port range (0-65535). Use 0 for all protocols. |
+| `to_port` | `number` | `0` | End of port range (0-65535). Use 0 for all protocols. |
+| `cidr_block` | `string` | `null` | The IPv4 CIDR block to match (e.g. `0.0.0.0/0`). |
+| `ipv6_cidr_block` | `string` | `null` | The IPv6 CIDR block to match (e.g. `::/0`). |
+| `icmp_type` | `number` | `null` | The ICMP type code (used when protocol is `"icmp"`). |
+| `icmp_code` | `number` | `null` | The ICMP code (used when protocol is `"icmp"`). |
 
 ## Outputs
 
