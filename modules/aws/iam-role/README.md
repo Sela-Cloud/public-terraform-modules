@@ -112,6 +112,12 @@ module "lambda_exec_role" {
 | permissions_boundary | ARN of the policy used to set the permissions boundary for the role. | `string` | `null` | no |
 | managed_policy_arns | List of exclusive IAM managed policy ARNs to attach to the IAM role. | `list(string)` | `[]` | no |
 | inline_policy | Configuration block defining exclusive IAM inline policies associated with the IAM role. | `list(object({ name = string, policy = string }))` | `[]` | no |
+| trusted_entity_type | Who can assume this role: `AWS_SERVICE`, `AWS_ACCOUNT`, `IAM_PRINCIPAL`, or `CUSTOM_JSON` (to use `assume_role_policy` raw JSON). | `string` | `null` | no |
+| trusted_service_principals | AWS service principals (e.g. `ec2.amazonaws.com`) allowed to assume this role when `trusted_entity_type` is `AWS_SERVICE`. | `list(string)` | `[]` | no |
+| trusted_account_ids | AWS account IDs allowed to assume this role when `trusted_entity_type` is `AWS_ACCOUNT`. | `list(string)` | `[]` | no |
+| trusted_role_arns | ARNs of existing IAM roles allowed to assume this role when `trusted_entity_type` is `IAM_PRINCIPAL`. | `list(string)` | `[]` | no |
+| trusted_user_arns | ARNs of existing IAM users allowed to assume this role when `trusted_entity_type` is `IAM_PRINCIPAL`. | `list(string)` | `[]` | no |
+| trusted_external_id | Requires `sts:ExternalId` to match this value on assumption. Used with `IAM_PRINCIPAL` or `AWS_ACCOUNT` for cross-account trust. | `string` | `null` | no |
 | tags | A map of tags to assign to the role. | `map(string)` | `{}` | no |
 
 ## Outputs

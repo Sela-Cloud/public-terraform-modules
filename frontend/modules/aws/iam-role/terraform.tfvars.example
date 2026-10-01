@@ -1,28 +1,17 @@
 region = "us-east-1"
 
 iam_role = {
+  # Example 1: EC2 instance role configured using structured trusted entity inputs
   "app-ec2-role" = {
-    name                  = "app-ec2-role"
-    name_prefix           = null
-    assume_role_policy    = <<-EOF
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Action": "sts:AssumeRole",
-          "Effect": "Allow",
-          "Principal": {
-            "Service": "ec2.amazonaws.com"
-          }
-        }
-      ]
-    }
-    EOF
-    description           = "EC2 instance role for application workloads"
-    path                  = "/"
-    force_detach_policies = false
-    max_session_duration  = 3600
-    permissions_boundary  = null
+    name                       = "app-ec2-role"
+    name_prefix                = null
+    trusted_entity_type        = "AWS_SERVICE"
+    trusted_service_principals = ["ec2.amazonaws.com"]
+    description                = "EC2 instance role for application workloads"
+    path                       = "/"
+    force_detach_policies      = false
+    max_session_duration       = 3600
+    permissions_boundary       = null
     managed_policy_arns = [
       "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
     ]
@@ -35,10 +24,12 @@ iam_role = {
     }
   },
 
+  # Example 2: Lambda execution role configured using custom JSON assume role policy & inline policy
   "lambda-processor-role" = {
-    name                  = "lambda-processor-role"
-    name_prefix           = null
-    assume_role_policy    = <<-EOF
+    name                = "lambda-processor-role"
+    name_prefix         = null
+    trusted_entity_type = "CUSTOM_JSON"
+    assume_role_policy  = <<-EOF
     {
       "Version": "2012-10-17",
       "Statement": [
@@ -88,3 +79,4 @@ iam_role = {
     }
   }
 }
+

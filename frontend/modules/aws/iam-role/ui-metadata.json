@@ -13,10 +13,24 @@
       "id": "region",
       "label": "AWS Region",
       "description": "The AWS region where resources will be provisioned.",
-      "type": "text",
+      "type": "select",
       "required": true,
       "default": "us-east-1",
-      "placeholder": "us-east-1"
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "provides": [
+    {
+      "data_source": "iam.roles",
+      "value_field": "name"
     }
   ],
   "resource": {
@@ -89,10 +103,22 @@
             "type": "select",
             "default": "CUSTOM_JSON",
             "options": [
-              { "value": "AWS_SERVICE", "label": "AWS Service" },
-              { "value": "AWS_ACCOUNT", "label": "AWS Account" },
-              { "value": "IAM_PRINCIPAL", "label": "Existing IAM Role or User" },
-              { "value": "CUSTOM_JSON", "label": "Custom JSON" }
+              {
+                "value": "AWS_SERVICE",
+                "label": "AWS Service"
+              },
+              {
+                "value": "AWS_ACCOUNT",
+                "label": "AWS Account"
+              },
+              {
+                "value": "IAM_PRINCIPAL",
+                "label": "Existing IAM Role or User"
+              },
+              {
+                "value": "CUSTOM_JSON",
+                "label": "Custom JSON"
+              }
             ]
           },
           {
@@ -102,16 +128,43 @@
             "type": "list",
             "required": false,
             "default": [],
-            "depends_on": { "field": "trusted_entity_type", "value": "AWS_SERVICE" },
+            "depends_on": {
+              "field": "trusted_entity_type",
+              "value": "AWS_SERVICE"
+            },
             "options": [
-              { "value": "ec2.amazonaws.com", "label": "EC2" },
-              { "value": "lambda.amazonaws.com", "label": "Lambda" },
-              { "value": "ecs-tasks.amazonaws.com", "label": "ECS Tasks" },
-              { "value": "eks.amazonaws.com", "label": "EKS" },
-              { "value": "eks-fargate-pods.amazonaws.com", "label": "EKS Fargate Pods" },
-              { "value": "rds.amazonaws.com", "label": "RDS" },
-              { "value": "states.amazonaws.com", "label": "Step Functions" },
-              { "value": "events.amazonaws.com", "label": "EventBridge" }
+              {
+                "value": "ec2.amazonaws.com",
+                "label": "EC2"
+              },
+              {
+                "value": "lambda.amazonaws.com",
+                "label": "Lambda"
+              },
+              {
+                "value": "ecs-tasks.amazonaws.com",
+                "label": "ECS Tasks"
+              },
+              {
+                "value": "eks.amazonaws.com",
+                "label": "EKS"
+              },
+              {
+                "value": "eks-fargate-pods.amazonaws.com",
+                "label": "EKS Fargate Pods"
+              },
+              {
+                "value": "rds.amazonaws.com",
+                "label": "RDS"
+              },
+              {
+                "value": "states.amazonaws.com",
+                "label": "Step Functions"
+              },
+              {
+                "value": "events.amazonaws.com",
+                "label": "EventBridge"
+              }
             ]
           },
           {
@@ -122,7 +175,10 @@
             "required": false,
             "default": [],
             "placeholder": "123456789012",
-            "depends_on": { "field": "trusted_entity_type", "value": "AWS_ACCOUNT" }
+            "depends_on": {
+              "field": "trusted_entity_type",
+              "value": "AWS_ACCOUNT"
+            }
           },
           {
             "id": "trusted_role_arns",
@@ -131,11 +187,17 @@
             "type": "list",
             "required": false,
             "default": [],
-            "depends_on": { "field": "trusted_entity_type", "value": "IAM_PRINCIPAL" },
+            "depends_on": {
+              "field": "trusted_entity_type",
+              "value": "IAM_PRINCIPAL"
+            },
             "data_source": {
               "resource": "iam.roles",
               "params": {},
-              "display": { "value_key": "arn", "label_key": "name" },
+              "display": {
+                "value_key": "arn",
+                "label_key": "name"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -147,11 +209,17 @@
             "type": "list",
             "required": false,
             "default": [],
-            "depends_on": { "field": "trusted_entity_type", "value": "IAM_PRINCIPAL" },
+            "depends_on": {
+              "field": "trusted_entity_type",
+              "value": "IAM_PRINCIPAL"
+            },
             "data_source": {
               "resource": "iam.users",
               "params": {},
-              "display": { "value_key": "arn", "label_key": "name" },
+              "display": {
+                "value_key": "arn",
+                "label_key": "name"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -163,7 +231,14 @@
             "type": "text",
             "required": false,
             "nullable": true,
-            "depends_on": { "field": "trusted_entity_type", "value": "IAM_PRINCIPAL" }
+            "depends_on": {
+              "field": "trusted_entity_type",
+              "operator": "in",
+              "value": [
+                "IAM_PRINCIPAL",
+                "AWS_ACCOUNT"
+              ]
+            }
           },
           {
             "id": "assume_role_policy",
@@ -174,7 +249,10 @@
             "required": true,
             "default": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Action\": \"sts:AssumeRole\",\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"Service\": \"ec2.amazonaws.com\"\n      }\n    }\n  ]\n}",
             "placeholder": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [...]\n}",
-            "depends_on": { "field": "trusted_entity_type", "value": "CUSTOM_JSON" }
+            "depends_on": {
+              "field": "trusted_entity_type",
+              "value": "CUSTOM_JSON"
+            }
           },
           {
             "id": "permissions_boundary",
@@ -227,8 +305,16 @@
             "default": [],
             "data_source": {
               "resource": "iam.policies",
-              "params": { "scope": { "static": "local" } },
-              "display": { "value_key": "id", "label_key": "name", "description_key": "arn" },
+              "params": {
+                "scope": {
+                  "static": "local"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "arn"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -237,9 +323,28 @@
             "id": "inline_policy",
             "label": "Inline Policies",
             "description": "List of inline policy objects defining policy name and JSON document.",
-            "type": "list",
+            "type": "repeatable",
             "required": false,
-            "default": []
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Policy Name",
+                "description": "Name of the inline policy.",
+                "type": "text",
+                "required": true,
+                "placeholder": "my-inline-policy"
+              },
+              {
+                "id": "policy",
+                "label": "Policy Document",
+                "description": "JSON formatted IAM policy document.",
+                "type": "text",
+                "multiline": true,
+                "required": true,
+                "placeholder": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [...]\n}"
+              }
+            ]
           }
         ]
       },

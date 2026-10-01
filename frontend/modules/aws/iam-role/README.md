@@ -55,6 +55,12 @@ modules/aws/iam-role (Child Module)
 | `permissions_boundary` | `string` | `null` | ARN of permissions boundary policy. |
 | `managed_policy_arns` | `list(string)` | `[]` | List of IAM managed policy ARNs to attach. |
 | `inline_policy` | `list(object)` | `[]` | List of inline policy objects (`name`, `policy`). |
+| `trusted_entity_type` | `string` | `"CUSTOM_JSON"` | Entity type allowed to assume the role: `"AWS_SERVICE"`, `"AWS_ACCOUNT"`, `"IAM_PRINCIPAL"`, or `"CUSTOM_JSON"`. |
+| `trusted_service_principals` | `list(string)` | `[]` | List of AWS service principals (e.g. `ec2.amazonaws.com`, `lambda.amazonaws.com`) allowed to assume the role when `trusted_entity_type` is `AWS_SERVICE`. |
+| `trusted_account_ids` | `list(string)` | `[]` | List of AWS 12-digit account IDs allowed to assume the role when `trusted_entity_type` is `AWS_ACCOUNT`. |
+| `trusted_role_arns` | `list(string)` | `[]` | List of existing IAM Role ARNs allowed to assume the role when `trusted_entity_type` is `IAM_PRINCIPAL`. |
+| `trusted_user_arns` | `list(string)` | `[]` | List of existing IAM User ARNs allowed to assume the role when `trusted_entity_type` is `IAM_PRINCIPAL`. |
+| `trusted_external_id` | `string` | `null` | External ID condition (`sts:ExternalId`) required on assumption for cross-account trust. |
 | `tags` | `map(string)` | `{}` | Key-value tags to assign to the role. |
 
 ## Outputs

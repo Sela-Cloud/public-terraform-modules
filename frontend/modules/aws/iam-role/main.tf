@@ -3,7 +3,7 @@
  *****************************************/
 
 module "iam_role" {
-  source   = "../../../../modules/aws/iam-role"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/iam-role?ref=v0.8.4"
   for_each = var.iam_role
 
   name                  = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)
