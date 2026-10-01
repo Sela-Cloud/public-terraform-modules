@@ -1,0 +1,29 @@
+module "mssql_managed_instance" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/mssql-managed-instance?ref=azure-wip"
+  for_each = var.mssql_managed_instance
+
+  name                                 = each.value.name
+  resource_group_name                  = each.value.resource_group_name
+  location                             = each.value.location
+  sku_name                             = each.value.sku_name
+  vcores                               = each.value.vcores
+  storage_size_in_gb                   = each.value.storage_size_in_gb
+  subnet_id                            = each.value.subnet_id
+  license_type                         = each.value.license_type
+  administrator_login                  = each.value.administrator_login
+  administrator_login_password         = each.value.administrator_login_password
+  collation                            = each.value.collation
+  timezone_id                          = each.value.timezone_id
+  minimum_tls_version                  = each.value.minimum_tls_version
+  proxy_override                       = each.value.proxy_override
+  public_data_endpoint_enabled         = each.value.public_data_endpoint_enabled
+  storage_account_type                 = each.value.storage_account_type
+  storage_iops                         = each.value.storage_iops
+  zone_redundant_enabled               = each.value.zone_redundant_enabled
+  dns_zone_partner_id                  = each.value.dns_zone_partner_id
+  maintenance_configuration_name       = each.value.maintenance_configuration_name
+  identity                             = each.value.identity
+  azure_active_directory_administrator = each.value.azure_active_directory_administrator
+  managed_databases                    = each.value.managed_databases
+  tags                                 = each.value.tags
+}
