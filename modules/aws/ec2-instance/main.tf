@@ -19,8 +19,8 @@ data "aws_ami" "amazon_linux_2023" {
 }
 
 locals {
-  ami_id             = coalesce(var.ami, try(data.aws_ami.amazon_linux_2023[0].id, null))
-  key_name           = try(aws_key_pair.this[0].key_name, var.key_name)
+  ami_id   = coalesce(var.ami, try(data.aws_ami.amazon_linux_2023[0].id, null))
+  key_name = try(aws_key_pair.this[0].key_name, var.key_name)
   security_group_ids = compact(concat(
     var.vpc_security_group_ids,
     try([aws_security_group.this[0].id], [])
