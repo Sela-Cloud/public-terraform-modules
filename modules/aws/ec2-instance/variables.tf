@@ -5,13 +5,11 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "ap-south-1"
 }
 
 variable "name" {
   description = "Name to be used on all resources as identifier, applied as the 'Name' tag."
   type        = string
-  default     = "ec2-instance"
 }
 
 variable "ami" {
@@ -35,7 +33,6 @@ variable "key_name" {
 variable "availability_zone" {
   description = "AZ where the instance should be created. If null, AWS assigns an AZ automatically."
   type        = string
-  default     = null
 }
 
 variable "placement_group" {
