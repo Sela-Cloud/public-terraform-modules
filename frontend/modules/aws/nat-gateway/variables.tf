@@ -1,85 +1,43 @@
-variable "name" {
-  description = "Name to be used on all resources as identifier, applied as the 'Name' tag."
+variable "region" {
+  description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "nat-gateway-default"
+  default     = "us-east-1"
 }
 
-variable "availability_mode" {
-  description = "Specifies whether to create a zonal (single-AZ) or regional (multi-AZ) NAT gateway. Valid values: 'zonal', 'regional'."
-  type        = string
-  default     = "zonal"
-
-  validation {
-    condition     = contains(["zonal", "regional"], var.availability_mode)
-    error_message = "The availability_mode value must be either 'zonal' or 'regional'."
-  }
-}
-
-variable "connectivity_type" {
-  description = "Connectivity type for the NAT Gateway. Valid values: 'private', 'public'."
-  type        = string
-  default     = "public"
-
-  validation {
-    condition     = contains(["public", "private"], var.connectivity_type)
-    error_message = "The connectivity_type value must be either 'public' or 'private'."
-  }
-}
-
-variable "subnet_id" {
-  description = "The Subnet ID of the subnet in which to place the NAT Gateway. Required when availability_mode is 'zonal'. Must not be set when availability_mode is 'regional'."
-  type        = string
-  default     = null
-}
-
-variable "allocation_id" {
-  description = "The Allocation ID of the Elastic IP address for the NAT Gateway. Required when connectivity_type is 'public' and availability_mode is 'zonal'. Must not be set when availability_mode is 'regional'."
-  type        = string
-  default     = null
-}
-
-variable "vpc_id" {
-  description = "VPC ID where this NAT Gateway will be created. Required when availability_mode is 'regional'. Must not be set when availability_mode is 'zonal'."
-  type        = string
-  default     = null
-}
-
-variable "private_ip" {
-  description = "The private IPv4 address to assign to the NAT Gateway (zonal NAT gateways only). If not provided, an address will be automatically assigned."
-  type        = string
-  default     = null
-}
-
-variable "secondary_allocation_ids" {
-  description = "A list of secondary allocation EIP IDs for this NAT Gateway (zonal NAT gateways only)."
-  type        = list(string)
-  default     = []
-}
-
-variable "secondary_private_ip_addresses" {
-  description = "A list of secondary private IPv4 addresses to assign to the NAT Gateway (zonal NAT gateways only)."
-  type        = list(string)
-  default     = []
-}
-
-variable "secondary_private_ip_address_count" {
-  description = "The number of secondary private IPv4 addresses to assign to the NAT Gateway (zonal and private NAT gateways only)."
-  type        = number
-  default     = null
-}
-
-variable "availability_zone_address" {
-  description = "Configuration block for Elastic IP addresses and availability zones for regional NAT gateways."
-  type = list(object({
-    allocation_ids       = list(string)
-    availability_zone    = optional(string, null)
-    availability_zone_id = optional(string, null)
+variable "nat_gateway" {
+  description = "Map of AWS NAT Gateway configurations to deploy, keyed by NAT gateway name."
+  type = map(object({
+    name                               = optional(string, "nat-gateway-default")
+    availability_mode                  = optional(string, "zonal")
+    connectivity_type                  = optional(string, "public")
+    subnet_id                          = optional(string, null)
+    allocation_id                      = optional(string, null)
+    vpc_id                             = optional(string, null)
+    private_ip                         = optional(string, null)
+    secondary_allocation_ids           = optional(list(string), [])
+    secondary_private_ip_addresses     = optional(list(string), [])
+    secondary_private_ip_address_count = optional(number, null)
+    availability_zone_address = optional(list(object({
+      allocation_ids       = list(string)
+      availability_zone    = optional(string, null)
+      availability_zone_id = optional(string, null)
+    })), [])
+    tags = optional(map(string), {})
   }))
-  default = []
-}
-
-variable "tags" {
-  description = "A map of tags to assign to the resource."
-  type        = map(string)
-  default     = {}
+  default = {
+    "nat-gateway-default" = {
+      name                               = "nat-gateway-default"
+      availability_mode                  = "zonal"
+      connectivity_type                  = "public"
+      subnet_id                          = null
+      allocation_id                      = null
+      vpc_id                             = null
+      private_ip                         = null
+      secondary_allocation_ids           = []
+      secondary_private_ip_addresses     = []
+      secondary_private_ip_address_count = null
+      availability_zone_address          = []
+      tags                               = {}
+    }
+  }
 }

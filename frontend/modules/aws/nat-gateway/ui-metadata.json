@@ -1,0 +1,268 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "nat-gateway",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS NAT Gateway",
+    "icon": "nat-gateway",
+    "description": "Provision Amazon VPC NAT Gateways with zonal or regional availability modes for secure outbound internet traffic",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "nat_gateway",
+    "key_field": "name",
+    "key_label": "NAT Gateway Name",
+    "key_description": "Unique name and identifier for the NAT Gateway, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core NAT Gateway settings including name, availability mode, connectivity type, and target network placement.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "NAT Gateway Name",
+            "description": "Unique name for the NAT Gateway, applied as the 'Name' tag and map key.",
+            "type": "text",
+            "required": true,
+            "default": "nat-gateway-default",
+            "placeholder": "public-nat-gw",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "NAT Gateway name must only contain alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "availability_mode",
+            "label": "Availability Mode",
+            "description": "Specifies whether to create a zonal (single-AZ) or regional (multi-AZ) NAT gateway.",
+            "type": "select",
+            "required": false,
+            "default": "zonal",
+            "options": [
+              {
+                "value": "zonal",
+                "label": "Zonal",
+                "description": "Single-AZ NAT Gateway placed in a specific subnet within an availability zone."
+              },
+              {
+                "value": "regional",
+                "label": "Regional",
+                "description": "Multi-AZ NAT Gateway that scales across availability zones within a VPC."
+              }
+            ]
+          },
+          {
+            "id": "connectivity_type",
+            "label": "Connectivity Type",
+            "description": "Connectivity type for the NAT Gateway.",
+            "type": "select",
+            "required": false,
+            "default": "public",
+            "options": [
+              {
+                "value": "public",
+                "label": "Public",
+                "description": "Internet-facing NAT gateway to route private subnet traffic to the internet."
+              },
+              {
+                "value": "private",
+                "label": "Private",
+                "description": "Internal NAT gateway for routing private traffic without an internet gateway (zonal mode only)."
+              }
+            ]
+          },
+          {
+            "id": "subnet_id",
+            "label": "Subnet ID",
+            "description": "The Subnet ID of the subnet in which to place the NAT Gateway (required for zonal mode).",
+            "type": "select",
+            "required": false,
+            "placeholder": "subnet-0123456789abcdef0",
+            "depends_on": {
+              "field": "availability_mode",
+              "value": "zonal",
+              "operator": "eq"
+            },
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC ID",
+            "description": "The ID of the VPC in which the regional NAT Gateway will be created (required for regional mode).",
+            "type": "select",
+            "required": false,
+            "placeholder": "vpc-0123456789abcdef0",
+            "depends_on": {
+              "field": "availability_mode",
+              "value": "regional",
+              "operator": "eq"
+            },
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "ip_addressing",
+        "label": "IP Addressing & Elastic IPs",
+        "description": "Configure Elastic IP and private IPv4 allocation settings for zonal NAT gateways.",
+        "depends_on": {
+          "field": "availability_mode",
+          "value": "zonal",
+          "operator": "eq"
+        },
+        "fields": [
+          {
+            "id": "allocation_id",
+            "label": "Elastic IP Allocation ID",
+            "description": "The Allocation ID of the Elastic IP address for the NAT Gateway (required for public zonal NAT Gateways).",
+            "type": "text",
+            "required": false,
+            "placeholder": "eipalloc-0123456789abcdef0"
+          },
+          {
+            "id": "private_ip",
+            "label": "Private IPv4 Address",
+            "description": "The private IPv4 address to assign to the NAT Gateway (zonal only). If omitted, an address is automatically assigned.",
+            "type": "text",
+            "required": false,
+            "placeholder": "10.0.1.50"
+          },
+          {
+            "id": "secondary_allocation_ids",
+            "label": "Secondary EIP Allocation IDs",
+            "description": "List of secondary Elastic IP allocation IDs to associate with the NAT Gateway (zonal only).",
+            "type": "list",
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "secondary_private_ip_addresses",
+            "label": "Secondary Private IPv4 Addresses",
+            "description": "List of secondary private IPv4 addresses to assign to the NAT Gateway (zonal only).",
+            "type": "list",
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "secondary_private_ip_address_count",
+            "label": "Secondary Private IP Count",
+            "description": "Number of secondary private IPv4 addresses to assign to the NAT Gateway (zonal and private only).",
+            "type": "number",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": "regional_settings",
+        "label": "Regional Multi-AZ Settings",
+        "description": "Configure availability zones and Elastic IP mappings for manual regional NAT gateway mode.",
+        "depends_on": {
+          "field": "availability_mode",
+          "value": "regional",
+          "operator": "eq"
+        },
+        "fields": [
+          {
+            "id": "availability_zone_address",
+            "label": "Availability Zone Address Mappings",
+            "description": "Repeatable mappings of Elastic IP allocations to specific availability zones for regional NAT gateways.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "allocation_ids",
+                "label": "Allocation IDs",
+                "description": "List of Elastic IP allocation IDs to be used for handling outbound NAT traffic in this specific Availability Zone.",
+                "type": "list",
+                "required": true,
+                "default": []
+              },
+              {
+                "id": "availability_zone",
+                "label": "Availability Zone",
+                "description": "Availability Zone (e.g. us-east-1a) where this specific NAT gateway configuration will be active.",
+                "type": "text",
+                "required": false,
+                "placeholder": "us-east-1a"
+              },
+              {
+                "id": "availability_zone_id",
+                "label": "Availability Zone ID",
+                "description": "Availability Zone ID (e.g. use1-az1) where this specific NAT gateway configuration will be active.",
+                "type": "text",
+                "required": false,
+                "placeholder": "use1-az1"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for organizational, tracking, and cost allocation purposes.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "NAT Gateway Tags",
+            "description": "Key-value tags assigned to the NAT Gateway.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
