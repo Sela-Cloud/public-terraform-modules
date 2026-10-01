@@ -34,7 +34,7 @@ variable "frontdoor" {
       sample_size                             = optional(number, 4)
       successful_samples_required             = optional(number, 2)
       additional_latency_enforce_milliseconds = optional(number, 0)
-    })), [
+      })), [
       {
         name                                    = "defaultLoadBalancingSettings"
         sample_size                             = 4
@@ -50,7 +50,7 @@ variable "frontdoor" {
       protocol            = optional(string, "Http")
       probe_method        = optional(string, "HEAD")
       interval_in_seconds = optional(number, 120)
-    })), [
+      })), [
       {
         name                = "defaultHealthProbeSettings"
         enabled             = true

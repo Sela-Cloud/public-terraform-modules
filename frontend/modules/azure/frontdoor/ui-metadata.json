@@ -38,9 +38,17 @@
             "id": "resource_group_name",
             "label": "Resource Group Name",
             "description": "Specifies the name of the Resource Group in which the Front Door service should exist.",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "placeholder": "rg-my-frontdoor"
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "location"
+              }
+            }
           },
           {
             "id": "friendly_name",
