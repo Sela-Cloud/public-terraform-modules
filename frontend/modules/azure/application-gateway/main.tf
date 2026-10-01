@@ -1,0 +1,33 @@
+module "application_gateway" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/application-gateway?ref=azure-wip"
+  for_each = var.application_gateway
+
+  name                              = each.value.name
+  resource_group_name               = each.value.resource_group_name
+  location                          = each.value.location
+  sku                               = each.value.sku
+  autoscale_configuration           = each.value.autoscale_configuration
+  gateway_ip_configurations         = each.value.gateway_ip_configurations
+  frontend_ip_configurations        = each.value.frontend_ip_configurations
+  frontend_ports                    = each.value.frontend_ports
+  backend_address_pools             = each.value.backend_address_pools
+  backend_http_settings             = each.value.backend_http_settings
+  http_listeners                    = each.value.http_listeners
+  request_routing_rules             = each.value.request_routing_rules
+  probes                            = each.value.probes
+  identity                          = each.value.identity
+  ssl_certificates                  = each.value.ssl_certificates
+  ssl_policy                        = each.value.ssl_policy
+  trusted_root_certificates         = each.value.trusted_root_certificates
+  redirect_configurations           = each.value.redirect_configurations
+  url_path_maps                     = each.value.url_path_maps
+  rewrite_rule_sets                 = each.value.rewrite_rule_sets
+  waf_configuration                 = each.value.waf_configuration
+  zones                             = each.value.zones
+  http2_enabled                     = each.value.http2_enabled
+  fips_enabled                      = each.value.fips_enabled
+  firewall_policy_id                = each.value.firewall_policy_id
+  force_firewall_policy_association = each.value.force_firewall_policy_association
+  global                            = each.value.global
+  tags                              = each.value.tags
+}
