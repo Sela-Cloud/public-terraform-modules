@@ -1,0 +1,722 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "application-gateway",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Application Gateway",
+    "icon": "application-gateway",
+    "description": "Azure Application Gateway (Layer 7) web traffic load balancer with SSL termination, autoscale, and optional WAF",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "application_gateway",
+    "key_field": "name",
+    "key_label": "Application Gateway Name",
+    "key_description": "The unique name for the Azure Application Gateway. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Application Gateway identity, resource group, and region settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Application Gateway Name",
+            "description": "Name of the Azure Application Gateway. Changing this forces a new resource to be created.",
+            "type": "text",
+            "required": true,
+            "placeholder": "appgw-my-workload"
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Application Gateway.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Application Gateway should be created.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" },
+              { "value": "israelcentral", "label": "Israel Central (Tel Aviv)" }
+            ]
+          },
+          {
+            "id": "zones",
+            "label": "Availability Zones",
+            "description": "Availability Zones in which this Application Gateway should be deployed (e.g. 1, 2, 3).",
+            "type": "list"
+          },
+          {
+            "id": "http2_enabled",
+            "label": "Enable HTTP/2",
+            "description": "Whether HTTP/2 is enabled on the Application Gateway.",
+            "type": "boolean",
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "sku_and_scale",
+        "label": "SKU & Autoscale",
+        "description": "SKU size, tier, and autoscale capacity configuration.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "sku",
+            "label": "SKU Settings",
+            "description": "SKU name and tier for the Application Gateway.",
+            "type": "object",
+            "fields": [
+              {
+                "id": "name",
+                "label": "SKU Name",
+                "description": "Name of the SKU.",
+                "type": "select",
+                "required": true,
+                "default": "Standard_v2",
+                "options": [
+                  { "value": "Standard_v2", "label": "Standard_v2 (Recommended)" },
+                  { "value": "WAF_v2", "label": "WAF_v2 (Web Application Firewall)" },
+                  { "value": "Standard_Small", "label": "Standard_Small (v1 Legacy)" },
+                  { "value": "Standard_Medium", "label": "Standard_Medium (v1 Legacy)" },
+                  { "value": "Standard_Large", "label": "Standard_Large (v1 Legacy)" },
+                  { "value": "WAF_Medium", "label": "WAF_Medium (v1 Legacy)" },
+                  { "value": "WAF_Large", "label": "WAF_Large (v1 Legacy)" }
+                ]
+              },
+              {
+                "id": "tier",
+                "label": "SKU Tier",
+                "description": "Tier of the SKU.",
+                "type": "select",
+                "required": true,
+                "default": "Standard_v2",
+                "options": [
+                  { "value": "Standard_v2", "label": "Standard_v2" },
+                  { "value": "WAF_v2", "label": "WAF_v2" },
+                  { "value": "Standard", "label": "Standard (v1)" },
+                  { "value": "WAF", "label": "WAF (v1)" }
+                ]
+              },
+              {
+                "id": "capacity",
+                "label": "Static Capacity",
+                "description": "Static capacity instance count (applicable when autoscale is not configured).",
+                "type": "number"
+              }
+            ]
+          },
+          {
+            "id": "autoscale_configuration",
+            "label": "Autoscale Configuration",
+            "description": "Minimum and maximum capacity instances for v2 SKUs.",
+            "type": "object",
+            "fields": [
+              {
+                "id": "min_capacity",
+                "label": "Minimum Capacity",
+                "description": "Minimum capacity units (0 to 100).",
+                "type": "number",
+                "required": true,
+                "default": 1
+              },
+              {
+                "id": "max_capacity",
+                "label": "Maximum Capacity",
+                "description": "Maximum capacity units (2 to 125).",
+                "type": "number",
+                "default": 10
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Network & Frontend IP Configuration",
+        "description": "Gateway IP and frontend listener port/IP configurations.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "gateway_ip_configurations",
+            "label": "Gateway IP Configurations",
+            "description": "Subnet configuration for the Application Gateway. Must be a dedicated subnet.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Configuration Name",
+                "description": "Name of the gateway IP configuration.",
+                "type": "text",
+                "required": true,
+                "default": "appgw-gateway-ip-config"
+              },
+              {
+                "id": "subnet_id",
+                "label": "Subnet ID",
+                "description": "Resource ID of the subnet dedicated to the Application Gateway.",
+                "type": "text",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "frontend_ip_configurations",
+            "label": "Frontend IP Configurations",
+            "description": "Public or private IP configurations used by frontend listeners.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Frontend IP Name",
+                "description": "Name of the frontend IP configuration.",
+                "type": "text",
+                "required": true,
+                "default": "appgw-frontend-ip"
+              },
+              {
+                "id": "public_ip_address_id",
+                "label": "Public IP Address ID",
+                "description": "Resource ID of the Public IP address for public traffic.",
+                "type": "text"
+              },
+              {
+                "id": "subnet_id",
+                "label": "Private Subnet ID",
+                "description": "Resource ID of the subnet for private frontend traffic.",
+                "type": "text"
+              },
+              {
+                "id": "private_ip_address",
+                "label": "Private IP Address",
+                "description": "Specific private IP address if static allocation is used.",
+                "type": "text"
+              },
+              {
+                "id": "private_ip_address_allocation",
+                "label": "Private IP Allocation",
+                "description": "Allocation method for private IP.",
+                "type": "select",
+                "options": [
+                  { "value": "Dynamic", "label": "Dynamic" },
+                  { "value": "Static", "label": "Static" }
+                ]
+              },
+              {
+                "id": "private_link_configuration_name",
+                "label": "Private Link Configuration Name",
+                "description": "The name of any associated Private Link configuration.",
+                "type": "text"
+              }
+            ]
+          },
+          {
+            "id": "frontend_ports",
+            "label": "Frontend Ports",
+            "description": "Ports on which the Application Gateway listens.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Port Name",
+                "description": "Name of the frontend port configuration.",
+                "type": "text",
+                "required": true,
+                "default": "port-80"
+              },
+              {
+                "id": "port",
+                "label": "Port Number",
+                "description": "Port number (1-65502).",
+                "type": "number",
+                "required": true,
+                "default": 80
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "backends_and_listeners",
+        "label": "Backends, HTTP Settings & Listeners",
+        "description": "Backend target pools, HTTP routing settings, and listener configurations.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "backend_address_pools",
+            "label": "Backend Address Pools",
+            "description": "Target pools of backends (IP addresses or FQDNs).",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Pool Name",
+                "description": "Name of the backend address pool.",
+                "type": "text",
+                "required": true,
+                "default": "backend-pool-default"
+              },
+              {
+                "id": "fqdns",
+                "label": "Backend FQDNs",
+                "description": "List of FQDNs (e.g. app.azurewebsites.net).",
+                "type": "list"
+              },
+              {
+                "id": "ip_addresses",
+                "label": "Backend IP Addresses",
+                "description": "List of IP addresses.",
+                "type": "list"
+              }
+            ]
+          },
+          {
+            "id": "backend_http_settings",
+            "label": "Backend HTTP Settings",
+            "description": "HTTP/HTTPS communication settings with backend servers.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Settings Name",
+                "description": "Name of the backend HTTP settings.",
+                "type": "text",
+                "required": true,
+                "default": "backend-http-settings"
+              },
+              {
+                "id": "port",
+                "label": "Backend Port",
+                "description": "Port number on the backend servers.",
+                "type": "number",
+                "required": true,
+                "default": 80
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "description": "Protocol to use for backend communication.",
+                "type": "select",
+                "required": true,
+                "default": "Http",
+                "options": [
+                  { "value": "Http", "label": "HTTP" },
+                  { "value": "Https", "label": "HTTPS" }
+                ]
+              },
+              {
+                "id": "cookie_based_affinity",
+                "label": "Cookie-Based Affinity",
+                "description": "Whether cookie-based session affinity is enabled.",
+                "type": "select",
+                "required": true,
+                "default": "Disabled",
+                "options": [
+                  { "value": "Disabled", "label": "Disabled" },
+                  { "value": "Enabled", "label": "Enabled" }
+                ]
+              },
+              {
+                "id": "affinity_cookie_name",
+                "label": "Affinity Cookie Name",
+                "description": "Name of cookie used for session affinity.",
+                "type": "text"
+              },
+              {
+                "id": "path",
+                "label": "Path Prefix",
+                "description": "Path prefix to append to request URI.",
+                "type": "text"
+              },
+              {
+                "id": "request_timeout",
+                "label": "Request Timeout (seconds)",
+                "description": "Request timeout in seconds (1 to 86400).",
+                "type": "number",
+                "default": 60
+              },
+              {
+                "id": "probe_name",
+                "label": "Health Probe Name",
+                "description": "Name of custom health probe to associate.",
+                "type": "text"
+              },
+              {
+                "id": "host_name",
+                "label": "Host Header Override",
+                "description": "Host header override sent to backend servers.",
+                "type": "text"
+              },
+              {
+                "id": "pick_host_name_from_backend_address",
+                "label": "Pick Host Name from Backend",
+                "description": "Automatically pick host header from backend address.",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "trusted_root_certificate_names",
+                "label": "Trusted Root Certificate Names",
+                "description": "List of trusted root certificate names for backend HTTPS.",
+                "type": "list"
+              }
+            ]
+          },
+          {
+            "id": "http_listeners",
+            "label": "HTTP Listeners",
+            "description": "Frontend listeners that receive incoming traffic.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Listener Name",
+                "description": "Name of the HTTP listener.",
+                "type": "text",
+                "required": true,
+                "default": "http-listener"
+              },
+              {
+                "id": "frontend_ip_configuration_name",
+                "label": "Frontend IP Name",
+                "description": "Name of the associated frontend IP configuration.",
+                "type": "text",
+                "required": true,
+                "default": "appgw-frontend-ip"
+              },
+              {
+                "id": "frontend_port_name",
+                "label": "Frontend Port Name",
+                "description": "Name of the associated frontend port.",
+                "type": "text",
+                "required": true,
+                "default": "port-80"
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "description": "Protocol to listen on.",
+                "type": "select",
+                "required": true,
+                "default": "Http",
+                "options": [
+                  { "value": "Http", "label": "HTTP" },
+                  { "value": "Https", "label": "HTTPS" }
+                ]
+              },
+              {
+                "id": "host_name",
+                "label": "Host Name",
+                "description": "Specific host name to listen for (e.g. app.example.com).",
+                "type": "text"
+              },
+              {
+                "id": "host_names",
+                "label": "Multiple Host Names",
+                "description": "List of host names for multi-site listeners.",
+                "type": "list"
+              },
+              {
+                "id": "require_sni",
+                "label": "Require SNI",
+                "description": "Whether Server Name Indication is required for HTTPS.",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "ssl_certificate_name",
+                "label": "SSL Certificate Name",
+                "description": "Name of SSL certificate for HTTPS listeners.",
+                "type": "text"
+              },
+              {
+                "id": "ssl_profile_name",
+                "label": "SSL Profile Name",
+                "description": "Name of SSL profile to associate.",
+                "type": "text"
+              },
+              {
+                "id": "firewall_policy_id",
+                "label": "WAF Policy ID",
+                "description": "Listener-level Web Application Firewall policy ID.",
+                "type": "text"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rules",
+        "label": "Routing Rules",
+        "description": "Request routing rules connecting listeners to backend pools.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "request_routing_rules",
+            "label": "Request Routing Rules",
+            "description": "Rules that evaluate incoming requests on listeners and route them.",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Rule Name",
+                "description": "Name of the routing rule.",
+                "type": "text",
+                "required": true,
+                "default": "rule-1"
+              },
+              {
+                "id": "rule_type",
+                "label": "Rule Type",
+                "description": "Type of rule: Basic or PathBasedRouting.",
+                "type": "select",
+                "required": true,
+                "default": "Basic",
+                "options": [
+                  { "value": "Basic", "label": "Basic" },
+                  { "value": "PathBasedRouting", "label": "PathBasedRouting" }
+                ]
+              },
+              {
+                "id": "http_listener_name",
+                "label": "HTTP Listener Name",
+                "description": "Name of the listener this rule applies to.",
+                "type": "text",
+                "required": true,
+                "default": "http-listener"
+              },
+              {
+                "id": "backend_address_pool_name",
+                "label": "Backend Pool Name",
+                "description": "Name of the backend address pool to route traffic to.",
+                "type": "text",
+                "default": "backend-pool-default"
+              },
+              {
+                "id": "backend_http_settings_name",
+                "label": "Backend HTTP Settings Name",
+                "description": "Name of backend HTTP settings to use.",
+                "type": "text",
+                "default": "backend-http-settings"
+              },
+              {
+                "id": "redirect_configuration_name",
+                "label": "Redirect Configuration Name",
+                "description": "Name of redirect configuration (if redirecting).",
+                "type": "text"
+              },
+              {
+                "id": "rewrite_rule_set_name",
+                "label": "Rewrite Rule Set Name",
+                "description": "Name of URL/header rewrite rule set.",
+                "type": "text"
+              },
+              {
+                "id": "url_path_map_name",
+                "label": "URL Path Map Name",
+                "description": "Name of URL path map (for PathBasedRouting).",
+                "type": "text"
+              },
+              {
+                "id": "priority",
+                "label": "Priority",
+                "description": "Rule evaluation priority (1 to 20000, required for v2 SKUs).",
+                "type": "number",
+                "default": 100
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "probes_and_ssl",
+        "label": "Health Probes & SSL Certificates",
+        "description": "Custom health check probes and SSL certificate configurations.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "probes",
+            "label": "Custom Health Probes",
+            "description": "List of custom health probe configurations.",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Probe Name",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": true,
+                "default": "Http",
+                "options": [
+                  { "value": "Http", "label": "HTTP" },
+                  { "value": "Https", "label": "HTTPS" }
+                ]
+              },
+              {
+                "id": "path",
+                "label": "Probe Path",
+                "type": "text",
+                "required": true,
+                "default": "/health"
+              },
+              {
+                "id": "host",
+                "label": "Host Header",
+                "type": "text"
+              },
+              {
+                "id": "interval",
+                "label": "Interval (seconds)",
+                "type": "number",
+                "default": 30
+              },
+              {
+                "id": "timeout",
+                "label": "Timeout (seconds)",
+                "type": "number",
+                "default": 30
+              },
+              {
+                "id": "unhealthy_threshold",
+                "label": "Unhealthy Threshold",
+                "type": "number",
+                "default": 3
+              },
+              {
+                "id": "port",
+                "label": "Probe Port",
+                "type": "number"
+              },
+              {
+                "id": "pick_host_name_from_backend_http_settings",
+                "label": "Pick Host from HTTP Settings",
+                "type": "boolean",
+                "default": false
+              }
+            ]
+          },
+          {
+            "id": "ssl_certificates",
+            "label": "SSL Certificates",
+            "description": "List of SSL certificates (from Key Vault or certificate data).",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Certificate Name",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "key_vault_secret_id",
+                "label": "Key Vault Secret ID",
+                "description": "Secret ID (versionless) in Azure Key Vault containing the SSL certificate.",
+                "type": "text"
+              },
+              {
+                "id": "data",
+                "label": "Base64 PFX Certificate Data",
+                "type": "text"
+              },
+              {
+                "id": "password",
+                "label": "Certificate Password",
+                "type": "text"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "security_and_waf",
+        "label": "WAF & Security",
+        "description": "Web Application Firewall policy and FIPS configurations.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "firewall_policy_id",
+            "label": "WAF Policy ID",
+            "description": "Global Web Application Firewall Policy resource ID to associate with the Application Gateway.",
+            "type": "text"
+          },
+          {
+            "id": "force_firewall_policy_association",
+            "label": "Force Firewall Policy Association",
+            "description": "Whether to force association of the firewall policy.",
+            "type": "boolean"
+          },
+          {
+            "id": "fips_enabled",
+            "label": "Enable FIPS",
+            "description": "Whether FIPS 140-2 compliance is enabled.",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for governance and cost tracking.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value pairs to assign to the Application Gateway.",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}
