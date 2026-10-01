@@ -90,8 +90,28 @@ KNOWN_DATA_SOURCES = {
     # services/clouds/gcp/lookups.py and both are mirrored here.
     "aws.regions",
     "ec2.regions",
+    "ec2.subnet",
+    "ec2.subnets",
     "ec2.vpc",
     "ec2.vpcs",
+    # AWS IAM. `iam.roles` is also a Google identifier (listed below) — one name, two meanings,
+    # which is fine because the platform dispatches by the environment's cloud. This list only
+    # answers whether an identifier is real anywhere. (No double quotes in comments inside this
+    # set: the deployer's mirror test reads every double-quoted string here as an identifier.)
+    "iam.group",
+    "iam.groups",
+    "iam.policies",
+    "iam.policy",
+    "iam.role",
+    "iam.user",
+    "iam.users",
+    # Azure. Implemented in services/clouds/azure/lookups.py.
+    "azure.resourceGroups",
+    "network.subnets",
+    "network.virtualNetworks",
+    "network.virtualNetworks.subnets",
+    "network.vnets",
+    "resources.resourceGroups",
     "gke.clusters",
     "iam.customRoles",
     "iam.custom_roles",
@@ -1162,6 +1182,190 @@ def collect_catalog_refs(root: str, modules: list) -> dict:
 REMOTE_URL = "https://github.com/Sela-Cloud/public-terraform-modules"
 
 
+REF_MODES = ("release", "pr", "main")
+
+
+def _remote_kinds(ref):
+    """Which kinds of ref by this name exist on the remote: a set of {"tag", "branch"}.
+
+    None means the question could not be answered — network trouble — which callers treat as a
+    warning, so an offline run is never a red build.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "ls-remote", "--tags", "--heads", REMOTE_URL, ref],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    kinds = set()
+    for line in result.stdout.splitlines():
+        name = line.split("\t", 1)[-1].strip()
+        # Exact matches only: `ls-remote` treats the pattern as a suffix, so asking for `v0.7`
+        # would otherwise also report `refs/tags/xv0.7`.
+        if name in ("refs/tags/" + ref, "refs/tags/" + ref + "^{}"):
+            kinds.add("tag")
+        elif name == "refs/heads/" + ref:
+            kinds.add("branch")
+    return kinds
+
+
+def changed_wrappers(root, base):
+    """Catalog entries whose files differ between ``base`` and HEAD, as `<provider>/<id>`.
+
+    Three-dot, so it is what the PR itself changed rather than everything main has gained since
+    the branch was cut.
+    """
+    result = subprocess.run(
+        ["git", "-C", root, "diff", "--name-only", "%s...HEAD" % base, "--", "frontend/modules"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise SystemExit("error: git diff against %r failed: %s" % (base, result.stderr.strip()))
+    changed = set()
+    for path in result.stdout.splitlines():
+        parts = path.split("/")
+        # frontend/modules/<provider>/<id>/...
+        if len(parts) >= 5:
+            changed.add("%s/%s" % (parts[2], parts[3]))
+    return changed
+
+
+def check_ref_policy(refs, report, mode="release", pr_branch="", changed=None, expect_ref=""):
+    """R8: judge the wrappers' `?ref=` pins by where in the release cycle this run sits.
+
+    Wrappers reach their child module by git ref of this same repository, and the worker deploys
+    from `origin/main`. That creates three legitimately different states, and one rule for all of
+    them either blocks normal work or lets an outage through:
+
+    ``pr``
+        A developer's wrapper pins their own branch — necessarily, because the child module they
+        are adding or changing is in no tag yet. Refs may be mixed. What is refused is a ref that is
+        *neither* a release tag nor this PR's branch: another developer's branch copied along, or a
+        typo, either of which merges into a wrapper nobody can init.
+
+        Only wrappers **this PR changed** are held to that. A branch pin already on main — merged
+        earlier and awaiting its release bump — is judged as main judges it, so it cannot turn
+        every unrelated PR red for something none of them introduced.
+
+    ``main``
+        Between merging and the release bump, main legitimately holds branch pins, so mixed refs
+        are a warning. A ref that *no longer exists* is an error, because main is what every deploy
+        uses: a branch deleted after merge leaves its wrappers failing `terraform init` for
+        everyone. This is the check that notices.
+
+    ``release``
+        What a tag must satisfy before its catalog is published: one ref, and it exists.
+    """
+    if mode == "release":
+        if len(refs) > 1:
+            detail = "; ".join(
+                "%s in %s" % (ref, ", ".join(sorted(mods))) for ref, mods in sorted(refs.items())
+            )
+            report.error("<catalog>", "R8", "remote ?ref= pins are not uniform: %s" % detail)
+        if expect_ref:
+            # The Release workflow validates *before* it creates the tag, so the tag cannot exist
+            # yet and looking it up would always fail. What can be checked is stronger anyway:
+            # every pin is exactly the version about to be tagged.
+            for ref, mods in sorted(refs.items()):
+                if ref != expect_ref:
+                    report.error(
+                        "<catalog>",
+                        "R8",
+                        "%s pin ?ref=%s, but this release is %s"
+                        % (", ".join(sorted(mods)), ref, expect_ref),
+                    )
+        else:
+            check_refs_exist(refs, report)
+        return
+
+    if mode == "pr":
+        # Split each ref's modules into those this PR touched and those it inherited from main.
+        # The inherited ones are judged exactly as a push to main would judge them.
+        changed = changed or set()
+        inherited = {}
+        own = {}
+        for ref, mods in refs.items():
+            mine = {m for m in mods if m in changed}
+            if mine:
+                own[ref] = mine
+            if mods - mine:
+                inherited[ref] = mods - mine
+        _check_main_refs(inherited, report, severity_missing="warn")
+        refs = own
+
+    if mode == "main":
+        _check_main_refs(refs, report, severity_missing="error")
+        return
+
+    for ref, mods in sorted(refs.items()):
+        where = ", ".join(sorted(mods))
+
+        if ref == pr_branch:
+            # Not looked up: this is the PR's own head, which exists by definition — and for a PR
+            # from a fork it would not be on this remote at all, which is not a fault of the PR.
+            report.warn(
+                "<catalog>",
+                "R8",
+                "%s pin%s this PR's branch (?ref=%s). Expected while developing; the release bump "
+                "must retag %s before this branch is deleted, because main is what deploys use."
+                % (where, "s" if len(mods) == 1 else "", ref, "it" if len(mods) == 1 else "them"),
+            )
+            continue
+
+        kinds = _remote_kinds(ref)
+        if kinds is None:
+            report.warn("<catalog>", "R8", "could not verify ref %r exists (network?)" % ref)
+            continue
+        if "tag" not in kinds:
+            report.error(
+                "<catalog>",
+                "R8",
+                "%s pin%s ?ref=%s, which is neither a release tag nor this PR's branch (%s). "
+                "Pin %s while developing, or an existing tag."
+                % (where, "s" if len(mods) == 1 else "", ref, pr_branch, pr_branch),
+            )
+
+
+def _check_main_refs(refs, report, severity_missing):
+    """The rules for pins already on main: a pending bump warns, a vanished ref is an outage."""
+    for ref, mods in sorted(refs.items()):
+        where = ", ".join(sorted(mods))
+        kinds = _remote_kinds(ref)
+        if kinds is None:
+            report.warn("<catalog>", "R8", "could not verify ref %r exists (network?)" % ref)
+        elif not kinds:
+            message = (
+                "%s pin%s ?ref=%s, which no longer exists on %s. Main is what every deploy uses, "
+                "so these wrappers fail `terraform init` for everyone. Retag them to the release, "
+                "or restore the branch." % (where, "s" if len(mods) == 1 else "", ref, REMOTE_URL)
+            )
+            # On main it is an outage and the build goes red. Inside an unrelated PR it is a
+            # warning: that PR did not cause it, and the push-to-main run is where it must fail.
+            getattr(report, "error" if severity_missing == "error" else "warn")(
+                "<catalog>", "R8", message
+            )
+        elif "tag" not in kinds:
+            report.warn(
+                "<catalog>",
+                "R8",
+                "%s still pin%s branch ?ref=%s — pending the release bump. Do not delete that "
+                "branch until it is retagged." % (where, "s" if len(mods) == 1 else "", ref),
+            )
+    if len(refs) > 1:
+        report.warn(
+            "<catalog>",
+            "R8",
+            "ref pins are mixed (%s) — expected between merges and the next release bump."
+            % ", ".join(sorted(refs)),
+        )
+
+
 def check_refs_exist(refs, report):
     """A pinned ref that was never tagged breaks everything that runs `terraform init`.
 
@@ -1211,7 +1415,41 @@ def main(argv=None):
     parser.add_argument(
         "--strict", action="store_true", help="treat warnings as errors (exit 1 on any finding)"
     )
+    parser.add_argument(
+        "--ref-mode",
+        choices=REF_MODES,
+        default="release",
+        help=(
+            "how strictly to judge ?ref= pins: 'release' (default; uniform and existing — what a "
+            "tag must satisfy), 'pr' (the PR's own branch is allowed), or 'main' (a pending "
+            "release bump is a warning, a ref that no longer exists is an error)"
+        ),
+    )
+    parser.add_argument(
+        "--pr-branch",
+        default="",
+        help="with --ref-mode pr: the pull request's head branch, which wrappers may pin",
+    )
+    parser.add_argument(
+        "--base",
+        default="",
+        help="with --ref-mode pr: the PR's base commit, to tell its own wrappers from inherited ones",
+    )
+    parser.add_argument(
+        "--expect-ref",
+        default="",
+        help=(
+            "with --ref-mode release: the tag about to be created. Every pin must equal it, and it "
+            "is not looked up on the remote, since it does not exist yet"
+        ),
+    )
     args = parser.parse_args(argv)
+    if args.ref_mode == "pr" and not (args.pr_branch and args.base):
+        print("error: --ref-mode pr needs --pr-branch and --base", file=sys.stderr)
+        return 2
+    if args.expect_ref and args.ref_mode != "release":
+        print("error: --expect-ref only applies to --ref-mode release", file=sys.stderr)
+        return 2
 
     root = os.path.abspath(args.root)
     base = os.path.join(root, "frontend", "modules")
@@ -1244,16 +1482,17 @@ def main(argv=None):
     for name in modules:
         validate_module(root, name, report)
 
-    # R8: uniform remote ref across the whole catalog
+    # R8: the remote ref pins, judged by where in the release cycle this run sits.
     refs = collect_catalog_refs(root, modules)
-    if len(refs) > 1:
-        detail = "; ".join(
-            "%s in %s" % (ref, ", ".join(sorted(mods))) for ref, mods in sorted(refs.items())
-        )
-        report.error("<catalog>", "R8", "remote ?ref= pins are not uniform: %s" % detail)
-
-    # R8b: every pinned ref must actually exist on the remote
-    check_refs_exist(refs, report)
+    changed = changed_wrappers(root, args.base) if args.ref_mode == "pr" else None
+    check_ref_policy(
+        refs,
+        report,
+        mode=args.ref_mode,
+        pr_branch=args.pr_branch,
+        changed=changed,
+        expect_ref=args.expect_ref,
+    )
 
     # ---- output ----
     module_order = modules + ["<catalog>"]
