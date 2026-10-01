@@ -43,7 +43,10 @@
             "data_source": {
               "resource": "resources.resourceGroups",
               "params": {},
-              "display": "name"
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
             }
           },
           {
