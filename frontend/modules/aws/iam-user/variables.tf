@@ -1,45 +1,27 @@
-variable "name" {
-  description = "The user's name. Must consist of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-."
+variable "region" {
+  description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "iam-user-default"
+  default     = "us-east-1"
+}
 
-  validation {
-    condition     = can(regex("^[a-zA-Z0-9+=,.@_-]{1,64}$", var.name))
-    error_message = "The user name must be between 1 and 64 characters and consist of alphanumeric characters and/or the symbols: +=,.@_-"
+variable "iam_user" {
+  description = "Map of AWS IAM User configurations to deploy, keyed by username."
+  type = map(object({
+    name                 = optional(string, "iam-user-default")
+    path                 = optional(string, "/")
+    permissions_boundary = optional(string, null)
+    groups               = optional(list(string), [])
+    managed_policy_arns  = optional(list(string), [])
+    tags                 = optional(map(string), {})
+  }))
+  default = {
+    "iam-user-default" = {
+      name                 = "iam-user-default"
+      path                 = "/"
+      permissions_boundary = null
+      groups               = []
+      managed_policy_arns  = []
+      tags                 = {}
+    }
   }
-}
-
-variable "path" {
-  description = "Path in which to create the user. Must begin and end with a forward slash (/)."
-  type        = string
-  default     = "/"
-
-  validation {
-    condition     = can(regex("^(/|(/[a-zA-Z0-9_+=,.@-]+)+/)$", var.path))
-    error_message = "The path must begin and end with a forward slash (/)."
-  }
-}
-
-variable "permissions_boundary" {
-  description = "The ARN of the policy that is used to set the permissions boundary for the user."
-  type        = string
-  default     = null
-}
-
-variable "tags" {
-  description = "A map of tags to assign to the user."
-  type        = map(string)
-  default     = {}
-}
-
-variable "groups" {
-  description = "IAM groups this user belongs to. Authoritative for this user's group membership: do not also manage this same user via another group's own membership list, or the two will fight over it on every apply."
-  type        = list(string)
-  default     = []
-}
-
-variable "managed_policy_arns" {
-  description = "List of IAM managed policy ARNs to attach directly to the user."
-  type        = list(string)
-  default     = []
 }

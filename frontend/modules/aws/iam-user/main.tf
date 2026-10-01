@@ -1,38 +1,15 @@
-################################################################################
-# AWS IAM User Resource
-################################################################################
+/******************************************
+  AWS IAM User Root Module
+ *****************************************/
 
-resource "aws_iam_user" "this" {
-  name                 = var.name
-  path                 = var.path
-  permissions_boundary = var.permissions_boundary
+module "iam_user" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/iam-user?ref=v0.8.4"
+  for_each = var.iam_user
 
-  tags = merge(
-    var.tags,
-    {
-      Name = var.name
-    }
-  )
-}
-
-################################################################################
-# Group Membership
-################################################################################
-
-resource "aws_iam_user_group_membership" "this" {
-  count = length(var.groups) > 0 ? 1 : 0
-
-  user   = aws_iam_user.this.name
-  groups = var.groups
-}
-
-################################################################################
-# Managed Policy Attachments
-################################################################################
-
-resource "aws_iam_user_policy_attachment" "this" {
-  for_each = toset(var.managed_policy_arns)
-
-  user       = aws_iam_user.this.name
-  policy_arn = each.value
+  name                 = coalesce(each.value.name, each.key)
+  path                 = each.value.path
+  permissions_boundary = each.value.permissions_boundary
+  groups               = each.value.groups
+  managed_policy_arns  = each.value.managed_policy_arns
+  tags                 = each.value.tags
 }

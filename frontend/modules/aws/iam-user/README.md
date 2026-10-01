@@ -1,77 +1,61 @@
-# AWS IAM User Terraform Module
+# AWS IAM User Root Module
 
-This module provisions an AWS Identity and Access Management (IAM) User with configurable paths, permissions boundaries, and tags.
+This is the Sela Craft frontend root module for deploying one or more AWS IAM Users. It wraps the [`modules/aws/iam-user`](../../../../modules/aws/iam-user) child module using Terraform's `for_each` meta-argument.
 
-## Features
+## Architecture
 
-- **Custom Path Hierarchy**: Organize IAM users within organizational paths (e.g., `/engineering/`, `/service-accounts/`).
-- **Permissions Boundary Enforcement**: Support for attaching a permissions boundary policy ARN to restrict maximum allowable permissions.
-- **Name Validation**: Enforces AWS naming conventions for IAM usernames (1 to 64 alphanumeric characters and symbols `+=,.@_-`).
-- **Standard Tagging**: Built-in tagging merged with the `Name` identifier tag.
-
-## Usage
-
-### Basic Usage
-
-```hcl
-module "iam_user" {
-  source = "../../modules/aws/iam-user"
-
-  name = "john.doe"
-
-  tags = {
-    Department  = "Engineering"
-    Environment = "production"
-  }
-}
+```
+frontend/modules/aws/iam-user (Root Wrapper Module)
+  │ (for_each = var.iam_user)
+  ▼
+modules/aws/iam-user (Child Module)
+  ├── aws_iam_user
+  ├── aws_iam_user_group_membership (optional)
+  └── aws_iam_user_policy_attachment (optional)
 ```
 
-### Full Configuration (Service Account User with Permissions Boundary)
+## Quick Start
 
-```hcl
-module "service_user" {
-  source = "../../modules/aws/iam-user"
+1. Copy `terraform.tfvars.example` to `terraform.tfvars` and customize:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-  name                 = "cicd-deployer"
-  path                 = "/automation/"
-  permissions_boundary = "arn:aws:iam::123456789012:policy/DeveloperBoundary"
+2. Initialize Terraform:
+   ```bash
+   terraform init
+   ```
 
-  tags = {
-    Team        = "DevOps"
-    Purpose     = "CI/CD Deployment"
-    Environment = "production"
-  }
-}
-```
+3. Review execution plan:
+   ```bash
+   terraform plan
+   ```
 
-## Requirements
+4. Apply changes:
+   ```bash
+   terraform apply
+   ```
 
-| Name | Version |
-|------|---------|
-| terraform | >= 1.5.0 |
-| aws | >= 5.0 |
-
-## Providers
-
-| Name | Version |
-|------|---------|
-| aws | >= 5.0 |
-
-## Inputs
+## Input Variables
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| name | The user's name (1 to 64 alphanumeric chars and `+=,.@_-`). | `string` | `"iam-user-default"` | no |
-| path | Path in which to create the user. Must begin and end with `/`. | `string` | `"/"` | no |
-| permissions_boundary | The ARN of the policy that is used to set the permissions boundary for the user. | `string` | `null` | no |
-| tags | A map of tags to assign to the user. | `map(string)` | `{}` | no |
+| `region` | The AWS region where resources will be provisioned | `string` | `"us-east-1"` | yes |
+| `iam_user` | Map of AWS IAM User configurations to deploy, keyed by username | `map(object({...}))` | Sample default IAM User | no |
+
+### User Configuration Object Schema (`iam_user`)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `string` | `"iam-user-default"` | The user's name (1 to 64 alphanumeric characters and symbols `+=,.@_-`). |
+| `path` | `string` | `"/"` | Path in which to create the user (must begin and end with `/`). |
+| `permissions_boundary` | `string` | `null` | The ARN of the policy that sets the permissions boundary for the user. |
+| `groups` | `list(string)` | `[]` | IAM groups this user belongs to. Authoritative for group membership. |
+| `managed_policy_arns` | `list(string)` | `[]` | List of IAM managed policy ARNs to attach directly to the user. |
+| `tags` | `map(string)` | `{}` | Key-value tags assigned to the IAM user. |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| id | The user's name. |
-| arn | The Amazon Resource Name (ARN) assigned by AWS for this user. |
-| name | The user's name. |
-| unique_id | The unique ID assigned by AWS for this user. |
-| tags_all | A map of tags assigned to the resource, including those inherited from the provider default_tags. |
+| `iam_user` | Map of created IAM Users and their attributes (`id`, `arn`, `name`, `unique_id`, `tags_all`, `groups`, `policy_attachments`). |
