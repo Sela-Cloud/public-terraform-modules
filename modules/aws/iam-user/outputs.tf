@@ -22,3 +22,13 @@ output "tags_all" {
   description = "A map of tags assigned to the resource, including those inherited from the provider default_tags."
   value       = aws_iam_user.this.tags_all
 }
+
+output "groups" {
+  description = "A list of IAM groups this user belongs to."
+  value       = var.groups
+}
+
+output "policy_attachments" {
+  description = "A list of policy ARNs attached to the IAM user."
+  value       = [for k, v in aws_iam_user_policy_attachment.this : v.policy_arn]
+}

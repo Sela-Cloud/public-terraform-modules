@@ -6,6 +6,14 @@ iam_user = {
     path                 = "/engineering/"
     permissions_boundary = null
 
+    groups = [
+      "developers"
+    ]
+
+    managed_policy_arns = [
+      "arn:aws:iam::aws:policy/PowerUserAccess"
+    ]
+
     tags = {
       Environment = "development"
       Department  = "Engineering"
@@ -18,6 +26,12 @@ iam_user = {
     name                 = "cicd-deployer"
     path                 = "/automation/"
     permissions_boundary = "arn:aws:iam::123456789012:policy/DeveloperBoundary"
+
+    groups = [
+      "deployers"
+    ]
+
+    managed_policy_arns = []
 
     tags = {
       Environment = "production"

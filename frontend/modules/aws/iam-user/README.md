@@ -9,7 +9,9 @@ frontend/modules/aws/iam-user (Root Wrapper Module)
   │ (for_each = var.iam_user)
   ▼
 modules/aws/iam-user (Child Module)
-  └── aws_iam_user
+  ├── aws_iam_user
+  ├── aws_iam_user_group_membership (optional)
+  └── aws_iam_user_policy_attachment (optional)
 ```
 
 ## Quick Start
@@ -48,10 +50,12 @@ modules/aws/iam-user (Child Module)
 | `name` | `string` | `"iam-user-default"` | The user's name (1 to 64 alphanumeric characters and symbols `+=,.@_-`). |
 | `path` | `string` | `"/"` | Path in which to create the user (must begin and end with `/`). |
 | `permissions_boundary` | `string` | `null` | The ARN of the policy that sets the permissions boundary for the user. |
+| `groups` | `list(string)` | `[]` | IAM groups this user belongs to. Authoritative for group membership. |
+| `managed_policy_arns` | `list(string)` | `[]` | List of IAM managed policy ARNs to attach directly to the user. |
 | `tags` | `map(string)` | `{}` | Key-value tags assigned to the IAM user. |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| `iam_user` | Map of created IAM Users and their attributes (id, arn, name, unique_id, tags_all, etc.) |
+| `iam_user` | Map of created IAM Users and their attributes (`id`, `arn`, `name`, `unique_id`, `tags_all`, `groups`, `policy_attachments`). |
