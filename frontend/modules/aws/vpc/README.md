@@ -39,10 +39,10 @@ modules/aws/vpc (Child Module)
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | `region` | The AWS region where resources will be provisioned | `string` | `"us-east-1"` | yes |
-| `vpc` | Map of VPC configurations to deploy, keyed by VPC name | `map(object({...}))` | Sample default VPC | no |
+| `vpc` | Map of VPC configurations to deploy, keyed by VPC name | `map(object({...}))` | Default map with `vpc-default` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| `vpc` | Map of created VPCs and their detailed attributes (id, arn, cidr_block, main_route_table_id, default_security_group_id, etc.) |
+| `vpc` | Map of created VPCs and their detailed attributes (`id`, `arn`, `cidr_block`, `main_route_table_id`, `default_security_group_id`, etc.) |

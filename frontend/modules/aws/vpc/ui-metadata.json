@@ -13,10 +13,24 @@
       "id": "region",
       "label": "AWS Region",
       "description": "The AWS region where resources will be provisioned.",
-      "type": "text",
+      "type": "select",
       "required": true,
       "default": "us-east-1",
-      "placeholder": "us-east-1"
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "provides": [
+    {
+      "data_source": "ec2.vpcs",
+      "value_field": "name"
     }
   ],
   "resource": {
@@ -50,7 +64,7 @@
             "label": "IPv4 CIDR Block",
             "description": "The primary IPv4 network range for the VPC in CIDR notation (e.g. 10.0.0.0/16).",
             "type": "text",
-            "required": true,
+            "required": false,
             "default": "10.0.0.0/16",
             "placeholder": "10.0.0.0/16",
             "validation": {
@@ -68,11 +82,13 @@
             "options": [
               {
                 "value": "default",
-                "label": "Shared (Default)"
+                "label": "Shared (Default)",
+                "description": "Instances run on shared host hardware."
               },
               {
                 "value": "dedicated",
-                "label": "Dedicated (Single-Tenant Hardware)"
+                "label": "Dedicated (Single-Tenant Hardware)",
+                "description": "Instances run on dedicated single-tenant host hardware."
               }
             ]
           }
