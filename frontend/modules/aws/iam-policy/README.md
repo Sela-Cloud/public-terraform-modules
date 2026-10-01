@@ -1,102 +1,60 @@
-# AWS IAM Policy Terraform Module
+# AWS IAM Policy Root Module
 
-This module provisions an AWS Identity and Access Management (IAM) Managed Policy with configurable policy documents, paths, name prefixes, creation delays, and tags.
+This is the Sela Craft frontend root module for deploying one or more AWS IAM Managed Policies. It wraps the [`modules/aws/iam-policy`](../../../../modules/aws/iam-policy) child module using Terraform's `for_each` meta-argument.
 
-## Features
+## Architecture
 
-- **JSON Policy Validation**: Validates that the provided policy document is a valid JSON formatted string.
-- **Custom Path Hierarchy**: Organize IAM policies within organizational paths (e.g., `/engineering/`, `/security/`).
-- **Flexible Naming**: Supports explicit policy names or automated unique naming via `name_prefix`.
-- **Latency Consistency Handling**: Optional creation delay (`delay_after_policy_creation_in_ms`) for high-latency environments.
-- **Standard Tagging**: Built-in tagging merged with the `Name` identifier tag.
-
-## Usage
-
-### Basic Usage
-
-```hcl
-module "iam_policy" {
-  source = "../../modules/aws/iam-policy"
-
-  name        = "s3-read-only"
-  description = "Allows read-only access to S3 buckets"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["s3:Get*", "s3:List*"]
-        Resource = "*"
-      }
-    ]
-  })
-
-  tags = {
-    Environment = "production"
-    ManagedBy   = "Terraform"
-  }
-}
+```
+frontend/modules/aws/iam-policy (Root Wrapper Module)
+  │ (for_each = var.iam_policy)
+  ▼
+modules/aws/iam-policy (Child Module)
+  └── aws_iam_policy
 ```
 
-### Usage with Name Prefix and Custom Path
+## Quick Start
 
-```hcl
-module "dynamodb_policy" {
-  source = "../../modules/aws/iam-policy"
+1. Copy `terraform.tfvars.example` to `terraform.tfvars` and customize:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-  name_prefix = "dynamodb-app-"
-  path        = "/app-permissions/"
-  description = "DynamoDB read/write access policy"
+2. Initialize Terraform:
+   ```bash
+   terraform init
+   ```
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem"]
-        Resource = "arn:aws:dynamodb:*:*:table/app-*"
-      }
-    ]
-  })
-}
-```
+3. Review execution plan:
+   ```bash
+   terraform plan
+   ```
 
-## Requirements
+4. Apply changes:
+   ```bash
+   terraform apply
+   ```
 
-| Name | Version |
-|------|---------|
-| terraform | >= 1.5.0 |
-| aws | >= 5.0 |
-
-## Providers
-
-| Name | Version |
-|------|---------|
-| aws | >= 5.0 |
-
-## Inputs
+## Input Variables
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| name | Friendly name of the policy (1 to 128 characters, alphanumeric and `+=,.@_-`). Conflicts with `name_prefix`. | `string` | `"iam-policy-default"` | no |
-| name_prefix | Creates a unique name beginning with the specified prefix. Conflicts with `name`. | `string` | `null` | no |
-| description | Description of the IAM policy. | `string` | `"Managed by Terraform"` | no |
-| path | Path in which to create the policy. Must begin and end with `/`. | `string` | `"/"` | no |
-| policy | The policy document as a valid JSON formatted string. | `string` | CloudWatch Logs access policy | no |
-| delay_after_policy_creation_in_ms | Number of milliseconds to wait between creating the policy and setting its version as default. | `number` | `null` | no |
-| tags | A map of tags to assign to the policy. | `map(string)` | `{}` | no |
+| `region` | The AWS region where resources will be provisioned | `string` | `"us-east-1"` | yes |
+| `iam_policy` | Map of AWS IAM Policy configurations to deploy, keyed by policy name | `map(object({...}))` | Sample default IAM Policy | no |
+
+### Policy Configuration Object Schema (`iam_policy`)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `string` | `"iam-policy-default"` | Friendly name of the policy (1 to 128 alphanumeric characters and symbols `+=,.@_-`). Conflicts with `name_prefix`. |
+| `name_prefix` | `string` | `null` | Creates a unique friendly name beginning with the specified prefix. Conflicts with `name`. |
+| `description` | `string` | `"Managed by Terraform"` | Description of the policy's purpose and usage. |
+| `path` | `string` | `"/"` | Path in which to create the policy (must begin and end with `/`). |
+| `policy` | `string` | Default CloudWatch Logs access document | Valid JSON formatted policy document specifying permissions. |
+| `delay_after_policy_creation_in_ms` | `number` | `null` | Optional delay in milliseconds after policy creation. |
+| `tags` | `map(string)` | `{}` | Key-value tags assigned to the IAM policy. |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| id | The policy's ID (ARN). |
-| arn | The Amazon Resource Name (ARN) assigned by AWS for this policy. |
-| name | The name of the policy. |
-| description | The description of the policy. |
-| path | The path of the policy. |
-| policy | The policy document. |
-| policy_id | The policy's unique ID. |
-| attachment_count | The number of entities (users, groups, and roles) that the policy is attached to. |
-| tags_all | A map of tags assigned to the resource, including those inherited from provider default_tags. |
+| `iam_policy` | Map of created IAM Policies and their attributes (`id`, `arn`, `name`, `description`, `path`, `policy`, `policy_id`, `attachment_count`, `tags_all`). |

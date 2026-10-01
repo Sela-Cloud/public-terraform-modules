@@ -1,19 +1,16 @@
-################################################################################
-# AWS IAM Policy Resource
-################################################################################
+/******************************************
+  AWS IAM Policy Root Module
+ *****************************************/
 
-resource "aws_iam_policy" "this" {
-  name                              = var.name_prefix == null ? var.name : null
-  name_prefix                       = var.name_prefix
-  description                       = var.description
-  path                              = var.path
-  policy                            = var.policy
-  delay_after_policy_creation_in_ms = var.delay_after_policy_creation_in_ms
+module "iam_policy" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/iam-policy?ref=v0.8.4"
+  for_each = var.iam_policy
 
-  tags = merge(
-    var.tags,
-    var.name != null && var.name_prefix == null ? {
-      Name = var.name
-    } : {}
-  )
+  name                              = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)
+  name_prefix                       = each.value.name_prefix
+  description                       = each.value.description
+  path                              = each.value.path
+  policy                            = each.value.policy
+  delay_after_policy_creation_in_ms = each.value.delay_after_policy_creation_in_ms
+  tags                              = each.value.tags
 }
