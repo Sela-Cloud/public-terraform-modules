@@ -1,0 +1,33 @@
+module "postgresql_flexible_server" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/postgresql-flexible-server?ref=azure-wip"
+  for_each = var.postgresql_flexible_server
+
+  name                              = each.value.name
+  resource_group_name               = each.value.resource_group_name
+  location                          = each.value.location
+  administrator_login               = each.value.administrator_login
+  administrator_password            = each.value.administrator_password
+  sku_name                          = each.value.sku_name
+  server_version                    = each.value.server_version
+  storage_mb                        = each.value.storage_mb
+  storage_tier                      = each.value.storage_tier
+  auto_grow_enabled                 = each.value.auto_grow_enabled
+  backup_retention_days             = each.value.backup_retention_days
+  geo_redundant_backup_enabled      = each.value.geo_redundant_backup_enabled
+  delegated_subnet_id               = each.value.delegated_subnet_id
+  private_dns_zone_id               = each.value.private_dns_zone_id
+  public_network_access_enabled     = each.value.public_network_access_enabled
+  zone                              = each.value.zone
+  create_mode                       = each.value.create_mode
+  point_in_time_restore_time_in_utc = each.value.point_in_time_restore_time_in_utc
+  source_server_id                  = each.value.source_server_id
+  replication_role                  = each.value.replication_role
+  high_availability                 = each.value.high_availability
+  maintenance_window                = each.value.maintenance_window
+  authentication                    = each.value.authentication
+  identity                          = each.value.identity
+  databases                         = each.value.databases
+  firewall_rules                    = each.value.firewall_rules
+  server_parameters                 = each.value.server_parameters
+  tags                              = each.value.tags
+}
