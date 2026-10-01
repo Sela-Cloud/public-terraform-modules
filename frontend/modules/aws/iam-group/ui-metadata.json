@@ -13,10 +13,24 @@
       "id": "region",
       "label": "AWS Region",
       "description": "The AWS region where resources will be provisioned.",
-      "type": "text",
+      "type": "select",
       "required": true,
       "default": "us-east-1",
-      "placeholder": "us-east-1"
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "provides": [
+    {
+      "data_source": "iam.groups",
+      "value_field": "name"
     }
   ],
   "resource": {
@@ -74,8 +88,16 @@
             "default": [],
             "data_source": {
               "resource": "iam.policies",
-              "params": { "scope": { "static": "local" } },
-              "display": { "value_key": "id", "label_key": "name", "description_key": "arn" },
+              "params": {
+                "scope": {
+                  "static": "local"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "arn"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -84,7 +106,8 @@
       },
       {
         "id": "membership",
-        "label": "Membership",
+        "label": "Group Membership",
+        "description": "Manage IAM user memberships directly within this group.",
         "fields": [
           {
             "id": "users",
@@ -96,7 +119,10 @@
             "data_source": {
               "resource": "iam.users",
               "params": {},
-              "display": { "value_key": "id", "label_key": "name" },
+              "display": {
+                "value_key": "id",
+                "label_key": "name"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }

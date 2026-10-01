@@ -10,7 +10,8 @@ frontend/modules/aws/iam-group (Root Wrapper Module)
   ▼
 modules/aws/iam-group (Child Module)
   ├── aws_iam_group
-  └── aws_iam_group_policy_attachment (optional)
+  ├── aws_iam_group_policy_attachment (optional)
+  └── aws_iam_group_membership (optional)
 ```
 
 ## Quick Start
@@ -40,7 +41,7 @@ modules/aws/iam-group (Child Module)
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | `region` | The AWS region where resources will be provisioned | `string` | `"us-east-1"` | yes |
-| `iam_group` | Map of AWS IAM Group configurations to deploy, keyed by group name | `map(object({...}))` | Sample default IAM Group | no |
+| `iam_group` | Map of AWS IAM Group configurations to deploy, keyed by group name | `map(object({...}))` | Default map with `iam-group-default` | no |
 
 ### Group Configuration Object Schema (`iam_group`)
 
@@ -49,6 +50,7 @@ modules/aws/iam-group (Child Module)
 | `name` | `string` | `"iam-group-default"` | The group's name (1 to 128 alphanumeric characters and symbols `+=,.@_-`). |
 | `path` | `string` | `"/"` | Path in which to create the group (must begin and end with `/`). |
 | `managed_policy_arns` | `list(string)` | `[]` | List of AWS managed or customer managed policy ARNs to attach to the group. |
+| `users` | `list(string)` | `[]` | List of IAM user names who are members of this group. |
 
 ## Outputs
 

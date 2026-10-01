@@ -22,3 +22,8 @@ output "policy_attachments" {
   description = "A list of policy ARNs attached to the IAM group."
   value       = [for k, v in aws_iam_group_policy_attachment.this : v.policy_arn]
 }
+
+output "users" {
+  description = "List of IAM users who are members of this group."
+  value       = var.users
+}
