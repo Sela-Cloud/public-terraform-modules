@@ -3,7 +3,7 @@
  *****************************************/
 
 module "iam_policy" {
-  source   = "../../../../modules/aws/iam-policy"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/iam-policy?ref=v0.8.4"
   for_each = var.iam_policy
 
   name                              = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)
