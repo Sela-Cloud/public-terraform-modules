@@ -1,67 +1,59 @@
-# AWS IAM Group Terraform Module
+# AWS IAM Group Root Module
 
-This module provisions an AWS Identity and Access Management (IAM) Group with configurable paths and managed policy attachments.
+This is the Sela Craft frontend root module for deploying one or more AWS IAM Groups. It wraps the [`modules/aws/iam-group`](../../../../modules/aws/iam-group) child module using Terraform's `for_each` meta-argument.
 
-## Features
+## Architecture
 
-- **Custom Path Hierarchy**: Organize IAM groups within organizational paths (e.g., `/engineering/`, `/administrators/`).
-- **Name Validation**: Enforces AWS naming conventions for IAM group names (1 to 128 alphanumeric characters and symbols `+=,.@_-`).
-- **Policy Attachments**: Optional attachment of AWS managed or custom IAM policy ARNs directly to the group.
-
-## Usage
-
-### Basic Usage
-
-```hcl
-module "iam_group" {
-  source = "../../modules/aws/iam-group"
-
-  name = "developers"
-}
+```
+frontend/modules/aws/iam-group (Root Wrapper Module)
+  │ (for_each = var.iam_group)
+  ▼
+modules/aws/iam-group (Child Module)
+  ├── aws_iam_group
+  ├── aws_iam_group_policy_attachment (optional)
+  └── aws_iam_group_membership (optional)
 ```
 
-### Full Configuration (Group with Custom Path and Attached Policies)
+## Quick Start
 
-```hcl
-module "admin_group" {
-  source = "../../modules/aws/iam-group"
+1. Copy `terraform.tfvars.example` to `terraform.tfvars` and customize:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-  name = "administrators"
-  path = "/operations/"
+2. Initialize Terraform:
+   ```bash
+   terraform init
+   ```
 
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AdministratorAccess"
-  ]
-}
-```
+3. Review execution plan:
+   ```bash
+   terraform plan
+   ```
 
-## Requirements
+4. Apply changes:
+   ```bash
+   terraform apply
+   ```
 
-| Name | Version |
-|------|---------|
-| terraform | >= 1.5.0 |
-| aws | >= 5.0 |
-
-## Providers
-
-| Name | Version |
-|------|---------|
-| aws | >= 5.0 |
-
-## Inputs
+## Input Variables
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| name | The group's name (1 to 128 alphanumeric characters and symbols `+=,.@_-`). | `string` | `"iam-group-default"` | no |
-| path | Path in which to create the group. Must begin and end with `/`. | `string` | `"/"` | no |
-| managed_policy_arns | List of IAM policy ARNs to attach to the IAM group. | `list(string)` | `[]` | no |
+| `region` | The AWS region where resources will be provisioned | `string` | `"us-east-1"` | yes |
+| `iam_group` | Map of AWS IAM Group configurations to deploy, keyed by group name | `map(object({...}))` | Default map with `iam-group-default` | no |
+
+### Group Configuration Object Schema (`iam_group`)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `string` | `"iam-group-default"` | The group's name (1 to 128 alphanumeric characters and symbols `+=,.@_-`). |
+| `path` | `string` | `"/"` | Path in which to create the group (must begin and end with `/`). |
+| `managed_policy_arns` | `list(string)` | `[]` | List of AWS managed or customer managed policy ARNs to attach to the group. |
+| `users` | `list(string)` | `[]` | List of IAM user names who are members of this group. |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| id | The group's name. |
-| arn | The Amazon Resource Name (ARN) assigned by AWS for this group. |
-| name | The group's name. |
-| unique_id | The unique ID assigned by AWS for this group. |
-| policy_attachments | A list of policy ARNs attached to the IAM group. |
+| `iam_group` | Map of created IAM Groups and their attributes (`id`, `arn`, `name`, `unique_id`, `policy_attachments`). |

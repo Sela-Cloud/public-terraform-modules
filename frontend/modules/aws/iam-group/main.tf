@@ -1,31 +1,13 @@
-################################################################################
-# AWS IAM Group Resource
-################################################################################
+/******************************************
+  AWS IAM Group Root Module
+ *****************************************/
 
-resource "aws_iam_group" "this" {
-  name = var.name
-  path = var.path
-}
+module "iam_group" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/iam-group?ref=v0.8.4"
+  for_each = var.iam_group
 
-################################################################################
-# AWS IAM Group Policy Attachments
-################################################################################
-
-resource "aws_iam_group_policy_attachment" "this" {
-  for_each = toset(var.managed_policy_arns)
-
-  group      = aws_iam_group.this.name
-  policy_arn = each.value
-}
-
-################################################################################
-# Group Membership
-################################################################################
-
-resource "aws_iam_group_membership" "this" {
-  count = length(var.users) > 0 ? 1 : 0
-
-  name  = "${var.name}-membership"
-  group = aws_iam_group.this.name
-  users = var.users
+  name                = coalesce(each.value.name, each.key)
+  path                = each.value.path
+  managed_policy_arns = each.value.managed_policy_arns
+  users               = each.value.users
 }

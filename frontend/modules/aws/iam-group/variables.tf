@@ -1,33 +1,23 @@
-variable "name" {
-  description = "The group's name. Must consist of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-."
+variable "region" {
+  description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "iam-group-default"
+  default     = "us-east-1"
+}
 
-  validation {
-    condition     = can(regex("^[a-zA-Z0-9+=,.@_-]{1,128}$", var.name))
-    error_message = "The group name must be between 1 and 128 characters and consist of alphanumeric characters and/or the symbols: +=,.@_-"
+variable "iam_group" {
+  description = "Map of AWS IAM Group configurations to deploy, keyed by group name."
+  type = map(object({
+    name                = optional(string, "iam-group-default")
+    path                = optional(string, "/")
+    managed_policy_arns = optional(list(string), [])
+    users               = optional(list(string), [])
+  }))
+  default = {
+    "iam-group-default" = {
+      name                = "iam-group-default"
+      path                = "/"
+      managed_policy_arns = []
+      users               = []
+    }
   }
-}
-
-variable "path" {
-  description = "Path in which to create the group. Must begin and end with a forward slash (/)."
-  type        = string
-  default     = "/"
-
-  validation {
-    condition     = can(regex("^(/|(/[a-zA-Z0-9_+=,.@-]+)+/)$", var.path))
-    error_message = "The path must begin and end with a forward slash (/)."
-  }
-}
-
-variable "managed_policy_arns" {
-  description = "List of IAM policy ARNs to attach to the IAM group."
-  type        = list(string)
-  default     = []
-}
-
-variable "users" {
-  description = "IAM users who are members of this group. Authoritative for this group's membership: do not also manage the same user via their own user-side groups list, or the two will fight over it on every apply."
-  type        = list(string)
-  default     = []
 }
