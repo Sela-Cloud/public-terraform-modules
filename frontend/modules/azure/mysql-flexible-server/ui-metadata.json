@@ -1,0 +1,244 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "mysql-flexible-server",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Database for MySQL Flexible Server",
+    "icon": "mysql",
+    "description": "Fully managed MySQL database service with zone redundancy, autoscale storage, and private networking.",
+    "category": "database"
+  },
+  "resource": {
+    "variable": "mysql_flexible_server",
+    "key_field": "name",
+    "key_label": "MySQL Server Name",
+    "key_description": "The unique name for the MySQL Flexible Server. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Server identity, region, and credentials.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Server Name",
+            "description": "Name of the MySQL Flexible Server. Must be between 3 and 63 characters.",
+            "type": "text",
+            "required": true,
+            "placeholder": "mysql-my-workload"
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the server.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the MySQL Flexible Server should be created.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" },
+              { "value": "israelcentral", "label": "Israel Central (Tel Aviv)" }
+            ]
+          },
+          {
+            "id": "administrator_login",
+            "label": "Administrator Login",
+            "description": "Administrator username for the MySQL server.",
+            "type": "text",
+            "default": "mysqladmin"
+          },
+          {
+            "id": "administrator_password",
+            "label": "Administrator Password",
+            "description": "Administrator password for the MySQL server.",
+            "type": "text"
+          },
+          {
+            "id": "zone",
+            "label": "Availability Zone",
+            "description": "Specifies the Availability Zone in which this server should be located (e.g. 1, 2, 3).",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "compute_and_storage",
+        "label": "Compute & Storage",
+        "description": "SKU size, MySQL version, and storage configurations.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "sku_name",
+            "label": "Compute Tier / SKU",
+            "description": "Compute tier and size for the MySQL Flexible Server.",
+            "type": "select",
+            "required": true,
+            "default": "B_Standard_B1ms",
+            "options": [
+              { "value": "B_Standard_B1ms", "label": "Burstable B1ms (1 vCore, 2 GiB RAM)" },
+              { "value": "B_Standard_B2s", "label": "Burstable B2s (2 vCores, 4 GiB RAM)" },
+              { "value": "GP_Standard_D2ds_v4", "label": "General Purpose D2ds_v4 (2 vCores, 8 GiB RAM)" },
+              { "value": "GP_Standard_D4ds_v4", "label": "General Purpose D4ds_v4 (4 vCores, 16 GiB RAM)" },
+              { "value": "GP_Standard_D8ds_v4", "label": "General Purpose D8ds_v4 (8 vCores, 32 GiB RAM)" },
+              { "value": "MO_Standard_E2ds_v4", "label": "Memory Optimized E2ds_v4 (2 vCores, 16 GiB RAM)" },
+              { "value": "MO_Standard_E4ds_v4", "label": "Memory Optimized E4ds_v4 (4 vCores, 32 GiB RAM)" }
+            ]
+          },
+          {
+            "id": "server_version",
+            "label": "MySQL Version",
+            "description": "Major engine version of MySQL.",
+            "type": "select",
+            "required": true,
+            "default": "8.0.21",
+            "options": [
+              { "value": "8.0.21", "label": "MySQL 8.0" },
+              { "value": "5.7", "label": "MySQL 5.7" }
+            ]
+          },
+          {
+            "id": "storage",
+            "label": "Storage Configuration",
+            "description": "Storage capacity and scaling settings.",
+            "type": "object",
+            "fields": [
+              {
+                "id": "size_gb",
+                "label": "Storage Size (GB)",
+                "description": "Max storage allowed for the server in GB (20 to 16384).",
+                "type": "number",
+                "default": 20
+              },
+              {
+                "id": "iops",
+                "label": "IOPS",
+                "description": "Storage IOPS for the server (360 to 20000).",
+                "type": "number",
+                "default": 360
+              },
+              {
+                "id": "auto_grow_enabled",
+                "label": "Enable Auto-Grow",
+                "description": "Enable storage auto-grow when disk capacity reaches limit.",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "io_scaling_enabled",
+                "label": "Enable IO Scaling",
+                "description": "Enable dynamic IO scaling.",
+                "type": "boolean",
+                "default": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "backup_and_ha",
+        "label": "Backup & High Availability",
+        "description": "Automated backups and disaster recovery settings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "backup_retention_days",
+            "label": "Backup Retention Days",
+            "description": "Number of days retention for automated backups (1 to 35).",
+            "type": "number",
+            "default": 7
+          },
+          {
+            "id": "geo_redundant_backup_enabled",
+            "label": "Geo-Redundant Backup",
+            "description": "Whether geo-redundant backups are enabled.",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Networking & Private Access",
+        "description": "Public network toggle and VNet delegated subnet integration.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "public_network_access",
+            "label": "Public Network Access",
+            "description": "Whether public network access is enabled.",
+            "type": "select",
+            "default": "Enabled",
+            "options": [
+              { "value": "Enabled", "label": "Enabled" },
+              { "value": "Disabled", "label": "Disabled (VNet Integration)" }
+            ]
+          },
+          {
+            "id": "delegated_subnet_id",
+            "label": "Delegated Subnet ID",
+            "description": "Subnet ID delegated to Microsoft.DBforMySQL/flexibleServers for private access.",
+            "type": "text"
+          },
+          {
+            "id": "private_dns_zone_id",
+            "label": "Private DNS Zone ID",
+            "description": "Private DNS zone resource ID for private VNet resolution.",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for governance and cost tracking.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value pairs to assign to the MySQL Flexible Server.",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}
