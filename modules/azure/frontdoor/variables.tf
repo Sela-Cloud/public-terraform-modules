@@ -85,17 +85,17 @@ variable "load_balancer_enabled" {
 variable "backend_pool_load_balancing" {
   description = "(Optional) A list of backend_pool_load_balancing blocks. Defaults to standard load balancing settings."
   type = list(object({
-    name                                    = string
-    sample_size                             = optional(number, 4)
-    successful_samples_required             = optional(number, 2)
-    additional_latency_enforce_milliseconds = optional(number, 0)
+    name                            = string
+    sample_size                     = optional(number, 4)
+    successful_samples_required     = optional(number, 2)
+    additional_latency_milliseconds = optional(number, 0)
   }))
   default = [
     {
-      name                                    = "defaultLoadBalancingSettings"
-      sample_size                             = 4
-      successful_samples_required             = 2
-      additional_latency_enforce_milliseconds = 0
+      name                            = "defaultLoadBalancingSettings"
+      sample_size                     = 4
+      successful_samples_required     = 2
+      additional_latency_milliseconds = 0
     }
   ]
 }

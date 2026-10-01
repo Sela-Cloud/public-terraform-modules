@@ -81,6 +81,26 @@ Azure Front Door provides a scalable and secure entry point for fast delivery of
 | forwarding_configuration | Forwarding configuration block to route to a backend pool. | `object` | `null` | no |
 | redirect_configuration | Redirection configuration block. | `object` | `null` | no |
 
+### Backend Pool Load Balancing Object
+
+| Attribute | Description | Type | Default | Required |
+|-----------|-------------|------|---------|:--------:|
+| name | The name of the load balancing settings block. | `string` | n/a | yes |
+| sample_size | The number of samples to consider for load balancing decisions. | `number` | `4` | no |
+| successful_samples_required | The number of samples within the sample size that must succeed. | `number` | `2` | no |
+| additional_latency_milliseconds | The additional latency tolerance in milliseconds for routing to acceptable backends. | `number` | `0` | no |
+
+### Backend Pool Health Probe Object
+
+| Attribute | Description | Type | Default | Required |
+|-----------|-------------|------|---------|:--------:|
+| name | The name of the health probe settings block. | `string` | n/a | yes |
+| enabled | Is this health probe enabled? | `bool` | `true` | no |
+| path | The path to use for the probe. | `string` | `"/"` | no |
+| protocol | The protocol of the probe (`Http` or `Https`). | `string` | `"Http"` | no |
+| probe_method | The HTTP method to use for the probe (`GET` or `HEAD`). | `string` | `"HEAD"` | no |
+| interval_in_seconds | The number of seconds between each probe. | `number` | `120` | no |
+
 ## Outputs
 
 | Name | Description |
@@ -98,7 +118,7 @@ Azure Front Door provides a scalable and secure entry point for fast delivery of
 
 ```hcl
 module "frontdoor" {
-  source = "../../modules/azure/frontdoor"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/frontdoor?ref=azure-wip"
 
   name                = "contoso-web-fd"
   resource_group_name = "rg-prod-networking"

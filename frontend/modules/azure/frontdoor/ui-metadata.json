@@ -257,7 +257,7 @@
                 "default": 2
               },
               {
-                "id": "additional_latency_enforce_milliseconds",
+                "id": "additional_latency_milliseconds",
                 "label": "Additional Latency Sensitivity (ms)",
                 "description": "The additional latency tolerance in milliseconds for routing to acceptable backends.",
                 "type": "number",

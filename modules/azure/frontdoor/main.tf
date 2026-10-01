@@ -19,10 +19,10 @@ resource "azurerm_frontdoor" "frontdoor" {
   dynamic "backend_pool_load_balancing" {
     for_each = var.backend_pool_load_balancing
     content {
-      name                                    = backend_pool_load_balancing.value.name
-      sample_size                             = backend_pool_load_balancing.value.sample_size
-      successful_samples_required             = backend_pool_load_balancing.value.successful_samples_required
-      additional_latency_enforce_milliseconds = backend_pool_load_balancing.value.additional_latency_enforce_milliseconds
+      name                            = backend_pool_load_balancing.value.name
+      sample_size                     = backend_pool_load_balancing.value.sample_size
+      successful_samples_required     = backend_pool_load_balancing.value.successful_samples_required
+      additional_latency_milliseconds = backend_pool_load_balancing.value.additional_latency_milliseconds
     }
   }
 
