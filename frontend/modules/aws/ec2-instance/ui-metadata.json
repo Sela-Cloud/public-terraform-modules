@@ -15,7 +15,6 @@
       "description": "The AWS region where resources will be provisioned.",
       "type": "text",
       "required": true,
-      "default": "us-east-1",
       "placeholder": "us-east-1"
     }
   ],
@@ -36,7 +35,6 @@
             "description": "Name applied to the instance as a tag and identifier.",
             "type": "text",
             "required": true,
-            "default": "ec2-instance",
             "placeholder": "my-web-server"
           },
           {
