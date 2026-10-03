@@ -1,0 +1,197 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "network-load-balancer",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Network Load Balancer",
+    "icon": "load-balancer",
+    "description": "Provision Amazon Network Load Balancers (NLB) for high-performance Layer 4 (TCP/UDP/TLS) traffic distribution",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "network_load_balancer",
+    "key_field": "name",
+    "key_label": "Load Balancer Name",
+    "key_description": "Unique identifier for the Network Load Balancer, applied as the resource name and map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core load balancer attributes including name, scheme, and IP address type.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Load Balancer Name",
+            "description": "Unique name for the Network Load Balancer (up to 32 alphanumeric characters and hyphens).",
+            "type": "text",
+            "required": true,
+            "default": "prod-nlb",
+            "placeholder": "prod-nlb",
+            "validation": {
+              "min": 1,
+              "max": 32,
+              "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9-]{0,30}[a-zA-Z0-9])?$",
+              "pattern_error": "Name must be 1-32 alphanumeric characters and hyphens, and cannot start or end with a hyphen."
+            }
+          },
+          {
+            "id": "internal",
+            "label": "Internal Load Balancer",
+            "description": "Whether the load balancer is internal (private VPC) or internet-facing (public).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "ip_address_type",
+            "label": "IP Address Type",
+            "description": "The type of IP addresses used by the subnets for your load balancer.",
+            "type": "select",
+            "required": false,
+            "default": "ipv4",
+            "options": [
+              {
+                "value": "ipv4",
+                "label": "IPv4 Only"
+              },
+              {
+                "value": "dualstack",
+                "label": "Dualstack (IPv4 and IPv6)"
+              }
+            ]
+          },
+          {
+            "id": "enable_deletion_protection",
+            "label": "Enable Deletion Protection",
+            "description": "If enabled, protects the load balancer from accidental deletion via the AWS API.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "network",
+        "label": "Networking & Security",
+        "description": "VPC, public/private subnets across multiple AZs, and security groups.",
+        "fields": [
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "description": "The VPC in which to deploy the Network Load Balancer.",
+            "type": "select",
+            "required": true,
+            "placeholder": "vpc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnets",
+            "label": "Subnets",
+            "description": "List of at least two public or private subnets in different Availability Zones.",
+            "type": "list",
+            "required": true,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "id",
+                "description_key": "availabilityZone"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "create_security_group",
+            "label": "Create Dedicated Security Group",
+            "description": "Automatically provision a dedicated Security Group for the NLB.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "security_groups",
+            "label": "Security Group IDs",
+            "description": "List of existing Security Group IDs to associate with the NLB.",
+            "type": "list",
+            "required": false,
+            "default": []
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced NLB Settings",
+        "description": "Cross-zone load balancing, client routing policy, and keep-alive settings.",
+        "fields": [
+          {
+            "id": "enable_cross_zone_load_balancing",
+            "label": "Cross-Zone Load Balancing",
+            "description": "Distribute traffic evenly across all registered targets in all enabled Availability Zones.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "client_keep_alive",
+            "label": "Client Keep Alive (seconds)",
+            "description": "Client keep-alive timeout duration in seconds (range: 60 to 604800).",
+            "type": "number",
+            "required": false,
+            "default": 3600,
+            "validation": {
+              "min": 60,
+              "max": 604800
+            }
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "User-defined key-value tags to assign to the Network Load Balancer.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value map of resource tags.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

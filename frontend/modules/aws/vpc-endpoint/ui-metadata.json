@@ -1,0 +1,129 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "vpc-endpoint",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS VPC Endpoints",
+    "icon": "endpoint",
+    "description": "Provision Amazon VPC Gateway and Interface (PrivateLink) Endpoints for secure private access to AWS services",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "vpc_endpoint",
+    "key_field": "name",
+    "key_label": "Endpoint Group Name",
+    "key_description": "Unique identifier for the VPC Endpoints deployment group.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "VPC placement and security configuration.",
+        "fields": [
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "description": "The VPC in which to create the VPC Endpoints.",
+            "type": "select",
+            "required": true,
+            "placeholder": "vpc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "create_security_group",
+            "label": "Create Dedicated Security Group",
+            "description": "Automatically provision a dedicated Security Group for Interface endpoints allowing inbound HTTPS (443).",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "security_group_name",
+            "label": "Security Group Name",
+            "description": "Custom name for the dedicated security group (defaults to vpc-endpoints-sg).",
+            "type": "text",
+            "required": false,
+            "placeholder": "vpc-endpoints-sg"
+          }
+        ]
+      },
+      {
+        "id": "network",
+        "label": "Networking & Subnets",
+        "description": "Subnets for Interface endpoints and route tables for Gateway endpoints.",
+        "fields": [
+          {
+            "id": "subnet_ids",
+            "label": "Subnets (Interface Endpoints)",
+            "description": "Subnets across Availability Zones where Interface endpoint ENIs will be deployed.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "id",
+                "description_key": "availabilityZone"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "route_table_ids",
+            "label": "Route Table IDs (Gateway Endpoints)",
+            "description": "Route tables to associate with Gateway endpoints (e.g. S3, DynamoDB).",
+            "type": "list",
+            "required": false,
+            "default": []
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "User-defined key-value tags to assign to the VPC Endpoints.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value map of resource tags.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

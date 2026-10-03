@@ -1,0 +1,231 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "eks",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Elastic Kubernetes Service (EKS)",
+    "icon": "kubernetes",
+    "description": "Provision Amazon EKS Kubernetes clusters with managed node groups, OIDC IRSA, and cluster addons",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "eks",
+    "key_field": "name",
+    "key_label": "Cluster Name",
+    "key_description": "Unique identifier for the EKS Cluster, applied as the resource name and map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Cluster name, Kubernetes version, and control plane settings.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Cluster Name",
+            "description": "Unique name for the EKS cluster (up to 100 alphanumeric characters, hyphens, and underscores).",
+            "type": "text",
+            "required": true,
+            "default": "eks-cluster",
+            "placeholder": "prod-eks-cluster",
+            "validation": {
+              "min": 1,
+              "max": 100,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_]{0,99}$",
+              "pattern_error": "Name must be 1-100 characters, start with an alphanumeric character, and contain only alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "kubernetes_version",
+            "label": "Kubernetes Version",
+            "description": "Desired Kubernetes version for the EKS control plane.",
+            "type": "select",
+            "required": false,
+            "default": "1.31",
+            "options": [
+              {
+                "value": "1.31",
+                "label": "v1.31 (Latest)"
+              },
+              {
+                "value": "1.30",
+                "label": "v1.30"
+              },
+              {
+                "value": "1.29",
+                "label": "v1.29"
+              },
+              {
+                "value": "1.28",
+                "label": "v1.28"
+              }
+            ]
+          },
+          {
+            "id": "authentication_mode",
+            "label": "Authentication Mode",
+            "description": "The authentication mode for the cluster API server.",
+            "type": "select",
+            "required": false,
+            "default": "API_AND_CONFIG_MAP",
+            "options": [
+              {
+                "value": "API_AND_CONFIG_MAP",
+                "label": "API and ConfigMap (Recommended)"
+              },
+              {
+                "value": "API",
+                "label": "EKS API (Access Entries Only)"
+              },
+              {
+                "value": "CONFIG_MAP",
+                "label": "ConfigMap (Legacy aws-auth)"
+              }
+            ]
+          },
+          {
+            "id": "bootstrap_cluster_creator_admin_permissions",
+            "label": "Bootstrap Creator as Cluster Admin",
+            "description": "Automatically grant the IAM principal deploying the cluster administrative permissions via an EKS Access Entry.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "network",
+        "label": "Networking & VPC",
+        "description": "VPC, subnets, and endpoint access controls.",
+        "fields": [
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "description": "The VPC where the cluster control plane and worker nodes reside.",
+            "type": "select",
+            "required": true,
+            "placeholder": "vpc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnet_ids",
+            "label": "Subnets",
+            "description": "List of at least two subnets across different Availability Zones for the control plane and nodes.",
+            "type": "list",
+            "required": true,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "id",
+                "description_key": "availabilityZone"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "endpoint_private_access",
+            "label": "Enable Private Endpoint",
+            "description": "Enable private API server access within the VPC.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "endpoint_public_access",
+            "label": "Enable Public Endpoint",
+            "description": "Enable public Internet access to the Kubernetes API server.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "create_cluster_security_group",
+            "label": "Create Dedicated Security Group",
+            "description": "Create a dedicated Security Group for the EKS Cluster control plane.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "iam",
+        "label": "IAM & Identity",
+        "description": "IAM roles and OIDC identity provider for IAM Roles for Service Accounts (IRSA).",
+        "fields": [
+          {
+            "id": "create_iam_role",
+            "label": "Create Cluster IAM Role",
+            "description": "Automatically provision an IAM role with required AmazonEKSClusterPolicy permissions.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "create_oidc_provider",
+            "label": "Create OIDC Provider (IRSA)",
+            "description": "Enable IAM Roles for Service Accounts (IRSA) via an IAM OpenID Connect identity provider.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "create_node_iam_role",
+            "label": "Create Node IAM Role",
+            "description": "Automatically create an IAM role for worker node groups with standard node policies.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "User-defined key-value tags to assign to the EKS Cluster.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value map of resource tags.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
