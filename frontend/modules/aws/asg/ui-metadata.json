@@ -1,6 +1,6 @@
 {
     "$schema": "../../../ui-metadata.schema.json",
-    "module": "autoscaling-group",
+    "module": "asg",
     "version": "1.0.0",
     "display": {
         "label": "Auto Scaling Group",
@@ -96,7 +96,7 @@
                     {
                         "id": "autoscaling_enabled",
                         "label": "Enable autoscaling",
-                        "description": "When enabled, the group size is driven by the autoscaling policies below and the desired capacity is ignored.",
+                        "description": "When enabled, the group size is driven by the autoscaling policies and the desired capacity is ignored.",
                         "type": "boolean",
                         "default": false
                     },
@@ -143,91 +143,99 @@
                 "collapsed": true,
                 "fields": [
                     {
-                        "id": "update_policy_type",
-                        "label": "Update type",
-                        "type": "select",
-                        "default": "PROACTIVE",
-                        "options": [
+                        "id": "update_policy",
+                        "label": "Update policy",
+                        "type": "object",
+                        "nullable": true,
+                        "fields": [
                             {
-                                "value": "PROACTIVE",
-                                "label": "Proactive (roll out automatically)"
+                                "id": "type",
+                                "label": "Update type",
+                                "type": "select",
+                                "default": "PROACTIVE",
+                                "options": [
+                                    {
+                                        "value": "PROACTIVE",
+                                        "label": "Proactive (roll out automatically)"
+                                    },
+                                    {
+                                        "value": "OPPORTUNISTIC",
+                                        "label": "Opportunistic (apply on next replacement)"
+                                    }
+                                ]
                             },
                             {
-                                "value": "OPPORTUNISTIC",
-                                "label": "Opportunistic (apply on next replacement)"
+                                "id": "minimal_action",
+                                "label": "Minimal action",
+                                "type": "select",
+                                "default": "REPLACE",
+                                "options": [
+                                    {
+                                        "value": "REPLACE",
+                                        "label": "Replace"
+                                    },
+                                    {
+                                        "value": "RESTART",
+                                        "label": "Restart"
+                                    },
+                                    {
+                                        "value": "REFRESH",
+                                        "label": "Refresh"
+                                    },
+                                    {
+                                        "value": "NONE",
+                                        "label": "None"
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "max_surge_fixed",
+                                "label": "Max surge (instances)",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            },
+                            {
+                                "id": "max_surge_percent",
+                                "label": "Max surge (percent)",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0,
+                                    "max": 100
+                                }
+                            },
+                            {
+                                "id": "max_unavailable_fixed",
+                                "label": "Max unavailable (instances)",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            },
+                            {
+                                "id": "max_unavailable_percent",
+                                "label": "Max unavailable (percent)",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0,
+                                    "max": 100
+                                }
+                            },
+                            {
+                                "id": "min_ready_sec",
+                                "label": "Minimum ready time (seconds)",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0
+                                }
                             }
                         ]
-                    },
-                    {
-                        "id": "update_policy_minimal_action",
-                        "label": "Minimal action",
-                        "type": "select",
-                        "default": "REPLACE",
-                        "options": [
-                            {
-                                "value": "REPLACE",
-                                "label": "Replace"
-                            },
-                            {
-                                "value": "RESTART",
-                                "label": "Restart"
-                            },
-                            {
-                                "value": "REFRESH",
-                                "label": "Refresh"
-                            },
-                            {
-                                "value": "NONE",
-                                "label": "None"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "update_policy_max_surge_fixed",
-                        "label": "Max surge (instances)",
-                        "type": "number",
-                        "nullable": true,
-                        "validation": {
-                            "min": 0
-                        }
-                    },
-                    {
-                        "id": "update_policy_max_surge_percent",
-                        "label": "Max surge (percent)",
-                        "type": "number",
-                        "nullable": true,
-                        "validation": {
-                            "min": 0,
-                            "max": 100
-                        }
-                    },
-                    {
-                        "id": "update_policy_max_unavailable_fixed",
-                        "label": "Max unavailable (instances)",
-                        "type": "number",
-                        "nullable": true,
-                        "validation": {
-                            "min": 0
-                        }
-                    },
-                    {
-                        "id": "update_policy_max_unavailable_percent",
-                        "label": "Max unavailable (percent)",
-                        "type": "number",
-                        "nullable": true,
-                        "validation": {
-                            "min": 0,
-                            "max": 100
-                        }
-                    },
-                    {
-                        "id": "update_policy_min_ready_sec",
-                        "label": "Minimum ready time (seconds)",
-                        "type": "number",
-                        "nullable": true,
-                        "validation": {
-                            "min": 0
-                        }
                     }
                 ]
             },
@@ -237,102 +245,110 @@
                 "collapsed": true,
                 "fields": [
                     {
-                        "id": "health_check_type",
-                        "label": "Protocol",
-                        "type": "select",
+                        "id": "health_check",
+                        "label": "Health check",
+                        "type": "object",
                         "nullable": true,
-                        "options": [
+                        "fields": [
                             {
-                                "value": "HTTP",
-                                "label": "HTTP"
+                                "id": "type",
+                                "label": "Protocol",
+                                "type": "select",
+                                "default": "HTTP",
+                                "options": [
+                                    {
+                                        "value": "HTTP",
+                                        "label": "HTTP"
+                                    },
+                                    {
+                                        "value": "HTTPS",
+                                        "label": "HTTPS"
+                                    },
+                                    {
+                                        "value": "HTTP2",
+                                        "label": "HTTP/2"
+                                    },
+                                    {
+                                        "value": "TCP",
+                                        "label": "TCP"
+                                    },
+                                    {
+                                        "value": "SSL",
+                                        "label": "SSL"
+                                    }
+                                ]
                             },
                             {
-                                "value": "HTTPS",
-                                "label": "HTTPS"
+                                "id": "port",
+                                "label": "Port",
+                                "type": "number",
+                                "default": 80,
+                                "validation": {
+                                    "min": 1,
+                                    "max": 65535
+                                }
                             },
                             {
-                                "value": "HTTP2",
-                                "label": "HTTP/2"
+                                "id": "request_path",
+                                "label": "Request path",
+                                "description": "Used by HTTP, HTTPS, and HTTP/2 checks.",
+                                "type": "text",
+                                "default": "/",
+                                "placeholder": "/healthz"
                             },
                             {
-                                "value": "TCP",
-                                "label": "TCP"
+                                "id": "check_interval_sec",
+                                "label": "Check interval (seconds)",
+                                "type": "number",
+                                "default": 30,
+                                "validation": {
+                                    "min": 1
+                                }
                             },
                             {
-                                "value": "SSL",
-                                "label": "SSL"
+                                "id": "timeout_sec",
+                                "label": "Timeout (seconds)",
+                                "type": "number",
+                                "default": 10,
+                                "validation": {
+                                    "min": 1
+                                }
+                            },
+                            {
+                                "id": "healthy_threshold",
+                                "label": "Healthy threshold",
+                                "type": "number",
+                                "default": 2,
+                                "validation": {
+                                    "min": 1
+                                }
+                            },
+                            {
+                                "id": "unhealthy_threshold",
+                                "label": "Unhealthy threshold",
+                                "type": "number",
+                                "default": 3,
+                                "validation": {
+                                    "min": 1
+                                }
+                            },
+                            {
+                                "id": "initial_delay_sec",
+                                "label": "Initial delay (seconds)",
+                                "description": "Grace period after an instance starts before health checks count.",
+                                "type": "number",
+                                "default": 30,
+                                "validation": {
+                                    "min": 0
+                                }
                             }
                         ]
-                    },
-                    {
-                        "id": "health_check_port",
-                        "label": "Port",
-                        "type": "number",
-                        "default": 80,
-                        "validation": {
-                            "min": 1,
-                            "max": 65535
-                        }
-                    },
-                    {
-                        "id": "health_check_request_path",
-                        "label": "Request path",
-                        "description": "Used by HTTP, HTTPS, and HTTP/2 checks.",
-                        "type": "text",
-                        "default": "/",
-                        "placeholder": "/healthz"
-                    },
-                    {
-                        "id": "health_check_interval_sec",
-                        "label": "Check interval (seconds)",
-                        "type": "number",
-                        "default": 30,
-                        "validation": {
-                            "min": 1
-                        }
-                    },
-                    {
-                        "id": "health_check_timeout_sec",
-                        "label": "Timeout (seconds)",
-                        "type": "number",
-                        "default": 10,
-                        "validation": {
-                            "min": 1
-                        }
-                    },
-                    {
-                        "id": "health_check_healthy_threshold",
-                        "label": "Healthy threshold",
-                        "type": "number",
-                        "default": 2,
-                        "validation": {
-                            "min": 1
-                        }
-                    },
-                    {
-                        "id": "health_check_unhealthy_threshold",
-                        "label": "Unhealthy threshold",
-                        "type": "number",
-                        "default": 3,
-                        "validation": {
-                            "min": 1
-                        }
-                    },
-                    {
-                        "id": "health_check_initial_delay_sec",
-                        "label": "Initial delay (seconds)",
-                        "description": "Grace period after an instance starts before health checks count.",
-                        "type": "number",
-                        "default": 30,
-                        "validation": {
-                            "min": 0
-                        }
                     }
                 ]
             },
             {
                 "id": "autoscaling",
-                "label": "Autoscaling policies",
+                "label": "Autoscaling",
                 "collapsed": true,
                 "depends_on": {
                     "field": "autoscaling_enabled",
@@ -340,55 +356,71 @@
                 },
                 "fields": [
                     {
-                        "id": "autoscaling_cpu_utilization_target",
-                        "label": "CPU utilization target",
-                        "description": "Target average CPU as a ratio between 0.1 and 1, for example 0.6 for 60%.",
-                        "type": "number",
+                        "id": "autoscaling_policies",
+                        "label": "Autoscaling policies",
+                        "type": "object",
                         "nullable": true,
-                        "validation": {
-                            "min": 0.1,
-                            "max": 1
-                        }
+                        "fields": [
+                            {
+                                "id": "cpu_utilization_target",
+                                "label": "CPU utilization target",
+                                "description": "Target average CPU as a ratio between 0.1 and 1, for example 0.6 for 60%.",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0.1,
+                                    "max": 1
+                                }
+                            },
+                            {
+                                "id": "load_balancing_utilization_target",
+                                "label": "Load balancing utilization target",
+                                "description": "Target load balancer utilization as a ratio between 0.1 and 1.",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0.1,
+                                    "max": 1
+                                }
+                            }
+                        ]
                     },
                     {
-                        "id": "autoscaling_load_balancing_utilization_target",
-                        "label": "Load balancing utilization target",
-                        "description": "Target load balancer utilization as a ratio between 0.1 and 1.",
-                        "type": "number",
+                        "id": "autoscaling_scale_in_control",
+                        "label": "Scale-in control",
+                        "description": "Limits how fast the group scales in.",
+                        "type": "object",
                         "nullable": true,
-                        "validation": {
-                            "min": 0.1,
-                            "max": 1
-                        }
-                    },
-                    {
-                        "id": "autoscaling_scale_in_max_replicas_fixed",
-                        "label": "Scale-in limit (instances)",
-                        "description": "Maximum instances removed within the scale-in time window.",
-                        "type": "number",
-                        "nullable": true,
-                        "validation": {
-                            "min": 0
-                        }
-                    },
-                    {
-                        "id": "autoscaling_scale_in_max_replicas_percent",
-                        "label": "Scale-in limit (percent)",
-                        "type": "number",
-                        "nullable": true,
-                        "validation": {
-                            "min": 0,
-                            "max": 100
-                        }
-                    },
-                    {
-                        "id": "autoscaling_scale_in_time_window_sec",
-                        "label": "Scale-in time window (seconds)",
-                        "type": "number",
-                        "nullable": true,
-                        "validation": {
-                            "min": 0
-                        }
+                        "fields": [
+                            {
+                                "id": "fixed_replicas",
+                                "label": "Max instances removed",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            },
+                            {
+                                "id": "percent_replicas",
+                                "label": "Max percent removed",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0,
+                                    "max": 100
+                                }
+                            },
+                            {
+                                "id": "time_window_sec",
+                                "label": "Time window (seconds)",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            }
+                        ]
                     },
                     {
                         "id": "scaling_schedules",
