@@ -1,0 +1,169 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "iam-user",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS IAM User",
+    "icon": "iam",
+    "description": "Provision AWS IAM Users with custom paths, permissions boundaries, group memberships, and managed policies",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "provides": [
+    {
+      "data_source": "iam.users",
+      "value_field": "name"
+    }
+  ],
+  "resource": {
+    "variable": "iam_user",
+    "key_field": "name",
+    "key_label": "User Name",
+    "key_description": "Unique username for the IAM user.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core IAM user settings including username and path hierarchy.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "User Name",
+            "description": "The user's name consisting of alphanumeric characters and symbols +=,.@_-",
+            "type": "text",
+            "required": true,
+            "default": "iam-user-default",
+            "placeholder": "john.doe",
+            "validation": {
+              "min": 1,
+              "max": 64,
+              "pattern": "^[a-zA-Z0-9+=,.@_-]+$",
+              "pattern_error": "User name must be 1 to 64 characters and contain only alphanumeric characters and symbols +=,.@_-"
+            }
+          },
+          {
+            "id": "path",
+            "label": "Path",
+            "description": "Path in which to create the user. Must begin and end with a forward slash (/).",
+            "type": "text",
+            "required": false,
+            "default": "/",
+            "placeholder": "/",
+            "validation": {
+              "pattern": "^(/|(/[a-zA-Z0-9_+=,.@-]+)+/)$",
+              "pattern_error": "Path must begin and end with a forward slash (/)."
+            }
+          }
+        ]
+      },
+      {
+        "id": "permissions",
+        "label": "Permissions & Boundaries",
+        "description": "Permission boundaries to restrict the maximum permissions this user can obtain.",
+        "fields": [
+          {
+            "id": "permissions_boundary",
+            "label": "Permissions Boundary ARN",
+            "description": "The ARN of the managed policy that sets the permissions boundary for the user.",
+            "type": "text",
+            "required": false,
+            "placeholder": "arn:aws:iam::123456789012:policy/DeveloperBoundary"
+          }
+        ]
+      },
+      {
+        "id": "membership",
+        "label": "Groups & Policies",
+        "description": "IAM groups and direct policy attachments for this user.",
+        "fields": [
+          {
+            "id": "groups",
+            "label": "Groups",
+            "description": "IAM groups this user belongs to. Authoritative for this user's membership — don't also add this user to the same group from that group's own Users field, or the two will fight over it on every apply.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "iam.groups",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "managed_policy_arns",
+            "label": "Managed Policy ARNs",
+            "description": "Managed policies to attach directly to this user.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "iam.policies",
+              "params": {
+                "scope": {
+                  "static": "local"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "arn"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for organizational, tracking, and cost allocation purposes.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "User Tags",
+            "description": "Key-value tags assigned to the IAM user.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  },
+  "satellites": [
+    {
+      "address": "aws_iam_user_group_membership.this",
+      "driven_by": "groups",
+      "note": "Group membership is a secondary resource driven by groups, and is only created when the list is non-empty."
+    },
+    {
+      "address": "aws_iam_user_policy_attachment.this",
+      "driven_by": "managed_policy_arns",
+      "note": "Policy attachments are secondary resources driven by managed_policy_arns."
+    }
+  ]
+}
