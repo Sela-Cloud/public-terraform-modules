@@ -28,7 +28,7 @@ variable "app_service" {
 
     # Optional Site Configuration attributes (With default values)
     site_config = optional(object({
-      always_on                         = optional(bool, true)
+      always_on                         = optional(bool, null)
       ftps_state                        = optional(string, "FtpsOnly")
       minimum_tls_version               = optional(string, "1.2")
       http2_enabled                     = optional(bool, false)

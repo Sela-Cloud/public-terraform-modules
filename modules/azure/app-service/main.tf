@@ -3,6 +3,10 @@ locals {
     var.create_service_plan ? azurerm_service_plan.plan[0].id : null
   )
   service_plan_name = var.service_plan_name != null ? var.service_plan_name : "asp-${var.name}"
+
+  # Azure forbids always_on = true on Free (F1, Free) and Shared (D1, Shared) tiers
+  is_free_or_shared_sku = contains(["f1", "free", "d1", "shared"], lower(var.service_plan_sku))
+  always_on             = var.site_config.always_on != null ? var.site_config.always_on : (!local.is_free_or_shared_sku)
 }
 
 resource "azurerm_service_plan" "plan" {
@@ -34,7 +38,7 @@ resource "azurerm_linux_web_app" "linux_app" {
   tags                          = var.tags
 
   site_config {
-    always_on                         = coalesce(var.site_config.always_on, true)
+    always_on                         = local.always_on
     ftps_state                        = coalesce(var.site_config.ftps_state, "FtpsOnly")
     minimum_tls_version               = coalesce(var.site_config.minimum_tls_version, "1.2")
     http2_enabled                     = coalesce(var.site_config.http2_enabled, false)
@@ -136,7 +140,7 @@ resource "azurerm_windows_web_app" "windows_app" {
   tags                          = var.tags
 
   site_config {
-    always_on                         = coalesce(var.site_config.always_on, true)
+    always_on                         = local.always_on
     ftps_state                        = coalesce(var.site_config.ftps_state, "FtpsOnly")
     minimum_tls_version               = coalesce(var.site_config.minimum_tls_version, "1.2")
     http2_enabled                     = coalesce(var.site_config.http2_enabled, false)
