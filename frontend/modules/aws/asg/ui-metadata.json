@@ -1,0 +1,453 @@
+{
+    "$schema": "../../../ui-metadata.schema.json",
+    "module": "asg",
+    "version": "1.0.0",
+    "display": {
+        "label": "Auto Scaling Group",
+        "icon": "layers",
+        "description": "EC2 Auto Scaling Groups with launch template, rolling instance refresh, health checks, target tracking policies, and scheduled scaling.",
+        "category": "regional"
+    },
+    "globals": [],
+    "import": {
+        "module": "asg",
+        "target": "aws_autoscaling_group.asg",
+        "id_template": "{asg_name}",
+        "identity_fields": [
+            "asg_name"
+        ],
+        "requires_review": false
+    },
+    "resource": {
+        "variable": "asg",
+        "key_field": "asg_name",
+        "key_label": "ASG name",
+        "key_description": "Group names cannot be changed after creation.",
+        "locked_after_create": true,
+        "sections": [
+            {
+                "id": "basics",
+                "label": "Group configuration",
+                "fields": [
+                    {
+                        "id": "asg_name",
+                        "label": "ASG name",
+                        "locked_after_create": true,
+                        "type": "text",
+                        "required": true,
+                        "placeholder": "web-asg",
+                        "validation": {
+                            "min": 1,
+                            "max": 255,
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+                            "pattern_error": "Use letters, numbers, hyphens, underscores, and periods; start with a letter or number."
+                        }
+                    },
+                    {
+                        "id": "hostname",
+                        "label": "Hostname",
+                        "description": "Base name for instances and resources.",
+                        "type": "text",
+                        "required": true,
+                        "placeholder": "web"
+                    },
+                    {
+                        "id": "subnet_ids",
+                        "label": "Subnets",
+                        "description": "Subnet IDs where the instances are deployed.",
+                        "type": "list",
+                        "required": true
+                    },
+                    {
+                        "id": "instance_template",
+                        "label": "Launch template ID",
+                        "description": "The ID of the EC2 launch template.",
+                        "type": "text",
+                        "required": true,
+                        "placeholder": "lt-0123456789abcdef0"
+                    },
+                    {
+                        "id": "instance_template_version",
+                        "label": "Launch template version",
+                        "description": "Version number, $Latest, or $Default.",
+                        "type": "text",
+                        "default": "$Latest",
+                        "placeholder": "$Latest"
+                    },
+                    {
+                        "id": "target_pools",
+                        "label": "Target group ARNs",
+                        "description": "ARNs of load balancer target groups to attach to the group.",
+                        "type": "list",
+                        "nullable": true
+                    },
+                    {
+                        "id": "cooldown_period",
+                        "label": "Cooldown / instance warmup (seconds)",
+                        "type": "number",
+                        "default": 300,
+                        "validation": {
+                            "min": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "capacity",
+                "label": "Capacity",
+                "fields": [
+                    {
+                        "id": "autoscaling_enabled",
+                        "label": "Enable autoscaling",
+                        "description": "When enabled, the group size is driven by the scaling policies and the desired capacity is ignored.",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    {
+                        "id": "min_size",
+                        "label": "Minimum size",
+                        "type": "number",
+                        "required": true,
+                        "default": 1,
+                        "validation": {
+                            "min": 0
+                        }
+                    },
+                    {
+                        "id": "max_size",
+                        "label": "Maximum size",
+                        "type": "number",
+                        "required": true,
+                        "default": 5,
+                        "validation": {
+                            "min": 1
+                        }
+                    },
+                    {
+                        "id": "desired_capacity",
+                        "label": "Desired capacity",
+                        "description": "Fixed number of instances when autoscaling is disabled.",
+                        "type": "number",
+                        "default": 2,
+                        "depends_on": {
+                            "field": "autoscaling_enabled",
+                            "value": false
+                        },
+                        "validation": {
+                            "min": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "health",
+                "label": "Health check",
+                "collapsed": true,
+                "fields": [
+                    {
+                        "id": "health_check",
+                        "label": "Health check",
+                        "type": "object",
+                        "fields": [
+                            {
+                                "id": "type",
+                                "label": "Health check type",
+                                "description": "Use ELB when the group is attached to a load balancer target group.",
+                                "type": "select",
+                                "required": true,
+                                "default": "EC2",
+                                "options": [
+                                    {
+                                        "value": "EC2",
+                                        "label": "EC2"
+                                    },
+                                    {
+                                        "value": "ELB",
+                                        "label": "ELB"
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "initial_delay_sec",
+                                "label": "Grace period (seconds)",
+                                "description": "Time after an instance starts before health checks count.",
+                                "type": "number",
+                                "required": true,
+                                "default": 300,
+                                "validation": {
+                                    "min": 0
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "update",
+                "label": "Instance refresh",
+                "collapsed": true,
+                "fields": [
+                    {
+                        "id": "update_policy",
+                        "label": "Instance refresh policies",
+                        "description": "Rolls out launch template changes across running instances.",
+                        "type": "repeatable",
+                        "fields": [
+                            {
+                                "id": "type",
+                                "label": "Strategy",
+                                "type": "select",
+                                "required": true,
+                                "default": "Rolling",
+                                "options": [
+                                    {
+                                        "value": "Rolling",
+                                        "label": "Rolling"
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "min_healthy_percentage",
+                                "label": "Minimum healthy percentage",
+                                "type": "number",
+                                "default": 50,
+                                "validation": {
+                                    "min": 0,
+                                    "max": 100
+                                }
+                            },
+                            {
+                                "id": "max_healthy_percentage",
+                                "label": "Maximum healthy percentage",
+                                "type": "number",
+                                "default": 200,
+                                "validation": {
+                                    "min": 100,
+                                    "max": 200
+                                }
+                            },
+                            {
+                                "id": "instance_warmup",
+                                "label": "Instance warmup (seconds)",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "scaling",
+                "label": "Target tracking policies",
+                "collapsed": true,
+                "depends_on": {
+                    "field": "autoscaling_enabled",
+                    "value": true
+                },
+                "fields": [
+                    {
+                        "id": "autoscaling_policies",
+                        "label": "Scaling policies",
+                        "description": "Each policy keeps a metric near its target value.",
+                        "type": "repeatable",
+                        "fields": [
+                            {
+                                "id": "metric_name",
+                                "label": "Metric name",
+                                "description": "Predefined: ASGAverageCPUUtilization, ASGAverageNetworkIn, ASGAverageNetworkOut, ALBRequestCountPerTarget. For custom metrics, the CloudWatch metric name.",
+                                "type": "text",
+                                "required": true,
+                                "placeholder": "ASGAverageCPUUtilization"
+                            },
+                            {
+                                "id": "target",
+                                "label": "Target value",
+                                "type": "number",
+                                "required": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            },
+                            {
+                                "id": "is_custom_metric",
+                                "label": "Custom CloudWatch metric",
+                                "type": "boolean",
+                                "required": true,
+                                "default": false
+                            },
+                            {
+                                "id": "resource_label",
+                                "label": "Resource label",
+                                "description": "Required for ALBRequestCountPerTarget: app/<lb>/<id>/targetgroup/<tg>/<id>.",
+                                "type": "text",
+                                "nullable": true,
+                                "depends_on": {
+                                    "field": "is_custom_metric",
+                                    "value": false
+                                }
+                            },
+                            {
+                                "id": "custom_metric",
+                                "label": "Custom metric settings",
+                                "type": "object",
+                                "nullable": true,
+                                "depends_on": {
+                                    "field": "is_custom_metric",
+                                    "value": true
+                                },
+                                "fields": [
+                                    {
+                                        "id": "namespace",
+                                        "label": "Namespace",
+                                        "type": "text",
+                                        "required": true,
+                                        "placeholder": "AWS/EC2"
+                                    },
+                                    {
+                                        "id": "dimension_name",
+                                        "label": "Dimension name",
+                                        "type": "text",
+                                        "nullable": true
+                                    },
+                                    {
+                                        "id": "dimension_value",
+                                        "label": "Dimension value",
+                                        "type": "text",
+                                        "nullable": true
+                                    },
+                                    {
+                                        "id": "statistic",
+                                        "label": "Statistic",
+                                        "type": "select",
+                                        "default": "Average",
+                                        "options": [
+                                            {
+                                                "value": "Average",
+                                                "label": "Average"
+                                            },
+                                            {
+                                                "value": "Minimum",
+                                                "label": "Minimum"
+                                            },
+                                            {
+                                                "value": "Maximum",
+                                                "label": "Maximum"
+                                            },
+                                            {
+                                                "value": "Sum",
+                                                "label": "Sum"
+                                            },
+                                            {
+                                                "value": "SampleCount",
+                                                "label": "Sample count"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "autoscaling_scale_in_control",
+                        "label": "Scale-in control",
+                        "type": "object",
+                        "fields": [
+                            {
+                                "id": "disabled",
+                                "label": "Disable scale-in",
+                                "type": "boolean",
+                                "required": true,
+                                "default": false
+                            },
+                            {
+                                "id": "time_window_sec",
+                                "label": "Time window (seconds)",
+                                "type": "number",
+                                "required": true,
+                                "default": 600,
+                                "validation": {
+                                    "min": 0
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "schedules",
+                "label": "Scheduled scaling",
+                "collapsed": true,
+                "fields": [
+                    {
+                        "id": "scaling_schedules",
+                        "label": "Scaling schedules",
+                        "description": "Change group limits on a recurring schedule. Leave a size empty to keep its current value.",
+                        "type": "repeatable",
+                        "fields": [
+                            {
+                                "id": "name",
+                                "label": "Schedule name",
+                                "type": "text",
+                                "nullable": true,
+                                "validation": {
+                                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+                                    "pattern_error": "Use letters, numbers, hyphens, underscores, and periods."
+                                }
+                            },
+                            {
+                                "id": "schedule",
+                                "label": "Recurrence (cron)",
+                                "type": "text",
+                                "required": true,
+                                "placeholder": "0 8 * * MON-FRI"
+                            },
+                            {
+                                "id": "time_zone",
+                                "label": "Time zone",
+                                "type": "text",
+                                "default": "UTC",
+                                "placeholder": "UTC"
+                            },
+                            {
+                                "id": "min_required_replicas",
+                                "label": "Minimum size",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            },
+                            {
+                                "id": "max_size",
+                                "label": "Maximum size",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            },
+                            {
+                                "id": "desired_capacity",
+                                "label": "Desired capacity",
+                                "type": "number",
+                                "nullable": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            },
+                            {
+                                "id": "disabled",
+                                "label": "Disabled",
+                                "type": "boolean",
+                                "default": false
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
