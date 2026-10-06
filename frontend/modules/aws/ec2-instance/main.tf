@@ -3,7 +3,7 @@
  *****************************************/
 
 module "ec2_instance" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ec2-instance?ref=v0.8.10"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ec2-instance?ref=v0.8.11"
   for_each = var.ec2_instance
 
   name                                 = coalesce(each.value.name, each.key)
