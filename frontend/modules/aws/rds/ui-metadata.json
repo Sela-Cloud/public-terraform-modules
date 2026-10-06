@@ -1,0 +1,353 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "rds",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS RDS Database",
+    "icon": "database",
+    "description": "Deploy managed Amazon RDS MySQL and PostgreSQL databases with high availability, security, and automated backups",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "rds",
+    "key_field": "identifier",
+    "key_label": "DB Instance Identifier",
+    "key_description": "Unique identifier for the RDS instance in the AWS Region.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Engine & Compute",
+        "description": "Database engine, compute sizing, and credentials.",
+        "fields": [
+          {
+            "id": "identifier",
+            "label": "DB Identifier",
+            "description": "Unique name for the RDS database instance.",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-database"
+          },
+          {
+            "id": "engine",
+            "label": "Database Engine",
+            "description": "Database engine to deploy (e.g., mysql or postgres).",
+            "type": "select",
+            "required": true,
+            "default": "mysql",
+            "options": [
+              {
+                "label": "MySQL",
+                "value": "mysql"
+              },
+              {
+                "label": "PostgreSQL",
+                "value": "postgres"
+              }
+            ]
+          },
+          {
+            "id": "engine_version",
+            "label": "Engine Version",
+            "description": "Database engine version (e.g., 8.0.35 for MySQL or 16.1 for PostgreSQL).",
+            "type": "text",
+            "required": false,
+            "placeholder": "8.0.35"
+          },
+          {
+            "id": "instance_class",
+            "label": "Instance Class",
+            "description": "Compute size for the RDS instance.",
+            "type": "text",
+            "required": true,
+            "default": "db.t4g.micro",
+            "placeholder": "db.t4g.micro"
+          },
+          {
+            "id": "db_name",
+            "label": "Initial Database Name",
+            "description": "Name of the initial schema database to create.",
+            "type": "text",
+            "required": false,
+            "placeholder": "appdb"
+          },
+          {
+            "id": "username",
+            "label": "Master Username",
+            "description": "Master username (defaults to admin for MySQL, postgres for PostgreSQL).",
+            "type": "text",
+            "required": false,
+            "placeholder": "admin"
+          },
+          {
+            "id": "manage_master_user_password",
+            "label": "Manage Password in Secrets Manager",
+            "description": "Automatically create and manage credentials securely in AWS Secrets Manager.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "password",
+            "label": "Master Password",
+            "description": "Master user password (leave empty if managing in Secrets Manager).",
+            "type": "text",
+            "required": false
+          },
+          {
+            "id": "port",
+            "label": "Database Port",
+            "description": "Custom port (defaults to 3306 for MySQL, 5432 for PostgreSQL).",
+            "type": "number",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "label": "Storage Configuration",
+        "description": "Volume size, autoscaling, and encryption.",
+        "fields": [
+          {
+            "id": "allocated_storage",
+            "label": "Allocated Storage (GB)",
+            "description": "Initial storage allocation in gigabytes.",
+            "type": "number",
+            "required": true,
+            "default": 20
+          },
+          {
+            "id": "max_allocated_storage",
+            "label": "Max Autoscaling Storage (GB)",
+            "description": "Upper limit for storage autoscaling (set to null or 0 to disable).",
+            "type": "number",
+            "required": false,
+            "default": 100
+          },
+          {
+            "id": "storage_type",
+            "label": "Storage Type",
+            "description": "Storage volume type (e.g., gp3, gp2, io1).",
+            "type": "select",
+            "required": true,
+            "default": "gp3",
+            "options": [
+              {
+                "label": "General Purpose SSD (gp3)",
+                "value": "gp3"
+              },
+              {
+                "label": "General Purpose SSD (gp2)",
+                "value": "gp2"
+              },
+              {
+                "label": "Provisioned IOPS SSD (io1)",
+                "value": "io1"
+              }
+            ]
+          },
+          {
+            "id": "storage_encrypted",
+            "label": "Storage Encrypted",
+            "description": "Enable KMS encryption at rest for the database storage.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "kms_key_id",
+            "label": "KMS Key ARN",
+            "description": "Custom KMS key ARN for storage encryption (leave empty for AWS default).",
+            "type": "text",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Networking & Security",
+        "description": "VPC, Subnet groups, and Security Group ingress rules.",
+        "fields": [
+          {
+            "id": "vpc_id",
+            "label": "VPC ID",
+            "description": "The VPC ID where the RDS database and security group reside.",
+            "type": "text",
+            "required": false,
+            "placeholder": "vpc-0123456789abcdef0"
+          },
+          {
+            "id": "subnet_ids",
+            "label": "Subnet IDs",
+            "description": "List of subnet IDs spanning multiple Availability Zones for the DB subnet group.",
+            "type": "list",
+            "required": false
+          },
+          {
+            "id": "create_db_subnet_group",
+            "label": "Create DB Subnet Group",
+            "description": "Whether to automatically create a dedicated DB subnet group.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "create_security_group",
+            "label": "Create Security Group",
+            "description": "Whether to create a dedicated security group for the RDS instance.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "allowed_cidr_blocks",
+            "label": "Allowed CIDR Blocks",
+            "description": "IPv4 CIDR blocks permitted to connect to the database port.",
+            "type": "list",
+            "required": false
+          },
+          {
+            "id": "allowed_security_group_ids",
+            "label": "Allowed Security Group IDs",
+            "description": "Source security groups permitted to connect to the database port.",
+            "type": "list",
+            "required": false
+          },
+          {
+            "id": "multi_az",
+            "label": "Multi-AZ Deployment",
+            "description": "Provision high-availability standby replica in a different AZ.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "publicly_accessible",
+            "label": "Publicly Accessible",
+            "description": "Whether the database is accessible from the public internet.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "maintenance",
+        "label": "Backups & Maintenance",
+        "description": "Automated backups, retention periods, and deletion safeguards.",
+        "fields": [
+          {
+            "id": "backup_retention_period",
+            "label": "Backup Retention Period (Days)",
+            "description": "Number of days automated backups are retained (0 to 35).",
+            "type": "number",
+            "required": false,
+            "default": 7
+          },
+          {
+            "id": "backup_window",
+            "label": "Backup Window (UTC)",
+            "description": "Daily window for automated backups.",
+            "type": "text",
+            "required": false,
+            "default": "03:00-04:00"
+          },
+          {
+            "id": "maintenance_window",
+            "label": "Maintenance Window (UTC)",
+            "description": "Weekly window for database maintenance.",
+            "type": "text",
+            "required": false,
+            "default": "Mon:04:00-Mon:05:00"
+          },
+          {
+            "id": "skip_final_snapshot",
+            "label": "Skip Final Snapshot",
+            "description": "Whether to skip taking a snapshot before deleting the database.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "deletion_protection",
+            "label": "Deletion Protection",
+            "description": "Protect the database from accidental deletion.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "auto_minor_version_upgrade",
+            "label": "Auto Minor Version Upgrade",
+            "description": "Automatically apply minor engine version updates during maintenance.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "monitoring",
+        "label": "Monitoring & Logs",
+        "description": "Enhanced Monitoring, Performance Insights, and CloudWatch logs.",
+        "fields": [
+          {
+            "id": "monitoring_interval",
+            "label": "Enhanced Monitoring Interval (seconds)",
+            "description": "Frequency of metrics collection (0, 1, 5, 10, 15, 30, 60).",
+            "type": "number",
+            "required": false,
+            "default": 0
+          },
+          {
+            "id": "create_monitoring_role",
+            "label": "Create Monitoring IAM Role",
+            "description": "Automatically create IAM role for RDS Enhanced Monitoring.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "performance_insights_enabled",
+            "label": "Performance Insights Enabled",
+            "description": "Collect detailed database query execution metrics.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "enabled_cloudwatch_logs_exports",
+            "label": "CloudWatch Logs Exports",
+            "description": "Log types to publish to CloudWatch.",
+            "type": "list",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for billing and governance.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value tags assigned to resources.",
+            "type": "map",
+            "required": false
+          }
+        ]
+      }
+    ]
+  }
+}

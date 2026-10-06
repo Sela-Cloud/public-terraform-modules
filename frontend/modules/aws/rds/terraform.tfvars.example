@@ -1,0 +1,76 @@
+region = "us-east-1"
+
+rds = {
+  "app-mysql" = {
+    identifier                  = "app-mysql"
+    engine                      = "mysql"
+    engine_version              = "8.0.35"
+    instance_class              = "db.t4g.micro"
+    allocated_storage           = 20
+    max_allocated_storage       = 100
+    storage_type                = "gp3"
+    storage_encrypted           = true
+    db_name                     = "appdb"
+    username                    = "dbadmin"
+    manage_master_user_password = true
+
+    vpc_id              = "vpc-0123456789abcdef0"
+    subnet_ids          = ["subnet-0123456789abcdef0", "subnet-0fedcba9876543210"]
+    allowed_cidr_blocks = ["10.0.0.0/16"]
+
+    multi_az                = false
+    publicly_accessible     = false
+    backup_retention_period = 7
+    skip_final_snapshot     = true
+    deletion_protection     = false
+
+    enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
+
+    tags = {
+      Environment = "dev"
+      ManagedBy   = "Terraform"
+    }
+  }
+
+  "analytics-postgres" = {
+    identifier                  = "analytics-postgres"
+    engine                      = "postgres"
+    engine_version              = "16.1"
+    instance_class              = "db.t4g.small"
+    allocated_storage           = 50
+    max_allocated_storage       = 200
+    storage_type                = "gp3"
+    storage_encrypted           = true
+    db_name                     = "analytics"
+    username                    = "postgres"
+    manage_master_user_password = true
+
+    vpc_id              = "vpc-0123456789abcdef0"
+    subnet_ids          = ["subnet-0123456789abcdef0", "subnet-0fedcba9876543210"]
+    allowed_cidr_blocks = ["10.0.0.0/16"]
+
+    multi_az                = true
+    publicly_accessible     = false
+    backup_retention_period = 14
+    skip_final_snapshot     = false
+    deletion_protection     = true
+
+    create_db_parameter_group = true
+    family                    = "postgres16"
+    parameters = [
+      {
+        name  = "log_min_duration_statement"
+        value = "1000"
+      }
+    ]
+
+    enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+    monitoring_interval             = 60
+    create_monitoring_role          = true
+
+    tags = {
+      Environment = "prod"
+      ManagedBy   = "Terraform"
+    }
+  }
+}
