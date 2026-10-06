@@ -49,4 +49,5 @@ output "identity_tenant_id" {
 output "web_app" {
   description = "The full Azure Web App resource object."
   value       = var.os_type == "Linux" ? azurerm_linux_web_app.linux_app[0] : azurerm_windows_web_app.windows_app[0]
+  sensitive   = true
 }

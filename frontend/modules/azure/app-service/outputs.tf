@@ -1,6 +1,7 @@
 output "app_services" {
   description = "Map of created App Services and their attributes."
   value       = module.app_service
+  sensitive   = true
 }
 
 output "app_service_ids" {
