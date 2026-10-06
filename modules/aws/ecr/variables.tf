@@ -1,11 +1,11 @@
 ################################################################################
-# AWS ECR/ACR Repository Variables
+# AWS ECR Repository Variables
 ################################################################################
 
 variable "name" {
   description = "Name of the repository."
   type        = string
-  default     = "acr-default"
+  default     = "ecr-default"
 }
 
 variable "image_tag_mutability" {

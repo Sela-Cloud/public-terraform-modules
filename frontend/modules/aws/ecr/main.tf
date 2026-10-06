@@ -1,10 +1,10 @@
 /******************************************
-  AWS ECR/ACR Repository Root Module
+  AWS ECR Repository Root Module
  *****************************************/
 
-module "acr" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/acr?ref=v0.8.10"
-  for_each = var.acr
+module "ecr" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ecr?ref=v0.8.10"
+  for_each = var.ecr
 
   name                 = coalesce(each.value.name, each.key)
   image_tag_mutability = each.value.image_tag_mutability

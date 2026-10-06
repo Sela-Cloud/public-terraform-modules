@@ -1,12 +1,12 @@
-# AWS ECR/ACR Repository Terraform Module
+# AWS ECR Repository Terraform Module
 
 This module provisions an Amazon Elastic Container Registry (ECR) repository with configurable image tag mutability, automatic image scanning on push, encryption (AES-256 or AWS KMS), force deletion options, and resource tags.
 
 ## Usage
 
 ```hcl
-module "acr" {
-  source = "path/to/modules/aws/acr"
+module "ecr" {
+  source = "path/to/modules/aws/ecr"
 
   name                 = "my-app-repository"
   image_tag_mutability = "MUTABLE"
@@ -24,8 +24,8 @@ module "acr" {
 ### With AWS KMS Encryption
 
 ```hcl
-module "acr" {
-  source = "path/to/modules/aws/acr"
+module "ecr" {
+  source = "path/to/modules/aws/ecr"
 
   name                 = "my-secure-repository"
   image_tag_mutability = "IMMUTABLE"
@@ -44,7 +44,7 @@ module "acr" {
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| name | Name of the repository | `string` | `"acr-default"` | no |
+| name | Name of the repository | `string` | `"ecr-default"` | no |
 | image\_tag\_mutability | Tag mutability setting (`MUTABLE` or `IMMUTABLE`) | `string` | `"MUTABLE"` | no |
 | force\_delete | Delete repository even if it contains images | `bool` | `false` | no |
 | scan\_on\_push | Whether images are scanned after being pushed | `bool` | `true` | no |
