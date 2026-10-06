@@ -1,5 +1,5 @@
 module "app_service" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/app-service?ref=azure-app-service"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/app-service?ref=v0.8.9"
   for_each = var.app_service
 
   name                          = each.value.name
