@@ -1,0 +1,75 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "datasync",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS DataSync",
+    "icon": "sync",
+    "description": "Automate data transfer and synchronization between on-premises storage and AWS storage services (S3, EFS, FSx)",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "datasync",
+    "key_field": "name",
+    "key_label": "Deployment Name",
+    "key_description": "Unique identifier for this DataSync deployment configuration.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core DataSync deployment settings.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Deployment Name",
+            "description": "Unique name for this DataSync deployment configuration.",
+            "type": "text",
+            "required": true,
+            "default": "datasync-default",
+            "placeholder": "my-datasync-deployment",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Name must contain only alphanumeric characters, dashes, and underscores."
+            }
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tags",
+        "description": "Resource tagging configuration.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value tags to assign to the DataSync resources.",
+            "type": "kv_map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+region = "us-east-1"
+
+datasync = {
+  "datasync-default" = {
+    name = "datasync-default"
+
+    s3_locations = {
+      "source_s3" = {
+        name             = "source-s3-location"
+        s3_bucket_arn    = "arn:aws:s3:::my-source-bucket"
+        subdirectory     = "/data"
+        s3_storage_class = "STANDARD"
+        s3_config = {
+          bucket_access_role_arn = "arn:aws:iam::123456789012:role/datasync-s3-access-role"
+        }
+      }
+      "dest_s3" = {
+        name             = "dest-s3-location"
+        s3_bucket_arn    = "arn:aws:s3:::my-destination-bucket"
+        subdirectory     = "/backup"
+        s3_storage_class = "STANDARD_IA"
+        s3_config = {
+          bucket_access_role_arn = "arn:aws:iam::123456789012:role/datasync-s3-access-role"
+        }
+      }
+    }
+
+    tasks = {
+      "s3-to-s3-sync" = {
+        name                     = "s3-to-s3-sync-task"
+        source_location_key      = "source_s3"
+        destination_location_key = "dest_s3"
+
+        schedule = {
+          schedule_expression = "rate(1 hour)"
+        }
+
+        options = {
+          verify_mode            = "POINT_IN_TIME_CONSISTENT"
+          preserve_deleted_files = "REMOVE"
+          log_level              = "BASIC"
+        }
+      }
+    }
+
+    tags = {
+      Environment = "production"
+      ManagedBy   = "Terraform"
+    }
+  }
+}
