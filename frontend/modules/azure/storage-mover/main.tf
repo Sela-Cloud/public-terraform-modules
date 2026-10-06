@@ -1,5 +1,5 @@
 module "storage_mover" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/storage-mover?ref=v0.8.9"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/storage-mover?ref=v0.8.10"
   for_each = var.storage_mover
 
   name                = each.value.name
