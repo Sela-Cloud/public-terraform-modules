@@ -29,9 +29,9 @@ Virtual network peering enables you to seamlessly connect two Azure virtual netw
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| name | The name of the Virtual Network Peering. | `string` | `"peer-default"` | no |
-| resource_group_name | The name of the Resource Group in which the Virtual Network Peering should exist. | `string` | `"rg-default"` | no |
-| virtual_network_name | The name of the local Virtual Network. | `string` | `"vnet-default"` | no |
+| name | The name of the Virtual Network Peering. | `string` | — | yes |
+| resource_group_name | The name of the Resource Group in which the Virtual Network Peering should exist. | `string` | — | yes |
+| virtual_network_name | The name of the local Virtual Network. | `string` | — | yes |
 | remote_virtual_network_id | The full Azure resource ID of the remote Virtual Network to be peered. | `string` | — | yes |
 | allow_virtual_network_access | Controls whether VMs in the local virtual network can access VMs in the remote virtual network. | `bool` | `true` | no |
 | allow_forwarded_traffic | Controls whether forwarded traffic from VMs in the remote virtual network will be allowed. | `bool` | `false` | no |

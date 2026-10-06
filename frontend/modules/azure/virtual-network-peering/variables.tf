@@ -1,9 +1,9 @@
 variable "virtual_network_peering" {
   description = "Map of Azure Virtual Network Peering configurations to create."
   type = map(object({
-    name                                   = optional(string, "peer-default")
-    resource_group_name                    = optional(string, "rg-default")
-    virtual_network_name                   = optional(string, "vnet-default")
+    name                                   = string
+    resource_group_name                    = string
+    virtual_network_name                   = string
     remote_virtual_network_id              = string
     allow_virtual_network_access           = optional(bool, true)
     allow_forwarded_traffic                = optional(bool, false)

@@ -1,7 +1,6 @@
 variable "name" {
   description = "The name of the Virtual Network Peering. Changing this forces a new resource to be created."
   type        = string
-  default     = "peer-default"
 
   validation {
     condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$", var.name)) && length(var.name) >= 1 && length(var.name) <= 80
@@ -12,13 +11,11 @@ variable "name" {
 variable "resource_group_name" {
   description = "The name of the Resource Group in which the Virtual Network Peering should exist. Changing this forces a new resource to be created."
   type        = string
-  default     = "rg-default"
 }
 
 variable "virtual_network_name" {
   description = "The name of the local Virtual Network. Changing this forces a new resource to be created."
   type        = string
-  default     = "vnet-default"
 }
 
 variable "remote_virtual_network_id" {

@@ -1,5 +1,5 @@
 {
-  "$schema": "../../ui-metadata.schema.json",
+  "$schema": "../../../ui-metadata.schema.json",
   "module": "virtual-network-peering",
   "version": "1.0.0",
   "display": {
@@ -26,7 +26,6 @@
             "description": "Name of the Virtual Network Peering. Must be 1-80 characters using alphanumeric, underscores, hyphens, and periods.",
             "type": "text",
             "required": true,
-            "default": "peer-default",
             "placeholder": "peer-hub-to-spoke",
             "validation": {
               "min": 1,
@@ -39,10 +38,16 @@
             "id": "resource_group_name",
             "label": "Resource Group Name",
             "description": "The name of the Resource Group in which the Virtual Network Peering should exist.",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "default": "rg-default",
-            "placeholder": "rg-my-workload"
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
           },
           {
             "id": "virtual_network_name",
@@ -50,7 +55,6 @@
             "description": "The name of the local Virtual Network from which peering originates.",
             "type": "text",
             "required": true,
-            "default": "vnet-default",
             "placeholder": "vnet-my-workload"
           },
           {
