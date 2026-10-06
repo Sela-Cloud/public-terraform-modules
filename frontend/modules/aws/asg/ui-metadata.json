@@ -1,0 +1,459 @@
+{
+    "$schema": "../../../ui-metadata.schema.json",
+    "module": "autoscaling-group",
+    "version": "1.0.0",
+    "display": {
+        "label": "Auto Scaling Group",
+        "icon": "layers",
+        "description": "Regional auto scaling groups with instance template, rolling updates, health checks, autoscaling policies, and scaling schedules.",
+        "category": "regional"
+    },
+    "globals": [],
+    "import": {
+        "module": "asg",
+        "target": "aws_autoscaling_group.this",
+        "id_template": "{asg_name}",
+        "identity_fields": [
+            "asg_name"
+        ],
+        "requires_review": true
+    },
+    "resource": {
+        "variable": "asg",
+        "key_field": "asg_name",
+        "key_label": "ASG name",
+        "key_description": "Group names cannot be changed after creation.",
+        "locked_after_create": true,
+        "sections": [
+            {
+                "id": "basics",
+                "label": "Group configuration",
+                "fields": [
+                    {
+                        "id": "asg_name",
+                        "label": "ASG name",
+                        "locked_after_create": true,
+                        "type": "text",
+                        "required": true,
+                        "placeholder": "web-asg",
+                        "validation": {
+                            "min": 1,
+                            "max": 255,
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+                            "pattern_error": "Use letters, numbers, hyphens, underscores, and periods; start with a letter or number."
+                        }
+                    },
+                    {
+                        "id": "hostname",
+                        "label": "Hostname",
+                        "description": "Base hostname applied to instances in the group.",
+                        "type": "text",
+                        "required": true,
+                        "placeholder": "web"
+                    },
+                    {
+                        "id": "instance_template",
+                        "label": "Instance template",
+                        "type": "text",
+                        "required": true,
+                        "placeholder": "web-template"
+                    },
+                    {
+                        "id": "instance_template_version",
+                        "label": "Instance template version",
+                        "description": "Leave empty to use the template default or latest version.",
+                        "type": "text",
+                        "nullable": true,
+                        "placeholder": "$Latest"
+                    },
+                    {
+                        "id": "subnet_ids",
+                        "label": "Subnets",
+                        "type": "list",
+                        "required": true
+                    },
+                    {
+                        "id": "target_pools",
+                        "label": "Target pools",
+                        "type": "list",
+                        "nullable": true
+                    },
+                    {
+                        "id": "cooldown_period",
+                        "label": "Cooldown period (seconds)",
+                        "type": "number",
+                        "default": 60,
+                        "validation": {
+                            "min": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "capacity",
+                "label": "Capacity",
+                "fields": [
+                    {
+                        "id": "autoscaling_enabled",
+                        "label": "Enable autoscaling",
+                        "description": "When enabled, the group size is driven by the autoscaling policies below and the desired capacity is ignored.",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    {
+                        "id": "min_size",
+                        "label": "Minimum size",
+                        "type": "number",
+                        "required": true,
+                        "default": 1,
+                        "validation": {
+                            "min": 0
+                        }
+                    },
+                    {
+                        "id": "max_size",
+                        "label": "Maximum size",
+                        "type": "number",
+                        "required": true,
+                        "default": 3,
+                        "validation": {
+                            "min": 1
+                        }
+                    },
+                    {
+                        "id": "desired_capacity",
+                        "label": "Desired capacity",
+                        "description": "Fixed number of instances when autoscaling is disabled.",
+                        "type": "number",
+                        "nullable": true,
+                        "default": 1,
+                        "depends_on": {
+                            "field": "autoscaling_enabled",
+                            "value": false
+                        },
+                        "validation": {
+                            "min": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "update-policy",
+                "label": "Rolling update policy",
+                "collapsed": true,
+                "fields": [
+                    {
+                        "id": "update_policy_type",
+                        "label": "Update type",
+                        "type": "select",
+                        "default": "PROACTIVE",
+                        "options": [
+                            {
+                                "value": "PROACTIVE",
+                                "label": "Proactive (roll out automatically)"
+                            },
+                            {
+                                "value": "OPPORTUNISTIC",
+                                "label": "Opportunistic (apply on next replacement)"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "update_policy_minimal_action",
+                        "label": "Minimal action",
+                        "type": "select",
+                        "default": "REPLACE",
+                        "options": [
+                            {
+                                "value": "REPLACE",
+                                "label": "Replace"
+                            },
+                            {
+                                "value": "RESTART",
+                                "label": "Restart"
+                            },
+                            {
+                                "value": "REFRESH",
+                                "label": "Refresh"
+                            },
+                            {
+                                "value": "NONE",
+                                "label": "None"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "update_policy_max_surge_fixed",
+                        "label": "Max surge (instances)",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0
+                        }
+                    },
+                    {
+                        "id": "update_policy_max_surge_percent",
+                        "label": "Max surge (percent)",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0,
+                            "max": 100
+                        }
+                    },
+                    {
+                        "id": "update_policy_max_unavailable_fixed",
+                        "label": "Max unavailable (instances)",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0
+                        }
+                    },
+                    {
+                        "id": "update_policy_max_unavailable_percent",
+                        "label": "Max unavailable (percent)",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0,
+                            "max": 100
+                        }
+                    },
+                    {
+                        "id": "update_policy_min_ready_sec",
+                        "label": "Minimum ready time (seconds)",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "health-check",
+                "label": "Health check",
+                "collapsed": true,
+                "fields": [
+                    {
+                        "id": "health_check_type",
+                        "label": "Protocol",
+                        "type": "select",
+                        "nullable": true,
+                        "options": [
+                            {
+                                "value": "HTTP",
+                                "label": "HTTP"
+                            },
+                            {
+                                "value": "HTTPS",
+                                "label": "HTTPS"
+                            },
+                            {
+                                "value": "HTTP2",
+                                "label": "HTTP/2"
+                            },
+                            {
+                                "value": "TCP",
+                                "label": "TCP"
+                            },
+                            {
+                                "value": "SSL",
+                                "label": "SSL"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "health_check_port",
+                        "label": "Port",
+                        "type": "number",
+                        "default": 80,
+                        "validation": {
+                            "min": 1,
+                            "max": 65535
+                        }
+                    },
+                    {
+                        "id": "health_check_request_path",
+                        "label": "Request path",
+                        "description": "Used by HTTP, HTTPS, and HTTP/2 checks.",
+                        "type": "text",
+                        "default": "/",
+                        "placeholder": "/healthz"
+                    },
+                    {
+                        "id": "health_check_interval_sec",
+                        "label": "Check interval (seconds)",
+                        "type": "number",
+                        "default": 30,
+                        "validation": {
+                            "min": 1
+                        }
+                    },
+                    {
+                        "id": "health_check_timeout_sec",
+                        "label": "Timeout (seconds)",
+                        "type": "number",
+                        "default": 10,
+                        "validation": {
+                            "min": 1
+                        }
+                    },
+                    {
+                        "id": "health_check_healthy_threshold",
+                        "label": "Healthy threshold",
+                        "type": "number",
+                        "default": 2,
+                        "validation": {
+                            "min": 1
+                        }
+                    },
+                    {
+                        "id": "health_check_unhealthy_threshold",
+                        "label": "Unhealthy threshold",
+                        "type": "number",
+                        "default": 3,
+                        "validation": {
+                            "min": 1
+                        }
+                    },
+                    {
+                        "id": "health_check_initial_delay_sec",
+                        "label": "Initial delay (seconds)",
+                        "description": "Grace period after an instance starts before health checks count.",
+                        "type": "number",
+                        "default": 30,
+                        "validation": {
+                            "min": 0
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "autoscaling",
+                "label": "Autoscaling policies",
+                "collapsed": true,
+                "depends_on": {
+                    "field": "autoscaling_enabled",
+                    "value": true
+                },
+                "fields": [
+                    {
+                        "id": "autoscaling_cpu_utilization_target",
+                        "label": "CPU utilization target",
+                        "description": "Target average CPU as a ratio between 0.1 and 1, for example 0.6 for 60%.",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0.1,
+                            "max": 1
+                        }
+                    },
+                    {
+                        "id": "autoscaling_load_balancing_utilization_target",
+                        "label": "Load balancing utilization target",
+                        "description": "Target load balancer utilization as a ratio between 0.1 and 1.",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0.1,
+                            "max": 1
+                        }
+                    },
+                    {
+                        "id": "autoscaling_scale_in_max_replicas_fixed",
+                        "label": "Scale-in limit (instances)",
+                        "description": "Maximum instances removed within the scale-in time window.",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0
+                        }
+                    },
+                    {
+                        "id": "autoscaling_scale_in_max_replicas_percent",
+                        "label": "Scale-in limit (percent)",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0,
+                            "max": 100
+                        }
+                    },
+                    {
+                        "id": "autoscaling_scale_in_time_window_sec",
+                        "label": "Scale-in time window (seconds)",
+                        "type": "number",
+                        "nullable": true,
+                        "validation": {
+                            "min": 0
+                        }
+                    },
+                    {
+                        "id": "scaling_schedules",
+                        "label": "Scaling schedules",
+                        "description": "Scale the group up or down on a recurring schedule.",
+                        "type": "repeatable",
+                        "fields": [
+                            {
+                                "id": "name",
+                                "label": "Schedule name",
+                                "type": "text",
+                                "required": true,
+                                "validation": {
+                                    "pattern": "^[a-z][a-z0-9-]{0,62}$",
+                                    "pattern_error": "Use lowercase letters, numbers, and hyphens."
+                                }
+                            },
+                            {
+                                "id": "schedule",
+                                "label": "Cron schedule",
+                                "type": "text",
+                                "required": true,
+                                "placeholder": "0 8 * * MON-FRI"
+                            },
+                            {
+                                "id": "time_zone",
+                                "label": "Time zone",
+                                "type": "text",
+                                "default": "UTC",
+                                "placeholder": "UTC"
+                            },
+                            {
+                                "id": "duration_sec",
+                                "label": "Duration (seconds)",
+                                "type": "number",
+                                "required": true,
+                                "validation": {
+                                    "min": 300
+                                }
+                            },
+                            {
+                                "id": "min_required_replicas",
+                                "label": "Minimum required instances",
+                                "type": "number",
+                                "required": true,
+                                "validation": {
+                                    "min": 0
+                                }
+                            },
+                            {
+                                "id": "disabled",
+                                "label": "Disabled",
+                                "type": "boolean",
+                                "default": false
+                            },
+                            {
+                                "id": "description",
+                                "label": "Description",
+                                "type": "text",
+                                "nullable": true
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
