@@ -23,4 +23,11 @@ resource "aws_subnet" "this" {
       Name = var.name
     }
   )
+
+  lifecycle {
+    precondition {
+      condition     = var.vpc_id != null && var.vpc_id != ""
+      error_message = "vpc_id is required."
+    }
+  }
 }

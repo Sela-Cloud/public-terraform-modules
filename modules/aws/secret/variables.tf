@@ -18,7 +18,12 @@ variable "kms_key_id" {
 variable "recovery_window_in_days" {
   type        = number
   default     = 30
-  description = "Number of days AWS Secrets Manager waits before permanently deleting the secret (7 to 30 days)."
+  description = "Number of days AWS Secrets Manager waits before permanently deleting the secret (7 to 30 days, or 0 to delete immediately without recovery)."
+
+  validation {
+    condition     = var.recovery_window_in_days == 0 || (var.recovery_window_in_days >= 7 && var.recovery_window_in_days <= 30)
+    error_message = "recovery_window_in_days must be 0 or between 7 and 30."
+  }
 }
 
 variable "tags" {

@@ -27,12 +27,6 @@
       }
     }
   ],
-  "provides": [
-    {
-      "data_source": "iam.roles",
-      "value_field": "name"
-    }
-  ],
   "resource": {
     "variable": "iam_role",
     "key_field": "name",

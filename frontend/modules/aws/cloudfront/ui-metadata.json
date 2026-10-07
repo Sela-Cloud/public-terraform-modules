@@ -211,9 +211,61 @@
               {
                 "id": "origin_shield_region",
                 "label": "Origin Shield Region",
-                "type": "text",
+                "type": "select",
                 "required": false,
-                "depends_on": { "field": "origin_shield_enabled", "value": true }
+                "depends_on": { "field": "origin_shield_enabled", "value": true },
+                "data_source": {
+                  "resource": "ec2.regions",
+                  "params": {},
+                  "display": { "value_key": "name", "label_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "origin_groups",
+        "label": "Origin Groups (Failover)",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "origin_groups",
+            "label": "Origin Group",
+            "description": "Pairs a primary and a secondary origin so CloudFront fails over automatically on the configured status codes.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "origin_group_id",
+                "label": "Origin Group Name",
+                "type": "text",
+                "required": true,
+                "placeholder": "my-origin-group"
+              },
+              {
+                "id": "failover_status_codes",
+                "label": "Failover Status Codes",
+                "description": "Response status codes from the primary origin that trigger failover to the secondary.",
+                "type": "list",
+                "default": [500, 502, 503, 504]
+              },
+              {
+                "id": "primary_origin_id",
+                "label": "Primary Origin",
+                "description": "Must match one of the origin names above.",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "secondary_origin_id",
+                "label": "Secondary Origin",
+                "description": "Must match one of the origin names above.",
+                "type": "text",
+                "required": true
               }
             ]
           }
@@ -297,6 +349,101 @@
         ]
       },
       {
+        "id": "ordered_cache_behaviors",
+        "label": "Path-Based Cache Behaviors",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "ordered_cache_behaviors",
+            "label": "Cache Behavior",
+            "description": "Evaluated in order, before falling back to the default cache behavior, for requests matching the path pattern.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "path_pattern",
+                "label": "Path Pattern",
+                "type": "text",
+                "required": true,
+                "placeholder": "/api/*"
+              },
+              {
+                "id": "target_origin_id",
+                "label": "Origin",
+                "description": "Must match one of the origin names, or an origin group name, above.",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "viewer_protocol_policy",
+                "label": "Viewer Protocol Policy",
+                "type": "select",
+                "default": "redirect-to-https",
+                "options": [
+                  { "value": "redirect-to-https", "label": "Redirect HTTP to HTTPS" },
+                  { "value": "https-only", "label": "HTTPS Only" },
+                  { "value": "allow-all", "label": "HTTP and HTTPS" }
+                ]
+              },
+              {
+                "id": "allowed_methods",
+                "label": "Allowed HTTP Methods",
+                "type": "list",
+                "default": ["GET", "HEAD"]
+              },
+              {
+                "id": "cached_methods",
+                "label": "Cached HTTP Methods",
+                "type": "list",
+                "default": ["GET", "HEAD"]
+              },
+              {
+                "id": "compress",
+                "label": "Compress objects automatically",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "cache_policy_id",
+                "label": "Cache Policy",
+                "description": "Defaults to AWS's managed 'CachingOptimized' policy.",
+                "type": "text",
+                "default": "658327ea-f89d-4fab-a63d-7e88639e58f6"
+              },
+              {
+                "id": "origin_request_policy_id",
+                "label": "Origin Request Policy",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "response_headers_policy_id",
+                "label": "Response Headers Policy",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "field_level_encryption_id",
+                "label": "Field-Level Encryption Config",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "realtime_log_config_arn",
+                "label": "Real-time Log Configuration",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
         "id": "certificate",
         "label": "Custom SSL Certificate",
         "fields": [
@@ -366,7 +513,7 @@
             "type": "list",
             "required": false,
             "default": [],
-            "depends_on": { "field": "geo_restriction_type", "value": "whitelist" }
+            "depends_on": { "field": "geo_restriction_type", "operator": "neq", "value": "none" }
           }
         ]
       },

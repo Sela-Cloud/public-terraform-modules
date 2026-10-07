@@ -3,7 +3,7 @@
  *****************************************/
 
 module "cloudfront" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/cloudfront?ref=v0.8.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/cloudfront?ref=aws-gaurav"
   for_each = var.cloudfront
 
   enabled             = each.value.enabled
@@ -15,7 +15,8 @@ module "cloudfront" {
   http_version        = each.value.http_version
   web_acl_id          = each.value.web_acl_id
 
-  origins = each.value.origins
+  origins       = each.value.origins
+  origin_groups = each.value.origin_groups
 
   target_origin_id           = each.value.target_origin_id
   viewer_protocol_policy     = each.value.viewer_protocol_policy
@@ -27,6 +28,7 @@ module "cloudfront" {
   response_headers_policy_id = each.value.response_headers_policy_id
   field_level_encryption_id  = each.value.field_level_encryption_id
   realtime_log_config_arn    = each.value.realtime_log_config_arn
+  ordered_cache_behaviors    = each.value.ordered_cache_behaviors
 
   use_default_certificate  = each.value.use_default_certificate
   acm_certificate_arn      = each.value.acm_certificate_arn
