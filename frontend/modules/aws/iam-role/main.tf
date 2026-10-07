@@ -1,0 +1,27 @@
+/******************************************
+  AWS IAM Role Root Module
+ *****************************************/
+
+module "iam_role" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/iam-role?ref=aws-gaurav"
+  for_each = var.iam_role
+
+  name                  = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)
+  name_prefix           = each.value.name_prefix
+  assume_role_policy    = each.value.assume_role_policy
+  description           = each.value.description
+  path                  = each.value.path
+  force_detach_policies = each.value.force_detach_policies
+  max_session_duration  = each.value.max_session_duration
+  permissions_boundary  = each.value.permissions_boundary
+  managed_policy_arns   = each.value.managed_policy_arns
+  inline_policy         = each.value.inline_policy
+  tags                  = each.value.tags
+
+  trusted_entity_type        = each.value.trusted_entity_type
+  trusted_service_principals = each.value.trusted_service_principals
+  trusted_account_ids        = each.value.trusted_account_ids
+  trusted_role_arns          = each.value.trusted_role_arns
+  trusted_user_arns          = each.value.trusted_user_arns
+  trusted_external_id        = each.value.trusted_external_id
+}
