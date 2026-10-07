@@ -1,5 +1,5 @@
 module "secrets" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/secret?ref=v0.8.8" # Update this path to your child module source
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/secret?ref=v0.8.14" # Update this path to your child module source
   for_each = var.secrets
 
   secret_id                    = each.value.secret_id

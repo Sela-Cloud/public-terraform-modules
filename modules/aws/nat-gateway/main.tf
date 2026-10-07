@@ -28,4 +28,27 @@ resource "aws_nat_gateway" "this" {
       Name = var.name
     }
   )
+
+  lifecycle {
+    precondition {
+      condition     = var.availability_mode != "zonal" || var.subnet_id != null
+      error_message = "subnet_id is required when availability_mode is 'zonal'."
+    }
+    precondition {
+      condition     = var.availability_mode != "zonal" || var.connectivity_type != "public" || var.allocation_id != null
+      error_message = "allocation_id is required when availability_mode is 'zonal' and connectivity_type is 'public'."
+    }
+    precondition {
+      condition     = var.availability_mode != "zonal" || var.vpc_id == null
+      error_message = "vpc_id must not be set when availability_mode is 'zonal'."
+    }
+    precondition {
+      condition     = var.availability_mode != "regional" || var.vpc_id != null
+      error_message = "vpc_id is required when availability_mode is 'regional'."
+    }
+    precondition {
+      condition     = var.availability_mode != "regional" || (var.subnet_id == null && var.allocation_id == null)
+      error_message = "subnet_id and allocation_id must not be set when availability_mode is 'regional'."
+    }
+  }
 }

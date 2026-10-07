@@ -1,3 +1,8 @@
+variable "region" {
+  description = "The AWS region where resources will be provisioned."
+  type        = string
+}
+
 variable "secrets" {
   type = map(object({
     secret_id               = string

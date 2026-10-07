@@ -163,11 +163,18 @@
         "fields": [
           {
             "id": "allocation_id",
-            "label": "Elastic IP Allocation ID",
-            "description": "The Allocation ID of the Elastic IP address for the NAT Gateway (required for public zonal NAT Gateways).",
-            "type": "text",
+            "label": "Elastic IP",
+            "description": "The Elastic IP address for the NAT Gateway (required for public zonal NAT Gateways).",
+            "type": "select",
             "required": false,
-            "placeholder": "eipalloc-0123456789abcdef0"
+            "placeholder": "eipalloc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.eips",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "public_ip" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "private_ip",
