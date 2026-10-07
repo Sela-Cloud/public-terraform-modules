@@ -153,11 +153,25 @@
               },
               {
                 "id": "public_ip_address_id",
-                "label": "Public IP Address ID",
-                "description": "Resource ID of the Public IP address (for Public Load Balancer).",
-                "type": "text",
+                "label": "Public IP Address",
+                "description": "Available Azure Public IP address for the load balancer frontend.",
+                "type": "select",
                 "required": false,
-                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/publicIPAddresses/pip-lb"
+                "nullable": true,
+                "data_source": {
+                  "resource": "network.publicIPAddresses",
+                  "params": {
+                    "available_only": {
+                      "static": "true"
+                    }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "ipAddress"
+                  },
+                  "allow_custom": true
+                }
               },
               {
                 "id": "public_ip_prefix_id",
@@ -243,11 +257,21 @@
               },
               {
                 "id": "virtual_network_id",
-                "label": "Virtual Network ID",
-                "description": "Virtual Network ID (optional, required if using IP-based backend pool addresses).",
-                "type": "text",
+                "label": "Virtual Network",
+                "description": "Virtual Network (optional, required if using IP-based backend pool addresses).",
+                "type": "select",
                 "required": false,
-                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/vnet-main"
+                "nullable": true,
+                "data_source": {
+                  "resource": "network.virtualNetworks",
+                  "params": {},
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "resourceGroup"
+                  },
+                  "allow_custom": true
+                }
               }
             ]
           }
