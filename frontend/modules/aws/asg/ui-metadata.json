@@ -8,7 +8,25 @@
         "description": "EC2 Auto Scaling Groups with launch template, rolling instance refresh, health checks, target tracking policies, and scheduled scaling.",
         "category": "regional"
     },
-    "globals": [],
+    "globals": [
+        {
+            "id": "region",
+            "label": "AWS Region",
+            "description": "The AWS region where resources will be provisioned.",
+            "type": "select",
+            "required": true,
+            "default": "us-east-1",
+            "data_source": {
+                "resource": "ec2.regions",
+                "params": {},
+                "display": {
+                    "value_key": "name",
+                    "label_key": "description",
+                    "description_key": "name"
+                }
+            }
+        }
+    ],
     "import": {
         "module": "asg",
         "target": "aws_autoscaling_group.asg",
@@ -349,30 +367,6 @@
                                 ]
                             }
                         ]
-                    },
-                    {
-                        "id": "autoscaling_scale_in_control",
-                        "label": "Scale-in control",
-                        "type": "object",
-                        "fields": [
-                            {
-                                "id": "disabled",
-                                "label": "Disable scale-in",
-                                "type": "boolean",
-                                "required": true,
-                                "default": false
-                            },
-                            {
-                                "id": "time_window_sec",
-                                "label": "Time window (seconds)",
-                                "type": "number",
-                                "required": true,
-                                "default": 600,
-                                "validation": {
-                                    "min": 0
-                                }
-                            }
-                        ]
                     }
                 ]
             },
@@ -445,6 +439,21 @@
                                 "default": false
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "id": "tags",
+                "label": "Tags",
+                "description": "Resource tags for organizational, tracking, and cost allocation purposes.",
+                "fields": [
+                    {
+                        "id": "tags",
+                        "label": "ASG Tags",
+                        "description": "Key-value tags assigned to the Auto Scaling Group and propagated to launched instances.",
+                        "type": "map",
+                        "required": false,
+                        "default": {}
                     }
                 ]
             }

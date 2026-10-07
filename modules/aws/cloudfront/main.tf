@@ -57,6 +57,24 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
+  dynamic "origin_group" {
+    for_each = { for g in var.origin_groups : g.origin_group_id => g }
+    content {
+      origin_id = origin_group.value.origin_group_id
+
+      failover_criteria {
+        status_codes = origin_group.value.failover_status_codes
+      }
+
+      member {
+        origin_id = origin_group.value.primary_origin_id
+      }
+      member {
+        origin_id = origin_group.value.secondary_origin_id
+      }
+    }
+  }
+
   default_cache_behavior {
     target_origin_id           = var.target_origin_id
     viewer_protocol_policy     = var.viewer_protocol_policy
@@ -68,6 +86,23 @@ resource "aws_cloudfront_distribution" "this" {
     response_headers_policy_id = var.response_headers_policy_id
     field_level_encryption_id  = var.field_level_encryption_id
     realtime_log_config_arn    = var.realtime_log_config_arn
+  }
+
+  dynamic "ordered_cache_behavior" {
+    for_each = var.ordered_cache_behaviors
+    content {
+      path_pattern               = ordered_cache_behavior.value.path_pattern
+      target_origin_id           = ordered_cache_behavior.value.target_origin_id
+      viewer_protocol_policy     = ordered_cache_behavior.value.viewer_protocol_policy
+      allowed_methods            = ordered_cache_behavior.value.allowed_methods
+      cached_methods             = ordered_cache_behavior.value.cached_methods
+      compress                   = ordered_cache_behavior.value.compress
+      cache_policy_id            = ordered_cache_behavior.value.cache_policy_id
+      origin_request_policy_id   = ordered_cache_behavior.value.origin_request_policy_id
+      response_headers_policy_id = ordered_cache_behavior.value.response_headers_policy_id
+      field_level_encryption_id  = ordered_cache_behavior.value.field_level_encryption_id
+      realtime_log_config_arn    = ordered_cache_behavior.value.realtime_log_config_arn
+    }
   }
 
   restrictions {
@@ -107,8 +142,28 @@ resource "aws_cloudfront_distribution" "this" {
 
   lifecycle {
     precondition {
-      condition     = contains([for o in var.origins : o.origin_id], var.target_origin_id)
-      error_message = "target_origin_id must match the origin_id of one of the origins in var.origins."
+      condition = contains(
+        concat([for o in var.origins : o.origin_id], [for g in var.origin_groups : g.origin_group_id]),
+        var.target_origin_id
+      )
+      error_message = "target_origin_id must match the origin_id of one of the origins, or an origin_group_id in var.origin_groups."
+    }
+    precondition {
+      condition = alltrue([
+        for g in var.origin_groups :
+        contains([for o in var.origins : o.origin_id], g.primary_origin_id) &&
+        contains([for o in var.origins : o.origin_id], g.secondary_origin_id)
+      ])
+      error_message = "origin_groups' primary_origin_id and secondary_origin_id must each match a real origin_id in var.origins."
+    }
+    precondition {
+      condition = alltrue([
+        for b in var.ordered_cache_behaviors : contains(
+          concat([for o in var.origins : o.origin_id], [for g in var.origin_groups : g.origin_group_id]),
+          b.target_origin_id
+        )
+      ])
+      error_message = "Each ordered_cache_behaviors entry's target_origin_id must match an origin_id or origin_group_id."
     }
     precondition {
       condition     = var.use_default_certificate || var.acm_certificate_arn != null

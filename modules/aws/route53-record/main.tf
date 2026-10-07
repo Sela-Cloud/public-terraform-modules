@@ -112,5 +112,9 @@ resource "aws_route53_record" "this" {
       condition     = var.geolocation_subdivision == null || var.geolocation_country == "US"
       error_message = "geolocation_subdivision requires geolocation_country to be 'US'."
     }
+    precondition {
+      condition     = var.routing_policy_type != "GEOLOCATION" || var.geolocation_continent != null || var.geolocation_country != null
+      error_message = "geolocation_continent or geolocation_country is required when routing_policy_type is GEOLOCATION."
+    }
   }
 }

@@ -96,6 +96,22 @@ variable "origins" {
   }
 }
 
+variable "origin_groups" {
+  description = "Origin groups for failover: each pairs a primary and a secondary origin_id from var.origins."
+  type = list(object({
+    origin_group_id       = string
+    failover_status_codes = optional(list(number), [500, 502, 503, 504])
+    primary_origin_id     = string
+    secondary_origin_id   = string
+  }))
+  default = []
+
+  validation {
+    condition     = length(distinct([for g in var.origin_groups : g.origin_group_id])) == length(var.origin_groups)
+    error_message = "Each origin group's origin_group_id must be unique."
+  }
+}
+
 variable "target_origin_id" {
   description = "origin_id of the origin the default cache behavior routes to."
   type        = string
@@ -158,6 +174,29 @@ variable "realtime_log_config_arn" {
   description = "Real-time log configuration ARN."
   type        = string
   default     = null
+}
+
+variable "ordered_cache_behaviors" {
+  description = "Path-pattern-based cache behaviors, evaluated in list order before the default cache behavior."
+  type = list(object({
+    path_pattern               = string
+    target_origin_id           = string
+    viewer_protocol_policy     = optional(string, "redirect-to-https")
+    allowed_methods            = optional(list(string), ["GET", "HEAD"])
+    cached_methods             = optional(list(string), ["GET", "HEAD"])
+    compress                   = optional(bool, true)
+    cache_policy_id            = optional(string, "658327ea-f89d-4fab-a63d-7e88639e58f6")
+    origin_request_policy_id   = optional(string)
+    response_headers_policy_id = optional(string)
+    field_level_encryption_id  = optional(string)
+    realtime_log_config_arn    = optional(string)
+  }))
+  default = []
+
+  validation {
+    condition     = length(distinct([for b in var.ordered_cache_behaviors : b.path_pattern])) == length(var.ordered_cache_behaviors)
+    error_message = "Each ordered cache behavior's path_pattern must be unique."
+  }
 }
 
 variable "use_default_certificate" {

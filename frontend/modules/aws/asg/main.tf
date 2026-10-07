@@ -4,7 +4,7 @@
 
 module "asg" {
   # Points to your local or remote AWS autoscaling child module
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/asg?ref=v0.8.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/asg?ref=aws-gaurav"
   for_each = var.asg
 
   hostname                  = each.value.hostname
@@ -23,8 +23,8 @@ module "asg" {
   update_policy = each.value.update_policy
   health_check  = each.value.health_check
 
-  autoscaling_enabled          = each.value.autoscaling_enabled
-  autoscaling_policies         = each.value.autoscaling_policies
-  scaling_schedules            = each.value.scaling_schedules
-  autoscaling_scale_in_control = each.value.autoscaling_scale_in_control
+  autoscaling_enabled  = each.value.autoscaling_enabled
+  autoscaling_policies = each.value.autoscaling_policies
+  scaling_schedules    = each.value.scaling_schedules
+  tags                 = each.value.tags
 }

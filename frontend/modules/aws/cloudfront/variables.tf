@@ -34,6 +34,13 @@ variable "cloudfront" {
       origin_shield_region      = optional(string)
     }))
 
+    origin_groups = optional(list(object({
+      origin_group_id       = string
+      failover_status_codes = optional(list(number), [500, 502, 503, 504])
+      primary_origin_id     = string
+      secondary_origin_id   = string
+    })), [])
+
     target_origin_id           = string
     viewer_protocol_policy     = optional(string, "redirect-to-https")
     allowed_methods            = optional(list(string), ["GET", "HEAD"])
@@ -44,6 +51,20 @@ variable "cloudfront" {
     response_headers_policy_id = optional(string)
     field_level_encryption_id  = optional(string)
     realtime_log_config_arn    = optional(string)
+
+    ordered_cache_behaviors = optional(list(object({
+      path_pattern               = string
+      target_origin_id           = string
+      viewer_protocol_policy     = optional(string, "redirect-to-https")
+      allowed_methods            = optional(list(string), ["GET", "HEAD"])
+      cached_methods             = optional(list(string), ["GET", "HEAD"])
+      compress                   = optional(bool, true)
+      cache_policy_id            = optional(string, "658327ea-f89d-4fab-a63d-7e88639e58f6")
+      origin_request_policy_id   = optional(string)
+      response_headers_policy_id = optional(string)
+      field_level_encryption_id  = optional(string)
+      realtime_log_config_arn    = optional(string)
+    })), [])
 
     use_default_certificate  = optional(bool, true)
     acm_certificate_arn      = optional(string)
@@ -76,9 +97,36 @@ variable "cloudfront" {
 
   validation {
     condition = alltrue([
-      for c in values(var.cloudfront) : contains([for o in c.origins : o.origin_id], c.target_origin_id)
+      for c in values(var.cloudfront) : contains(
+        concat([for o in c.origins : o.origin_id], [for g in c.origin_groups : g.origin_group_id]),
+        c.target_origin_id
+      )
     ])
-    error_message = "target_origin_id must match the origin_id of one of the origins."
+    error_message = "target_origin_id must match the origin_id of one of the origins, or an origin_group_id in origin_groups."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for c in values(var.cloudfront) : [
+        for g in c.origin_groups :
+        contains([for o in c.origins : o.origin_id], g.primary_origin_id) &&
+        contains([for o in c.origins : o.origin_id], g.secondary_origin_id)
+      ]
+    ]))
+    error_message = "origin_groups' primary_origin_id and secondary_origin_id must each match a real origin_id in origins."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for c in values(var.cloudfront) : [
+        for b in c.ordered_cache_behaviors :
+        contains(
+          concat([for o in c.origins : o.origin_id], [for g in c.origin_groups : g.origin_group_id]),
+          b.target_origin_id
+        )
+      ]
+    ]))
+    error_message = "Each ordered_cache_behaviors entry's target_origin_id must match an origin_id or origin_group_id."
   }
 
   validation {

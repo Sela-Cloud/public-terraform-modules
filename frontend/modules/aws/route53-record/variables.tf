@@ -108,4 +108,12 @@ variable "route53_record" {
     ])
     error_message = "geolocation_subdivision requires geolocation_country to be 'US'."
   }
+
+  validation {
+    condition = alltrue([
+      for r in values(var.route53_record) :
+      r.routing_policy_type != "GEOLOCATION" || r.geolocation_continent != null || r.geolocation_country != null
+    ])
+    error_message = "geolocation_continent or geolocation_country is required when routing_policy_type is GEOLOCATION."
+  }
 }

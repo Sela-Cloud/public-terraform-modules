@@ -46,7 +46,6 @@ resource "aws_iam_role" "this" {
   force_detach_policies = var.force_detach_policies
   max_session_duration  = var.max_session_duration
   permissions_boundary  = var.permissions_boundary
-  managed_policy_arns   = var.managed_policy_arns
 
   dynamic "inline_policy" {
     for_each = var.inline_policy
@@ -77,8 +76,19 @@ resource "aws_iam_role" "this" {
       error_message = "At least one of trusted_role_arns or trusted_user_arns is required when trusted_entity_type is IAM_PRINCIPAL."
     }
     precondition {
-      condition     = contains(["AWS_SERVICE", "AWS_ACCOUNT", "IAM_PRINCIPAL"], coalesce(var.trusted_entity_type, "")) || var.assume_role_policy != null
+      condition     = (var.trusted_entity_type != null && contains(["AWS_SERVICE", "AWS_ACCOUNT", "IAM_PRINCIPAL"], var.trusted_entity_type)) || var.assume_role_policy != null
       error_message = "assume_role_policy is required when trusted_entity_type is null or CUSTOM_JSON."
     }
   }
+}
+
+################################################################################
+# Managed Policy Attachments
+################################################################################
+
+resource "aws_iam_role_policy_attachment" "this" {
+  for_each = toset(var.managed_policy_arns)
+
+  role       = aws_iam_role.this.name
+  policy_arn = each.value
 }
