@@ -77,7 +77,7 @@ module "launch_template" {
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| `name` | The name of the launch template | `string` | `"lt-default"` | no |
+| `name` | The name of the launch template. Set at most one of name/name_prefix | `string` | `null` | no |
 | `name_prefix` | Creates a unique name beginning with prefix | `string` | `null` | no |
 | `description` | Description of the launch template | `string` | `null` | no |
 | `image_id` | The AMI ID to use to launch the instance | `string` | `null` | no |
@@ -94,6 +94,13 @@ module "launch_template" {
 | `network_interfaces` | Network interface configurations | `list(object)` | `[]` | no |
 | `tag_specifications` | Resource tag specifications | `list(object)` | `[]` | no |
 | `tags` | A map of tags to assign to the launch template | `map(string)` | `{}` | no |
+| `disable_api_termination` | Enables EC2 instance termination protection | `bool` | `null` | no |
+| `disable_api_stop` | Enables EC2 instance stop protection | `bool` | `null` | no |
+| `instance_initiated_shutdown_behavior` | Shutdown behavior (`stop` or `terminate`) | `string` | `null` | no |
+| `placement` | Instance placement (availability zone, tenancy, host, placement group) | `object` | `null` | no |
+| `cpu_options` | CPU core count and threads per core | `object` | `null` | no |
+| `credit_specification` | CPU credit option for burstable (T-family) instances | `object` | `null` | no |
+| `instance_market_options` | Purchasing option (e.g. Spot) for the instance | `object` | `null` | no |
 
 ## Outputs
 

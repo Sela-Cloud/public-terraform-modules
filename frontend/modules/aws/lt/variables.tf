@@ -7,7 +7,7 @@ variable "region" {
 variable "lt" {
   description = "Map of AWS Launch Template configurations to deploy, keyed by launch template name."
   type = map(object({
-    name                        = optional(string, "lt-default")
+    name                        = optional(string, null)
     name_prefix                 = optional(string, null)
     description                 = optional(string, null)
     image_id                    = optional(string, null)
@@ -50,32 +50,65 @@ variable "lt" {
       resource_type = string
       tags          = map(string)
     })), [])
-    tags = optional(map(string), {})
+    tags                                 = optional(map(string), {})
+    disable_api_termination              = optional(bool, null)
+    disable_api_stop                     = optional(bool, null)
+    instance_initiated_shutdown_behavior = optional(string, null)
+    placement = optional(object({
+      availability_zone = optional(string, null)
+      affinity          = optional(string, null)
+      group_name        = optional(string, null)
+      host_id           = optional(string, null)
+      tenancy           = optional(string, null)
+    }), null)
+    cpu_options = optional(object({
+      core_count       = optional(number, null)
+      threads_per_core = optional(number, null)
+    }), null)
+    credit_specification = optional(object({
+      cpu_credits = string
+    }), null)
+    instance_market_options = optional(object({
+      market_type = optional(string, "spot")
+      spot_options = optional(object({
+        max_price                      = optional(string, null)
+        spot_instance_type             = optional(string, "one-time")
+        instance_interruption_behavior = optional(string, "terminate")
+        valid_until                    = optional(string, null)
+      }), null)
+    }), null)
   }))
   default = {
     "lt-default" = {
-      name                        = "lt-default"
-      name_prefix                 = null
-      description                 = null
-      image_id                    = null
-      instance_type               = "t3.micro"
-      key_name                    = null
-      user_data                   = null
-      ebs_optimized               = null
-      vpc_security_group_ids      = null
-      update_default_version      = true
-      iam_instance_profile_name   = null
-      iam_instance_profile_arn    = null
-      enable_monitoring           = null
-      enable_metadata_options     = true
-      http_endpoint               = "enabled"
-      http_tokens                 = "required"
-      http_put_response_hop_limit = 1
-      instance_metadata_tags      = null
-      block_device_mappings       = []
-      network_interfaces          = []
-      tag_specifications          = []
-      tags                        = {}
+      name                                 = null
+      name_prefix                          = null
+      description                          = null
+      image_id                             = null
+      instance_type                        = "t3.micro"
+      key_name                             = null
+      user_data                            = null
+      ebs_optimized                        = null
+      vpc_security_group_ids               = null
+      update_default_version               = true
+      iam_instance_profile_name            = null
+      iam_instance_profile_arn             = null
+      enable_monitoring                    = null
+      enable_metadata_options              = true
+      http_endpoint                        = "enabled"
+      http_tokens                          = "required"
+      http_put_response_hop_limit          = 1
+      instance_metadata_tags               = null
+      block_device_mappings                = []
+      network_interfaces                   = []
+      tag_specifications                   = []
+      tags                                 = {}
+      disable_api_termination              = null
+      disable_api_stop                     = null
+      instance_initiated_shutdown_behavior = null
+      placement                            = null
+      cpu_options                          = null
+      credit_specification                 = null
+      instance_market_options              = null
     }
   }
 }

@@ -1,7 +1,7 @@
 variable "name" {
-  description = "The name of the launch template."
+  description = "The name of the launch template. Set at most one of name/name_prefix."
   type        = string
-  default     = "lt-default"
+  default     = null
 }
 
 variable "name_prefix" {
@@ -150,4 +150,65 @@ variable "tags" {
   description = "A map of tags to assign to the launch template."
   type        = map(string)
   default     = {}
+}
+
+variable "disable_api_termination" {
+  description = "If true, enables EC2 instance termination protection."
+  type        = bool
+  default     = null
+}
+
+variable "disable_api_stop" {
+  description = "If true, enables EC2 instance stop protection."
+  type        = bool
+  default     = null
+}
+
+variable "instance_initiated_shutdown_behavior" {
+  description = "Shutdown behavior for the instance. Valid values: 'stop', 'terminate'."
+  type        = string
+  default     = null
+}
+
+variable "placement" {
+  description = "Placement of the instance: availability zone, tenancy, host, or placement group."
+  type = object({
+    availability_zone = optional(string, null)
+    affinity          = optional(string, null)
+    group_name        = optional(string, null)
+    host_id           = optional(string, null)
+    tenancy           = optional(string, null)
+  })
+  default = null
+}
+
+variable "cpu_options" {
+  description = "CPU options for the instance (core count, threads per core)."
+  type = object({
+    core_count       = optional(number, null)
+    threads_per_core = optional(number, null)
+  })
+  default = null
+}
+
+variable "credit_specification" {
+  description = "Credit option for CPU usage on burstable (T-family) instances. cpu_credits: 'standard' or 'unlimited'."
+  type = object({
+    cpu_credits = string
+  })
+  default = null
+}
+
+variable "instance_market_options" {
+  description = "Purchasing option for the instance, e.g. Spot."
+  type = object({
+    market_type = optional(string, "spot")
+    spot_options = optional(object({
+      max_price                      = optional(string, null)
+      spot_instance_type             = optional(string, "one-time")
+      instance_interruption_behavior = optional(string, "terminate")
+      valid_until                    = optional(string, null)
+    }), null)
+  })
+  default = null
 }

@@ -174,6 +174,196 @@
         ]
       },
       {
+        "id": "network_interfaces",
+        "label": "Network Interfaces",
+        "description": "Customize network interfaces attached at instance boot.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "network_interfaces",
+            "label": "Network Interface",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "device_index",
+                "label": "Device Index",
+                "type": "number",
+                "default": 0,
+                "validation": { "min": 0 }
+              },
+              {
+                "id": "subnet_id",
+                "label": "Subnet ID",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "subnet-0123456789abcdef0"
+              },
+              {
+                "id": "security_groups",
+                "label": "Security Group IDs",
+                "type": "list",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "associate_public_ip_address",
+                "label": "Associate Public IP Address",
+                "type": "boolean",
+                "required": false,
+                "default": null,
+                "nullable": true
+              },
+              {
+                "id": "delete_on_termination",
+                "label": "Delete on Termination",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "description",
+                "label": "Description",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "label": "Storage (EBS Volumes)",
+        "description": "Additional EBS volumes attached to instances launched from this template.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "block_device_mappings",
+            "label": "Block Device Mapping",
+            "description": "Each mapping attaches one EBS volume at the given device name.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "device_name",
+                "label": "Device Name",
+                "type": "text",
+                "required": true,
+                "placeholder": "/dev/xvda"
+              },
+              {
+                "id": "ebs",
+                "label": "EBS Volume",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "volume_size",
+                    "label": "Volume Size (GiB)",
+                    "type": "number",
+                    "default": 20,
+                    "validation": { "min": 1 }
+                  },
+                  {
+                    "id": "volume_type",
+                    "label": "Volume Type",
+                    "type": "select",
+                    "default": "gp3",
+                    "options": [
+                      { "value": "gp3", "label": "gp3" },
+                      { "value": "gp2", "label": "gp2" },
+                      { "value": "io1", "label": "io1" },
+                      { "value": "io2", "label": "io2" },
+                      { "value": "st1", "label": "st1" },
+                      { "value": "sc1", "label": "sc1" },
+                      { "value": "standard", "label": "standard" }
+                    ]
+                  },
+                  {
+                    "id": "iops",
+                    "label": "IOPS",
+                    "type": "number",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "throughput",
+                    "label": "Throughput (MB/s)",
+                    "type": "number",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "encrypted",
+                    "label": "Encrypted",
+                    "type": "boolean",
+                    "default": true
+                  },
+                  {
+                    "id": "kms_key_id",
+                    "label": "KMS Key ID",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "delete_on_termination",
+                    "label": "Delete on Termination",
+                    "type": "boolean",
+                    "default": true
+                  },
+                  {
+                    "id": "snapshot_id",
+                    "label": "Snapshot ID",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tag_specifications",
+        "label": "Launch-Time Tag Specifications",
+        "description": "Tags applied to specific resource types (instance, volume, network interface) created at launch, in addition to the launch template's own tags.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tag_specifications",
+            "label": "Tag Specification",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "resource_type",
+                "label": "Resource Type",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "instance", "label": "Instance" },
+                  { "value": "volume", "label": "Volume" },
+                  { "value": "network-interface", "label": "Network Interface" },
+                  { "value": "spot-instances-request", "label": "Spot Instances Request" }
+                ]
+              },
+              {
+                "id": "tags",
+                "label": "Tags",
+                "type": "map",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
         "id": "user_data",
         "label": "User Data",
         "description": "Bootstrap shell script or cloud-init configuration executed on first boot.",
@@ -182,7 +372,8 @@
             "id": "user_data",
             "label": "User Data Script",
             "description": "The user data script (plain text or base64 encoded).",
-            "type": "textarea",
+            "type": "text",
+            "multiline": true,
             "required": false,
             "default": null,
             "nullable": true,
@@ -233,7 +424,8 @@
             "description": "Desired HTTP PUT response hop limit for metadata requests (1-64).",
             "type": "number",
             "required": false,
-            "default": 1
+            "default": 1,
+            "validation": { "min": 1, "max": 64 }
           },
           {
             "id": "instance_metadata_tags",
@@ -246,6 +438,232 @@
             "options": [
               { "value": "enabled", "label": "Enabled" },
               { "value": "disabled", "label": "Disabled" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "protection",
+        "label": "Instance Protection & Shutdown Behavior",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "disable_api_termination",
+            "label": "Enable Termination Protection",
+            "description": "Prevents the instance from being terminated via the API.",
+            "type": "boolean",
+            "required": false,
+            "default": null,
+            "nullable": true
+          },
+          {
+            "id": "disable_api_stop",
+            "label": "Enable Stop Protection",
+            "description": "Prevents the instance from being stopped via the API.",
+            "type": "boolean",
+            "required": false,
+            "default": null,
+            "nullable": true
+          },
+          {
+            "id": "instance_initiated_shutdown_behavior",
+            "label": "Shutdown Behavior",
+            "description": "What happens when the instance initiates a shutdown from the OS.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "stop", "label": "Stop" },
+              { "value": "terminate", "label": "Terminate" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "placement_section",
+        "label": "Placement",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "placement",
+            "label": "Placement",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "availability_zone",
+                "label": "Availability Zone",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "us-east-1a"
+              },
+              {
+                "id": "tenancy",
+                "label": "Tenancy",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "options": [
+                  { "value": "default", "label": "Default (shared hardware)" },
+                  { "value": "dedicated", "label": "Dedicated Instance" },
+                  { "value": "host", "label": "Dedicated Host" }
+                ]
+              },
+              {
+                "id": "affinity",
+                "label": "Host Affinity",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "tenancy", "value": "host" }
+              },
+              {
+                "id": "host_id",
+                "label": "Dedicated Host ID",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "tenancy", "value": "host" }
+              },
+              {
+                "id": "group_name",
+                "label": "Placement Group Name",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cpu_options_section",
+        "label": "CPU Options",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "cpu_options",
+            "label": "CPU Options",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "core_count",
+                "label": "Core Count",
+                "type": "number",
+                "required": false,
+                "nullable": true,
+                "validation": { "min": 1 }
+              },
+              {
+                "id": "threads_per_core",
+                "label": "Threads per Core",
+                "type": "number",
+                "required": false,
+                "nullable": true,
+                "validation": { "min": 1, "max": 2 }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "credit_specification_section",
+        "label": "Credit Specification (Burstable Instances)",
+        "description": "CPU credit option for T-family burstable instance types.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "credit_specification",
+            "label": "Credit Specification",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "cpu_credits",
+                "label": "CPU Credits",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "standard", "label": "Standard" },
+                  { "value": "unlimited", "label": "Unlimited" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "instance_market_options_section",
+        "label": "Purchasing Option",
+        "description": "Use Spot capacity instead of On-Demand for cost savings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "instance_market_options",
+            "label": "Market Options",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "market_type",
+                "label": "Market Type",
+                "type": "select",
+                "default": "spot",
+                "options": [{ "value": "spot", "label": "Spot" }]
+              },
+              {
+                "id": "spot_options",
+                "label": "Spot Options",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "max_price",
+                    "label": "Max Price (per hour, USD)",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "placeholder": "0.05"
+                  },
+                  {
+                    "id": "spot_instance_type",
+                    "label": "Spot Request Type",
+                    "type": "select",
+                    "default": "one-time",
+                    "options": [
+                      { "value": "one-time", "label": "One-time" },
+                      { "value": "persistent", "label": "Persistent" }
+                    ]
+                  },
+                  {
+                    "id": "instance_interruption_behavior",
+                    "label": "Interruption Behavior",
+                    "type": "select",
+                    "default": "terminate",
+                    "options": [
+                      { "value": "terminate", "label": "Terminate" },
+                      { "value": "stop", "label": "Stop" },
+                      { "value": "hibernate", "label": "Hibernate" }
+                    ]
+                  },
+                  {
+                    "id": "valid_until",
+                    "label": "Valid Until (RFC3339)",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "placeholder": "2026-12-31T23:59:59Z"
+                  }
+                ]
+              }
             ]
           }
         ]

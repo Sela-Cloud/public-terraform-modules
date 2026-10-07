@@ -3,10 +3,10 @@
  *****************************************/
 
 module "lt" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/lt?ref=v0.8.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/lt?ref=aws-lt"
   for_each = var.lt
 
-  name                        = coalesce(each.value.name, each.key)
+  name                        = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)
   name_prefix                 = each.value.name_prefix
   description                 = each.value.description
   image_id                    = each.value.image_id
@@ -28,4 +28,12 @@ module "lt" {
   network_interfaces          = each.value.network_interfaces
   tag_specifications          = each.value.tag_specifications
   tags                        = each.value.tags
+
+  disable_api_termination              = each.value.disable_api_termination
+  disable_api_stop                     = each.value.disable_api_stop
+  instance_initiated_shutdown_behavior = each.value.instance_initiated_shutdown_behavior
+  placement                            = each.value.placement
+  cpu_options                          = each.value.cpu_options
+  credit_specification                 = each.value.credit_specification
+  instance_market_options              = each.value.instance_market_options
 }
