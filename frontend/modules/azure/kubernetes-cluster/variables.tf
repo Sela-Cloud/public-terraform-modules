@@ -79,8 +79,8 @@ variable "kubernetes_cluster" {
       secret_rotation_interval = optional(string, "2m")
     }), null)
 
-    node_pools = optional(map(object({
-      name                 = optional(string, null)
+    node_pools = optional(list(object({
+      name                 = string
       vm_size              = string
       auto_scaling_enabled = optional(bool, true)
       node_count           = optional(number, null)
@@ -101,7 +101,7 @@ variable "kubernetes_cluster" {
       node_labels          = optional(map(string), {})
       node_taints          = optional(list(string), [])
       tags                 = optional(map(string), {})
-    })), {})
+    })), [])
 
     tags = optional(map(string), {})
   }))
