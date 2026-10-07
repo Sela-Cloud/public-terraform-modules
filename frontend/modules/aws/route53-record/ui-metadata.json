@@ -31,11 +31,18 @@
         "fields": [
           {
             "id": "zone_id",
-            "label": "Hosted Zone ID",
+            "label": "Hosted Zone",
             "description": "The hosted zone to create this record in.",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "placeholder": "Z1D633PJN98FT9"
+            "placeholder": "Z1D633PJN98FT9",
+            "data_source": {
+              "resource": "route53.zones",
+              "params": {},
+              "display": { "value_key": "id", "label_key": "name", "description_key": "private_zone" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "name",
