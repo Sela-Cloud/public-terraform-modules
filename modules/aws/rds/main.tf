@@ -368,6 +368,21 @@ resource "aws_db_instance" "this" {
   depends_on = [
     aws_iam_role_policy_attachment.enhanced_monitoring
   ]
+
+  lifecycle {
+    precondition {
+      condition     = var.manage_master_user_password || var.replicate_source_db != null || var.snapshot_identifier != null || (var.password != null && var.password != "")
+      error_message = "password is required when manage_master_user_password is false and not restoring from a snapshot or replica."
+    }
+    precondition {
+      condition     = !var.create_security_group || var.vpc_id != null
+      error_message = "vpc_id is required when create_security_group is true."
+    }
+    precondition {
+      condition     = !var.create_db_subnet_group || length(var.subnet_ids) >= 2
+      error_message = "subnet_ids must include at least 2 subnets (in different AZs) when create_db_subnet_group is true."
+    }
+  }
 }
 
 ################################################################################

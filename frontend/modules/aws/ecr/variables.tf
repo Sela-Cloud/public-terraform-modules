@@ -14,6 +14,8 @@ variable "ecr" {
     encryption_type      = optional(string, "AES256")
     kms_key              = optional(string, null)
     tags                 = optional(map(string), {})
+    lifecycle_policy     = optional(string, null)
+    repository_policy    = optional(string, null)
   }))
   default = {
     "ecr-default" = {
@@ -24,6 +26,8 @@ variable "ecr" {
       encryption_type      = "AES256"
       kms_key              = null
       tags                 = {}
+      lifecycle_policy     = null
+      repository_policy    = null
     }
   }
 }

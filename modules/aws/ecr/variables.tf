@@ -53,3 +53,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "lifecycle_policy" {
+  description = "Raw JSON lifecycle policy document (image expiration/retention rules). Null to leave the repository without a lifecycle policy."
+  type        = string
+  default     = null
+}
+
+variable "repository_policy" {
+  description = "Raw JSON repository policy document (cross-account access/permissions). Null to leave the repository without a resource policy."
+  type        = string
+  default     = null
+}

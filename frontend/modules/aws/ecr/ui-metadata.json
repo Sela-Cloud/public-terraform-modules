@@ -122,6 +122,34 @@
         ]
       },
       {
+        "id": "policies",
+        "label": "Lifecycle & Repository Policy",
+        "collapsed": true,
+        "description": "Raw JSON policy documents (optional). Leave blank to skip.",
+        "fields": [
+          {
+            "id": "lifecycle_policy",
+            "label": "Lifecycle Policy Document",
+            "description": "JSON lifecycle policy controlling image expiration/retention rules.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "nullable": true,
+            "placeholder": "{\n  \"rules\": [\n    {\n      \"rulePriority\": 1,\n      \"description\": \"Expire untagged images older than 14 days\",\n      \"selection\": {\n        \"tagStatus\": \"untagged\",\n        \"countType\": \"sinceImagePushed\",\n        \"countUnit\": \"days\",\n        \"countNumber\": 14\n      },\n      \"action\": { \"type\": \"expire\" }\n    }\n  ]\n}"
+          },
+          {
+            "id": "repository_policy",
+            "label": "Repository Policy Document",
+            "description": "JSON resource policy controlling cross-account access and permissions.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "nullable": true,
+            "placeholder": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [...]\n}"
+          }
+        ]
+      },
+      {
         "id": "tags",
         "label": "Tags",
         "description": "Metadata tags to assign to the repository.",

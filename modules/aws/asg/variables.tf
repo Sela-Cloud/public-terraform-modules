@@ -67,17 +67,6 @@ variable "update_policy" {
   default = []
 }
 
-variable "autoscaling_scale_in_control" {
-  type = object({
-    disabled        = bool
-    time_window_sec = number
-  })
-  default = {
-    disabled        = false
-    time_window_sec = 600
-  }
-}
-
 # The block allowing arbitrary metric combinations (CPU, Traffic, Memory, etc.)
 variable "autoscaling_policies" {
   type        = list(any)
@@ -88,4 +77,10 @@ variable "autoscaling_policies" {
 variable "scaling_schedules" {
   type    = list(any)
   default = []
+}
+
+variable "tags" {
+  description = "A map of tags to assign to the resource. Applied with propagate_at_launch = true, so instances launched by the group inherit them too."
+  type        = map(string)
+  default     = {}
 }

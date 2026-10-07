@@ -94,6 +94,10 @@ KNOWN_DATA_SOURCES = {
     "ec2.subnets",
     "ec2.vpc",
     "ec2.vpcs",
+    "ec2.eip",
+    "ec2.eips",
+    "route53.zone",
+    "route53.zones",
     # AWS IAM. `iam.roles` is also a Google identifier (listed below) — one name, two meanings,
     # which is fine because the platform dispatches by the environment's cloud. This list only
     # answers whether an identifier is real anywhere. (No double quotes in comments inside this
