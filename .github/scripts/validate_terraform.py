@@ -111,7 +111,7 @@ def localise(copy_root: str) -> int:
                 nonlocal rewritten
                 rewritten += 1
                 target = os.path.join(copy_root, match.group("path").strip("/"))
-                relative = os.path.relpath(target, dirpath)
+                relative = os.path.relpath(target, dirpath).replace("\\", "/")
                 # Terraform treats a source as local only if it begins with ./ or ../
                 if not relative.startswith("."):
                     relative = "./" + relative

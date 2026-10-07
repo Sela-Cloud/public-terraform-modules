@@ -98,39 +98,98 @@
             "options": [
               {
                 "value": "A",
-                "label": "A"
+                "label": "A",
+                "description": "IPv4 address record"
               },
               {
                 "value": "AAAA",
-                "label": "AAAA"
+                "label": "AAAA",
+                "description": "IPv6 address record"
               },
               {
                 "value": "CAA",
-                "label": "CAA"
+                "label": "CAA",
+                "description": "Certificate Authority Authorization"
               },
               {
                 "value": "CNAME",
-                "label": "CNAME"
+                "label": "CNAME",
+                "description": "Canonical name (alias) record"
+              },
+              {
+                "value": "DNSKEY",
+                "label": "DNSKEY",
+                "description": "DNSSEC public signing key record"
+              },
+              {
+                "value": "DS",
+                "label": "DS",
+                "description": "Delegation signer record for DNSSEC"
+              },
+              {
+                "value": "HTTPS",
+                "label": "HTTPS",
+                "description": "HTTPS service binding and parameters (RFC 9460)"
+              },
+              {
+                "value": "IPSECVPNKEY",
+                "label": "IPSECVPNKEY",
+                "description": "IPsec public key record (RFC 4025)"
               },
               {
                 "value": "MX",
-                "label": "MX"
+                "label": "MX",
+                "description": "Mail exchange record"
+              },
+              {
+                "value": "NAPTR",
+                "label": "NAPTR",
+                "description": "Naming Authority Pointer record"
               },
               {
                 "value": "NS",
-                "label": "NS"
+                "label": "NS",
+                "description": "Authoritative name server record"
               },
               {
                 "value": "PTR",
-                "label": "PTR"
+                "label": "PTR",
+                "description": "Pointer record for reverse DNS lookups"
+              },
+              {
+                "value": "SOA",
+                "label": "SOA",
+                "description": "Start of Authority record"
+              },
+              {
+                "value": "SPF",
+                "label": "SPF",
+                "description": "Sender Policy Framework record (RFC 4408)"
               },
               {
                 "value": "SRV",
-                "label": "SRV"
+                "label": "SRV",
+                "description": "Service locator record"
+              },
+              {
+                "value": "SSHFP",
+                "label": "SSHFP",
+                "description": "SSH public key fingerprint record"
+              },
+              {
+                "value": "SVCB",
+                "label": "SVCB",
+                "description": "General Service Binding record (RFC 9460)"
+              },
+              {
+                "value": "TLSA",
+                "label": "TLSA",
+                "description": "Transport Layer Security Authentication record (DANE)"
               },
               {
                 "value": "TXT",
-                "label": "TXT"
+                "label": "TXT",
+                "description": "Text record (SPF, DKIM, DMARC, or arbitrary text)"
               }
             ]
           },
@@ -146,7 +205,7 @@
           {
             "id": "rrdatas",
             "label": "Record data",
-            "description": "Add one value per record. SRV: priority weight port target.; TXT values containing spaces must be quoted; CAA: 0 issue \"ca.example\".",
+            "description": "Add one value per record. SRV: priority weight port target.; TXT and SPF values containing spaces must be quoted (e.g. \"v=spf1 ...\"); CAA: 0 issue \"ca.example\".",
             "type": "list",
             "required": true,
             "depends_on": {

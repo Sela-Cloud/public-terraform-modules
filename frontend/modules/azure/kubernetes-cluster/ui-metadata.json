@@ -1,0 +1,354 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "kubernetes-cluster",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Kubernetes Service (AKS)",
+    "icon": "azure-kubernetes",
+    "description": "Fully managed Kubernetes cluster with auto-scaling node pools, advanced networking, Workload Identity, and enterprise security.",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "kubernetes_cluster",
+    "key_field": "name",
+    "key_label": "Cluster Name",
+    "key_description": "The unique name for the Azure Kubernetes Service Managed Cluster. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Cluster identity, region, and control plane settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Cluster Name",
+            "description": "Name of the Managed Kubernetes Cluster. Must begin and end with an alphanumeric character and contain only letters, numbers, and hyphens.",
+            "type": "text",
+            "required": true,
+            "placeholder": "aks-my-workload",
+            "validation": {
+              "min": 1,
+              "max": 63,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]$",
+              "pattern_error": "Name must be 1 to 63 characters, start and end with an alphanumeric character, and contain only letters, numbers, and hyphens."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Kubernetes Cluster.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Kubernetes Cluster should be created.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" },
+              { "value": "israelcentral", "label": "Israel Central (Tel Aviv)" }
+            ]
+          },
+          {
+            "id": "sku_tier",
+            "label": "SKU Tier",
+            "description": "The SKU Tier for this cluster. Standard includes financially-backed 99.95% uptime SLA.",
+            "type": "select",
+            "default": "Standard",
+            "options": [
+              { "value": "Standard", "label": "Standard (Recommended - Uptime SLA)" },
+              { "value": "Free", "label": "Free (No Uptime SLA)" },
+              { "value": "Premium", "label": "Premium (Mission-critical SLA & long-term support)" }
+            ]
+          },
+          {
+            "id": "kubernetes_version",
+            "label": "Kubernetes Version",
+            "description": "Specific Kubernetes control plane version (leave empty for Azure default).",
+            "type": "text",
+            "placeholder": "1.30"
+          },
+          {
+            "id": "automatic_upgrade_channel",
+            "label": "Automatic Upgrade Channel",
+            "description": "Cluster upgrade channel for automated patch and minor version management.",
+            "type": "select",
+            "default": "patch",
+            "options": [
+              { "value": "patch", "label": "patch (Keep on latest patch of current minor)" },
+              { "value": "rapid", "label": "rapid (Upgrade to latest supported minor version)" },
+              { "value": "stable", "label": "stable (Upgrade to latest minor N-1 version)" },
+              { "value": "node-image", "label": "node-image (Only upgrade node OS images)" },
+              { "value": "none", "label": "none (Disable automatic upgrades)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "default_node_pool_section",
+        "label": "Default System Node Pool",
+        "description": "Primary node pool hosting critical system pods and cluster controllers.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "default_node_pool",
+            "label": "System Node Pool Configuration",
+            "description": "Sizing and auto-scaling settings for the system node pool.",
+            "type": "object",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Node Pool Name",
+                "description": "Unique name of the system node pool (1-12 lowercase letters/numbers).",
+                "type": "text",
+                "default": "system",
+                "required": true
+              },
+              {
+                "id": "vm_size",
+                "label": "VM SKU Size",
+                "description": "Virtual machine size for the nodes.",
+                "type": "select",
+                "default": "Standard_D2s_v5",
+                "options": [
+                  { "value": "Standard_D2s_v5", "label": "Standard_D2s_v5 (2 vCPU, 8 GiB RAM)" },
+                  { "value": "Standard_D4s_v5", "label": "Standard_D4s_v5 (4 vCPU, 16 GiB RAM)" },
+                  { "value": "Standard_D8s_v5", "label": "Standard_D8s_v5 (8 vCPU, 32 GiB RAM)" },
+                  { "value": "Standard_D16s_v5", "label": "Standard_D16s_v5 (16 vCPU, 64 GiB RAM)" },
+                  { "value": "Standard_B2s", "label": "Standard_B2s (2 vCPU, 4 GiB RAM - Dev/Test)" },
+                  { "value": "Standard_DS2_v2", "label": "Standard_DS2_v2 (2 vCPU, 7 GiB RAM)" },
+                  { "value": "Standard_DS3_v2", "label": "Standard_DS3_v2 (4 vCPU, 14 GiB RAM)" }
+                ]
+              },
+              {
+                "id": "auto_scaling_enabled",
+                "label": "Enable Autoscaling",
+                "description": "Enable Kubernetes cluster autoscaler on the system node pool.",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "min_count",
+                "label": "Minimum Node Count",
+                "description": "Minimum number of nodes in system pool when autoscaling is enabled.",
+                "type": "number",
+                "default": 1
+              },
+              {
+                "id": "max_count",
+                "label": "Maximum Node Count",
+                "description": "Maximum number of nodes in system pool when autoscaling is enabled.",
+                "type": "number",
+                "default": 3
+              },
+              {
+                "id": "os_disk_size_gb",
+                "label": "OS Disk Size (GB)",
+                "description": "Size of the OS disk in gigabytes.",
+                "type": "number",
+                "default": 128
+              },
+              {
+                "id": "vnet_subnet_id",
+                "label": "Subnet Resource ID",
+                "description": "Subnet ID for custom VNet Azure CNI integration (optional).",
+                "type": "text",
+                "placeholder": "/subscriptions/.../subnets/snet-aks-nodes"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "networking_section",
+        "label": "Networking & Ingress",
+        "description": "CNI network plugin, network policies, and private cluster configuration.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "network_profile",
+            "label": "Networking Profile",
+            "description": "Container Network Interface (CNI) and load balancer parameters.",
+            "type": "object",
+            "fields": [
+              {
+                "id": "network_plugin",
+                "label": "Network Plugin",
+                "description": "Network plugin used for building Kubernetes network.",
+                "type": "select",
+                "default": "azure",
+                "options": [
+                  { "value": "azure", "label": "Azure CNI (Native VNet IP allocation)" },
+                  { "value": "kubenet", "label": "Kubenet (Basic routed overlay network)" }
+                ]
+              },
+              {
+                "id": "network_policy",
+                "label": "Network Policy Engine",
+                "description": "Network policy engine used for traffic filtering between pods.",
+                "type": "select",
+                "default": "azure",
+                "options": [
+                  { "value": "azure", "label": "Azure Network Policy Manager" },
+                  { "value": "calico", "label": "Calico Network Policies" },
+                  { "value": "cilium", "label": "Cilium (eBPF-powered network policies)" }
+                ]
+              },
+              {
+                "id": "load_balancer_sku",
+                "label": "Load Balancer SKU",
+                "description": "SKU of the Azure Load Balancer used by the cluster.",
+                "type": "select",
+                "default": "standard",
+                "options": [
+                  { "value": "standard", "label": "Standard (Zone redundant, HA)" }
+                ]
+              },
+              {
+                "id": "outbound_type",
+                "label": "Outbound Routing Type",
+                "description": "Outbound routing method used for egress traffic.",
+                "type": "select",
+                "default": "loadBalancer",
+                "options": [
+                  { "value": "loadBalancer", "label": "loadBalancer (Managed Public IP)" },
+                  { "value": "userDefinedRouting", "label": "userDefinedRouting (Firewall / NVA Egress)" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "private_cluster_enabled",
+            "label": "Private Cluster",
+            "description": "Disable public internet endpoint for the Kubernetes API server.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "private_dns_zone_id",
+            "label": "Private DNS Zone ID",
+            "description": "Private DNS Zone resource ID for private cluster FQDN resolution (or 'System').",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "security_and_identity_section",
+        "label": "Security & Workload Identity",
+        "description": "Identity, Microsoft Entra ID, and governance features.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "identity_type",
+            "label": "Managed Identity Type",
+            "description": "Managed identity type assigned to the AKS cluster control plane.",
+            "type": "select",
+            "default": "SystemAssigned",
+            "options": [
+              { "value": "SystemAssigned", "label": "SystemAssigned" },
+              { "value": "UserAssigned", "label": "UserAssigned" }
+            ]
+          },
+          {
+            "id": "oidc_issuer_enabled",
+            "label": "Enable OIDC Issuer",
+            "description": "Enable OIDC discovery endpoint required for Microsoft Entra Workload Identity.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "workload_identity_enabled",
+            "label": "Enable Workload Identity",
+            "description": "Enable Microsoft Entra Workload Identity for passwordless Azure service access.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "azure_policy_enabled",
+            "label": "Enable Azure Policy Add-on",
+            "description": "Enforce built-in Azure Policy controls and compliance on cluster workloads.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "local_account_disabled",
+            "label": "Disable Local Admin Accounts",
+            "description": "Enforce Entra ID authentication and disable local cluster-admin kubeconfig access.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "log_analytics_workspace_id",
+            "label": "Log Analytics Workspace ID",
+            "description": "Resource ID of the Log Analytics Workspace for Container Insights monitoring.",
+            "type": "text",
+            "placeholder": "/subscriptions/.../workspaces/law-prod-containers"
+          }
+        ]
+      },
+      {
+        "id": "node_pools_section",
+        "label": "Additional Node Pools",
+        "description": "Map of secondary worker node pools (spot instances, GPU nodes, or dedicated user pools).",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "node_pools",
+            "label": "Worker Node Pools",
+            "description": "Map of secondary worker node pool configurations.",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for governance and cost tracking.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value pairs to assign to the AKS Cluster.",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}
