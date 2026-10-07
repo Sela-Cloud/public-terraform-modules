@@ -1,5 +1,5 @@
 module "kubernetes_cluster" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/kubernetes-cluster?ref=v0.8.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/kubernetes-cluster?ref=v0.8.14"
   for_each = var.kubernetes_cluster
 
   name                                             = each.value.name

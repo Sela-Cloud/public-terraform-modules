@@ -3,7 +3,7 @@
  *****************************************/
 
 module "mig" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/mig?ref=v0.8.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/mig?ref=v0.8.14"
   for_each = var.mig
 
   project_id        = var.project_id
