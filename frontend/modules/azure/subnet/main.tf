@@ -1,5 +1,5 @@
 module "subnet" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/subnet?ref=v0.1.0"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/subnet?ref=v0.8.11"
 
   for_each = var.subnet
 
@@ -11,14 +11,9 @@ module "subnet" {
 
   service_endpoints = each.value.service_endpoints
 
-  service_endpoint_policy_ids =
-    each.value.service_endpoint_policy_ids
-
-  private_endpoint_network_policies =
-    each.value.private_endpoint_network_policies
-
-  private_link_service_network_policies_enabled =
-    each.value.private_link_service_network_policies_enabled
+  service_endpoint_policy_ids                   = each.value.service_endpoint_policy_ids
+  private_endpoint_network_policies             = each.value.private_endpoint_network_policies
+  private_link_service_network_policies_enabled = each.value.private_link_service_network_policies_enabled
 
   delegation = each.value.delegation
 }

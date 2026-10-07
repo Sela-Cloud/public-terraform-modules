@@ -39,10 +39,16 @@
             "id": "resource_group_name",
             "label": "Resource Group Name",
             "description": "The name of the Resource Group in which to create the Virtual Machine Scale Set.",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "default": "rg-default",
-            "placeholder": "rg-my-workload"
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
           },
           {
             "id": "location",
@@ -84,11 +90,23 @@
               {
                 "id": "name",
                 "label": "VM Size / SKU",
-                "description": "Specifies the size of virtual machines in the scale set (e.g. Standard_B2s, Standard_D2s_v5).",
-                "type": "text",
+                "description": "Specifies the size of virtual machines in the scale set.",
+                "type": "select",
                 "required": true,
                 "default": "Standard_B2s",
-                "placeholder": "Standard_B2s"
+                "data_source": {
+                  "resource": "compute.vmSizes",
+                  "params": {
+                    "location": {
+                      "from_field": "location"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  }
+                }
               },
               {
                 "id": "tier",
@@ -554,13 +572,22 @@
               },
               {
                 "id": "network_security_group_id",
-                "label": "Network Security Group ID",
+                "label": "Network Security Group",
                 "description": "Identifier for the Network Security Group to attach to this NIC profile.",
-                "type": "text",
+                "type": "select",
                 "required": false,
                 "default": null,
                 "nullable": true,
-                "placeholder": "/subscriptions/.../networkSecurityGroups/..."
+                "data_source": {
+                  "resource": "network.networkSecurityGroups",
+                  "params": {},
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "resourceGroup"
+                  },
+                  "allow_custom": true
+                }
               },
               {
                 "id": "ip_configurations",
@@ -761,11 +788,20 @@
               },
               {
                 "id": "storage_uri",
-                "label": "Storage Account Endpoint",
+                "label": "Storage Account Blob Endpoint",
                 "description": "Primary blob endpoint URI of storage account for diagnostic data.",
-                "type": "text",
+                "type": "select",
                 "required": true,
-                "placeholder": "https://mystorageaccount.blob.core.windows.net/"
+                "data_source": {
+                  "resource": "storage.storageAccounts",
+                  "params": {},
+                  "display": {
+                    "value_key": "primaryBlobEndpoint",
+                    "label_key": "name",
+                    "description_key": "resourceGroup"
+                  },
+                  "allow_custom": true
+                }
               }
             ]
           }

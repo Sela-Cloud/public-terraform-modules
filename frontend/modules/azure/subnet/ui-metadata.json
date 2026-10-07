@@ -1,0 +1,198 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "subnet",
+  "version": "1.0.0",
+  "display": {
+    "label": "Subnet",
+    "icon": "subnet",
+    "description": "Azure Subnet within a Virtual Network for dividing network traffic and isolating workloads",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "subnet",
+    "key_field": "name",
+    "key_label": "Subnet Name",
+    "key_description": "The unique name for the Azure Subnet. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Subnet identity, network placement, and CIDR allocation.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Subnet Name",
+            "description": "Name of the Azure Subnet. Must be between 1 and 80 characters, begin with an alphanumeric character, and contain only alphanumerics, underscores, hyphens, and periods.",
+            "type": "text",
+            "required": true,
+            "placeholder": "snet-app-prod",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9_]$",
+              "pattern_error": "Subnet name must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The Azure Resource Group containing the Virtual Network.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "location"
+              }
+            }
+          },
+          {
+            "id": "virtual_network_name",
+            "label": "Virtual Network Name",
+            "description": "The Virtual Network in which to create the Subnet.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "network.virtualNetworks",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "addressSpace"
+              }
+            }
+          },
+          {
+            "id": "address_prefixes",
+            "label": "Address Prefixes (CIDR)",
+            "description": "The address prefixes for the Subnet in CIDR notation (e.g. 10.0.1.0/24).",
+            "type": "list",
+            "required": true,
+            "placeholder": "10.0.1.0/24"
+          }
+        ]
+      },
+      {
+        "id": "policies",
+        "label": "Endpoints & Network Policies",
+        "description": "Configure service endpoints, endpoint policies, and private link settings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "service_endpoints",
+            "label": "Service Endpoints",
+            "description": "List of service endpoints to associate with the Subnet (e.g. Microsoft.Storage, Microsoft.Sql, Microsoft.KeyVault).",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "placeholder": "Microsoft.Storage"
+          },
+          {
+            "id": "service_endpoint_policy_ids",
+            "label": "Service Endpoint Policy IDs",
+            "description": "List of Service Endpoint Policy IDs to associate with this Subnet.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "placeholder": "/subscriptions/.../serviceEndpointPolicies/..."
+          },
+          {
+            "id": "private_endpoint_network_policies",
+            "label": "Private Endpoint Network Policies",
+            "description": "Enable or disable network policies for private endpoints in this Subnet.",
+            "type": "select",
+            "required": false,
+            "default": "Disabled",
+            "options": [
+              {
+                "value": "Disabled",
+                "label": "Disabled"
+              },
+              {
+                "value": "Enabled",
+                "label": "Enabled"
+              },
+              {
+                "value": "NetworkSecurityGroupEnabled",
+                "label": "Network Security Group Enabled"
+              },
+              {
+                "value": "RouteTableEnabled",
+                "label": "Route Table Enabled"
+              }
+            ]
+          },
+          {
+            "id": "private_link_service_network_policies_enabled",
+            "label": "Private Link Service Network Policies Enabled",
+            "description": "Enable or disable network policies for private link service in this Subnet.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "delegation_section",
+        "label": "Subnet Delegation",
+        "description": "Delegate this Subnet to an Azure service (e.g., App Service or Container Instances).",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "delegation",
+            "label": "Service Delegation",
+            "description": "Subnet delegation configuration for dedicated services.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Delegation Name",
+                "description": "A name for this delegation.",
+                "type": "text",
+                "required": true,
+                "placeholder": "delegation-appservice"
+              },
+              {
+                "id": "service_delegation",
+                "label": "Service Delegation Details",
+                "description": "Target service delegation definition.",
+                "type": "object",
+                "required": true,
+                "fields": [
+                  {
+                    "id": "name",
+                    "label": "Service Name",
+                    "description": "The service name for delegation (e.g. Microsoft.Web/serverFarms, Microsoft.ContainerInstance/containerGroups).",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "Microsoft.Web/serverFarms"
+                  },
+                  {
+                    "id": "actions",
+                    "label": "Delegation Actions",
+                    "description": "Actions granted to the delegated service.",
+                    "type": "list",
+                    "required": false,
+                    "default": [],
+                    "placeholder": "Microsoft.Network/virtualNetworks/subnets/action"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

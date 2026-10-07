@@ -710,6 +710,228 @@ ordinary onboarding state, not a fault, and the dropdown says which one — "no 
 "no verified AWS role yet". An organization with several verified AWS targets is refused rather
 than guessed at, since picking the wrong account would return a plausible, empty list.
 
+##### Supported Azure Data Source Resources & Parameters
+
+From `RESOURCE_HANDLERS` in `applications/api/services/clouds/azure/lookups.py`. Every lookup reads
+the environment's own subscription, taken from its verified target — never from a form field.
+
+| Resource Identifier | Aliases | Returns | Parameters | Response Keys |
+| :--- | :--- | :--- | :--- | :--- |
+| `resources.resourceGroups` | `azure.resourceGroups` | Resource groups in the subscription | `location` (optional) | `name`, `id`, `location` |
+| `network.virtualNetworks` | `network.vnets` | Virtual networks, in one resource group or the whole subscription | `resource_group` (optional), `location` (optional) | `name`, `id`, `resourceGroup`, `location`, `addressSpace` |
+| `network.subnets` | `network.virtualNetworks.subnets` | Subnets of one virtual network | `vnet` (a name **or** a full id), `resource_group` (required when `vnet` is a name) | `name`, `id`, `addressPrefix`, `vnet`, `resourceGroup` |
+
+**Networking & security**
+
+| Resource Identifier | Returns | Parameters | Response Keys | Typical fields |
+| :--- | :--- | :--- | :--- | :--- |
+| `network.networkSecurityGroups` | Network security groups | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location` | Subnet / Network Interface `network_security_group_id` |
+| `network.applicationSecurityGroups` | Application security groups | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location` | NSG rule `source_asg_ids`, `destination_asg_ids` |
+| `network.routeTables` | Route tables | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `routes` (count) | Subnet `route_table_id` |
+| `network.publicIPAddresses` | Public IP addresses | `resource_group`, `location`, `available_only` (all optional) | `name`, `id`, `resourceGroup`, `location`, `ipAddress`, `allocation`, `sku`, `inUse` | Network Interface `public_ip_address_id`, Load Balancer / Application Gateway frontend IP |
+| `privatedns.privateZones` | Private DNS zones (global — no location filter) | `resource_group`, `suffix` (both optional) | `name`, `id`, `resourceGroup`, `recordSets`, `linkedNetworks` | MySQL / PostgreSQL Flexible Server `private_dns_zone_id` |
+
+**Compute & storage**
+
+| Resource Identifier | Returns | Parameters | Response Keys | Typical fields |
+| :--- | :--- | :--- | :--- | :--- |
+| `compute.vmSizes` | VM sizes this subscription can deploy in the region, smallest first | `location` (**required**) | `name`, `family`, `vCPUs`, `memoryGB`, `description` | Virtual Machine `size`, AKS `vm_size` |
+| `storage.storageAccounts` | Storage accounts | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `kind`, `sku`, `primaryBlobEndpoint` | VM boot diagnostics, Storage Mover target, MSSQL auditing |
+
+**Web & containers**
+
+| Resource Identifier | Returns | Parameters | Response Keys | Typical fields |
+| :--- | :--- | :--- | :--- | :--- |
+| `web.servicePlans` | App Service plans | `resource_group`, `location`, `os_type` (`Linux` / `Windows`) (all optional) | `name`, `id`, `resourceGroup`, `location`, `osType`, `sku`, `tier` | App Service `service_plan_id` |
+| `container.kubernetesVersions` | AKS minor versions offered in the region, newest first | `location` (**required**), `include_preview` (optional) | `name`, `version`, `latestPatch`, `isDefault`, `isPreview`, `description` | AKS `kubernetes_version` |
+| `operationalinsights.workspaces` | Log Analytics workspaces | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `customerId` | AKS `log_analytics_workspace_id`, App Service diagnostics |
+
+**Identity, secrets & databases**
+
+| Resource Identifier | Returns | Parameters | Response Keys | Typical fields |
+| :--- | :--- | :--- | :--- | :--- |
+| `managedIdentity.userAssignedIdentities` | User-assigned managed identities | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `clientId`, `principalId` | `identity_ids` on VM, AKS, App Service, Application Gateway, databases |
+| `keyvault.vaults` | Key vaults | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `vaultUri` | Feeds `keyvault.certificates` |
+| `keyvault.certificates` | Certificates in one vault | `vault` (a name **or** a full id), `resource_group` (required when `vault` is a name) | `name`, `id`, `secretId`, `secretIdWithVersion`, `contentType`, `enabled`, `vault`, `resourceGroup` | Application Gateway SSL `key_vault_secret_id`, Front Door custom domain certificate |
+
+`resource_group` also accepts `resource_group_name`; `vnet` also accepts `virtual_network`,
+`virtual_network_name` and `network`; `vault` also accepts `key_vault`, `key_vault_name` and
+`key_vault_id`; `suffix` also accepts `name_suffix`; `os_type` also accepts `os`. `location`
+accepts the portal's spelling (`East US`) as well as the API's (`eastus`). Boolean params
+(`available_only`, `include_preview`) take `true`. A fixed value is given with `static` rather
+than `from_field` — e.g. `"available_only": { "static": "true" }`.
+
+Every lookup that takes `resource_group` lists the whole subscription when it is omitted — results
+are then sorted by resource group, then name, because names repeat across groups. Give
+`description_key: "resourceGroup"` in that case so two `web-nsg`s can be told apart.
+
+**Notes on the individual lookups**
+
+- **`network.publicIPAddresses`** — a public IP attaches to one thing at a time. A field choosing an
+  address for a *new* NIC, load balancer or gateway should pass `"available_only": { "static": "true" }`, or the
+  dropdown offers addresses that are already attached and the apply fails on the conflict. `ipAddress`
+  is empty for an unattached *dynamic* address; that is normal.
+- **`privatedns.privateZones`** — use `suffix` so only zones the service accepts are offered:
+  `"suffix": { "static": ".postgres.database.azure.com" }` for PostgreSQL Flexible Server,
+  `.mysql.database.azure.com` for MySQL Flexible Server.
+- **`compute.vmSizes`** — read from Azure's SKU list, which reports sizes this subscription is barred
+  from in that region (`NotAvailableForSubscription`); those are left out. A size restricted only in
+  some zones is still offered. Returns an empty list until a region is chosen, so feed `location`
+  from the form's region field.
+- **`container.kubernetesVersions`** — one row per minor version (`1.30`). Submit `version`:
+  `kubernetes_version = "1.30"` lets AKS pick the latest patch, which is usually what you want.
+  `latestPatch` is for the description. Preview versions are hidden unless `include_preview` is
+  `true`; they carry no support.
+- **`operationalinsights.workspaces`** — `id` is the ARM id, which `log_analytics_workspace_id`
+  takes. `customerId` is the workspace's own GUID — the thing some settings call "workspace ID". Pick
+  the one your variable means.
+- **`managedIdentity.userAssignedIdentities`** — `id` goes in `identity_ids`; `clientId` and
+  `principalId` are there for app settings and role assignments.
+- **`keyvault.certificates`** — returns only secrets backing a *certificate* (content type
+  `application/x-pkcs12` or `application/x-pem-file`), never secret values. Submit `secretId`: it is
+  versionless, so Application Gateway and Front Door pick up a renewed certificate automatically.
+  Use `secretIdWithVersion` only to pin one version. Chain it from `keyvault.vaults` with
+  `value_key: "id"` and drop the `resource_group` param — the id carries it. Read through Azure
+  Resource Manager, so the Reader role used by every other lookup is enough; no Key Vault data-plane
+  role is needed.
+
+**Example — App Gateway certificate, chained from the vault:**
+
+```json
+[
+  {
+    "id": "key_vault_id",
+    "label": "Key vault",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "keyvault.vaults",
+      "display": { "value_key": "id", "label_key": "name", "description_key": "resourceGroup" }
+    }
+  },
+  {
+    "id": "ssl_certificate_secret_id",
+    "label": "SSL certificate",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "keyvault.certificates",
+      "params": { "vault": { "from_field": "key_vault_id" } },
+      "display": { "value_key": "secretId", "label_key": "name", "description_key": "contentType" }
+    }
+  }
+]
+```
+
+**Example — VM size and AKS version, fed by the region field:**
+
+```json
+[
+  {
+    "id": "size",
+    "label": "VM size",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "compute.vmSizes",
+      "params": { "location": { "from_field": "location" } },
+      "display": { "value_key": "name", "label_key": "name", "description_key": "description" }
+    }
+  },
+  {
+    "id": "kubernetes_version",
+    "label": "Kubernetes version",
+    "type": "select",
+    "data_source": {
+      "resource": "container.kubernetesVersions",
+      "params": { "location": { "from_field": "location" } },
+      "display": { "value_key": "version", "label_key": "version", "description_key": "description" }
+    }
+  }
+]
+```
+
+**Choose `value_key` by what the module's variable takes — this is the Azure-specific decision.**
+AWS is simple: resources are opaque ids, so the value is always `id`. Azure is not. Names are
+meaningful, but they are **not unique** — two resource groups can each hold a vnet called `hub` —
+and ids are long paths that embed the subscription and the resource group:
+
+```
+/subscriptions/<sub>/resourceGroups/network-rg/providers/Microsoft.Network/virtualNetworks/hub
+```
+
+`azurerm` modules take either, depending on the resource. So:
+
+- the variable is a **name** (`virtual_network_name`, `resource_group_name`) → `value_key: "name"`,
+  and the module must also be told the resource group, usually by a field of its own;
+- the variable is an **id** (`subnet_id`, `virtual_network_id`) → `value_key: "id"`. The label can
+  still be `name`; the id is what gets submitted.
+
+Getting it backwards produces a form that looks right and generates Terraform that does not apply —
+the same failure as swapping `id` and `name` on AWS, arrived at from the other direction.
+
+**Chaining the three.** The usual form picks a resource group, then a network in it, then a subnet in
+that — each dropdown fed by the one before:
+
+```json
+[
+  {
+    "id": "resource_group_name",
+    "label": "Resource group",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "resources.resourceGroups",
+      "display": { "value_key": "name", "label_key": "name", "description_key": "location" }
+    }
+  },
+  {
+    "id": "virtual_network_name",
+    "label": "Virtual network",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "network.virtualNetworks",
+      "params": { "resource_group": { "from_field": "resource_group_name" } },
+      "display": { "value_key": "name", "label_key": "name", "description_key": "addressSpace" }
+    }
+  },
+  {
+    "id": "subnet_id",
+    "label": "Subnet",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "network.subnets",
+      "params": {
+        "vnet": { "from_field": "virtual_network_name" },
+        "resource_group": { "from_field": "resource_group_name" }
+      },
+      "display": { "value_key": "id", "label_key": "name", "description_key": "addressPrefix" }
+    }
+  }
+]
+```
+
+Note the last one submits the subnet's **id** while the two above it submit **names** — each follows
+what its variable takes. If the vnet field submits an id instead, drop the subnet's
+`resource_group` param: `network.subnets` reads the resource group out of the id itself.
+
+The subnet dropdown returns an empty list — not an error — until both the network and its resource
+group are known. That is normal: it is asked before the user has chosen a network.
+
+**What the read needs to exist first.** An Azure lookup acts as the organization's own application
+in the customer's tenant, so it needs the application *and* a **verified** Azure target naming the
+tenant and subscription. Either missing is an onboarding state, not a fault, and the dropdown says
+which — "no Azure application yet" or "no verified Azure environment yet".
+
+**Lookups need a read role the onboarding does not grant.** The Cloud access screen asks the
+customer only for access to their Terraform state; permission to create resources comes from each
+module's own IAM guidance. So a dropdown works once the application holds *some* role that can read
+those resources — `Reader` on the subscription is the simplest, and any module role that covers the
+resource type does too. Until then the dropdown answers with an access error naming `Reader`, not an
+empty list that looks like "you have no networks".
+
 #### 4. `ui_only` Controls
 
 Every form control must map to **an attribute of the resource object, or a global** — that is R6 in

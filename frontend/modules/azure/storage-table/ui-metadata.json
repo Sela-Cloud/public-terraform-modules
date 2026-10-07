@@ -38,13 +38,21 @@
           },
           {
             "id": "storage_account_id",
-            "label": "Storage Account ID",
-            "description": "The Resource ID of the Azure Storage Account where the table should reside.",
-            "type": "text",
+            "label": "Storage Account",
+            "description": "The Azure Storage Account where the table should reside.",
+            "type": "select",
             "required": true,
-            "default": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-default/providers/Microsoft.Storage/storageAccounts/storagedefault",
-            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Storage/storageAccounts/...",
-            "locked_after_create": true
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "storage.storageAccounts",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              },
+              "allow_custom": true
+            }
           }
         ]
       },

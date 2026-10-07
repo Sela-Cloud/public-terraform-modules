@@ -40,11 +40,17 @@
             "id": "resource_group_name",
             "label": "Resource Group Name",
             "description": "The name of the Resource Group in which to create the Container Registry. Changing this forces a new resource to be created.",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "default": "rg-default",
-            "placeholder": "rg-my-workload",
-            "locked_after_create": true
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
           },
           {
             "id": "location",

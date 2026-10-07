@@ -100,8 +100,22 @@
             "id": "kubernetes_version",
             "label": "Kubernetes Version",
             "description": "Specific Kubernetes control plane version (leave empty for Azure default).",
-            "type": "text",
-            "placeholder": "1.30"
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "container.kubernetesVersions",
+              "params": {
+                "location": {
+                  "from_field": "location"
+                }
+              },
+              "display": {
+                "value_key": "version",
+                "label_key": "version",
+                "description_key": "description"
+              }
+            }
           },
           {
             "id": "automatic_upgrade_channel",
@@ -137,23 +151,34 @@
                 "description": "Unique name of the system node pool (1-12 lowercase letters/numbers).",
                 "type": "text",
                 "default": "system",
-                "required": true
+                "required": true,
+                "validation": {
+                  "min": 1,
+                  "max": 12,
+                  "pattern": "^[a-z][a-z0-9]{0,11}$",
+                  "pattern_error": "Node pool name must begin with a lowercase letter, contain only lowercase letters and numbers, and be between 1 and 12 characters in length."
+                }
               },
               {
                 "id": "vm_size",
                 "label": "VM SKU Size",
                 "description": "Virtual machine size for the nodes.",
                 "type": "select",
+                "required": true,
                 "default": "Standard_D2s_v5",
-                "options": [
-                  { "value": "Standard_D2s_v5", "label": "Standard_D2s_v5 (2 vCPU, 8 GiB RAM)" },
-                  { "value": "Standard_D4s_v5", "label": "Standard_D4s_v5 (4 vCPU, 16 GiB RAM)" },
-                  { "value": "Standard_D8s_v5", "label": "Standard_D8s_v5 (8 vCPU, 32 GiB RAM)" },
-                  { "value": "Standard_D16s_v5", "label": "Standard_D16s_v5 (16 vCPU, 64 GiB RAM)" },
-                  { "value": "Standard_B2s", "label": "Standard_B2s (2 vCPU, 4 GiB RAM - Dev/Test)" },
-                  { "value": "Standard_DS2_v2", "label": "Standard_DS2_v2 (2 vCPU, 7 GiB RAM)" },
-                  { "value": "Standard_DS3_v2", "label": "Standard_DS3_v2 (4 vCPU, 14 GiB RAM)" }
-                ]
+                "data_source": {
+                  "resource": "compute.vmSizes",
+                  "params": {
+                    "location": {
+                      "from_field": "location"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  }
+                }
               },
               {
                 "id": "auto_scaling_enabled",
@@ -314,10 +339,20 @@
           },
           {
             "id": "log_analytics_workspace_id",
-            "label": "Log Analytics Workspace ID",
-            "description": "Resource ID of the Log Analytics Workspace for Container Insights monitoring.",
-            "type": "text",
-            "placeholder": "/subscriptions/.../workspaces/law-prod-containers"
+            "label": "Log Analytics Workspace",
+            "description": "Log Analytics Workspace for Container Insights monitoring.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "operationalinsights.workspaces",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              }
+            }
           }
         ]
       },

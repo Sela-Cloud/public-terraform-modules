@@ -38,9 +38,17 @@
             "id": "resource_group_name",
             "label": "Resource Group Name",
             "description": "The name of the Resource Group in which to create the Virtual Machine.",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "placeholder": "rg-my-workload"
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "location"
+              }
+            }
           },
           {
             "id": "location",
@@ -80,10 +88,22 @@
             "id": "vm_size",
             "label": "VM Size",
             "description": "The size/SKU of the Virtual Machine.",
-            "type": "text",
+            "type": "select",
             "required": false,
             "default": "Standard_B2s",
-            "placeholder": "Standard_B2s or Standard_D2s_v3"
+            "data_source": {
+              "resource": "compute.vmSizes",
+              "params": {
+                "location": {
+                  "from_field": "location"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              }
+            }
           },
           {
             "id": "network_interface_ids",
@@ -577,11 +597,20 @@
                 "id": "storage_uri",
                 "label": "Storage Account URI",
                 "description": "Custom storage account blob endpoint. Leave empty for Azure managed boot diagnostics storage.",
-                "type": "text",
+                "type": "select",
                 "required": false,
                 "default": null,
                 "nullable": true,
-                "placeholder": "https://mystorage.blob.core.windows.net/"
+                "data_source": {
+                  "resource": "storage.storageAccounts",
+                  "params": {},
+                  "display": {
+                    "value_key": "primaryBlobEndpoint",
+                    "label_key": "name",
+                    "description_key": "resourceGroup"
+                  },
+                  "allow_custom": true
+                }
               }
             ]
           },

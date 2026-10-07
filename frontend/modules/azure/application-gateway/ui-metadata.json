@@ -216,9 +216,25 @@
               },
               {
                 "id": "public_ip_address_id",
-                "label": "Public IP Address ID",
+                "label": "Public IP Address",
                 "description": "Resource ID of the Public IP address for public traffic.",
-                "type": "text"
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "network.publicIPAddresses",
+                  "params": {
+                    "available_only": {
+                      "static": "true"
+                    }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "ipAddress"
+                  },
+                  "allow_custom": true
+                }
               },
               {
                 "id": "subnet_id",

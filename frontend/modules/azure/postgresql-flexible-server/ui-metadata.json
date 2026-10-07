@@ -198,9 +198,25 @@
           },
           {
             "id": "private_dns_zone_id",
-            "label": "Private DNS Zone ID",
-            "description": "Private DNS zone resource ID for private VNet resolution.",
-            "type": "text"
+            "label": "Private DNS Zone",
+            "description": "Private DNS zone for private VNet name resolution.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "privatedns.privateZones",
+              "params": {
+                "suffix": {
+                  "static": ".postgres.database.azure.com"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              },
+              "allow_custom": true
+            }
           }
         ]
       },

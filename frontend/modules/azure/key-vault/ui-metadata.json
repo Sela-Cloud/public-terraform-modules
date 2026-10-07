@@ -38,9 +38,16 @@
             "id": "resource_group_name",
             "label": "Resource Group Name",
             "description": "The name of the Resource Group in which to create the Key Vault.",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "placeholder": "rg-my-workload"
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
           },
           {
             "id": "location",
