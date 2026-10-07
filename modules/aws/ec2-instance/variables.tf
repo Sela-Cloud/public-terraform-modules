@@ -28,6 +28,7 @@ variable "key_name" {
 variable "availability_zone" {
   description = "AZ where the instance should be created. If null, AWS assigns an AZ automatically."
   type        = string
+  default     = null
 }
 
 variable "placement_group" {
@@ -310,7 +311,7 @@ variable "create_security_group" {
 }
 
 variable "vpc_id" {
-  description = "The VPC ID required to create the dedicated security group."
+  description = "The VPC ID required to create the dedicated security group. If not specified and subnet_id is provided, it is automatically discovered via the aws_subnet data source."
   type        = string
   default     = null
 }
