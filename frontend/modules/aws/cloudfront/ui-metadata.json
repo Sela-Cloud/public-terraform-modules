@@ -1,0 +1,608 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "cloudfront",
+  "version": "1.0.0",
+  "display": {
+    "label": "CloudFront Distribution",
+    "icon": "cloudfront",
+    "description": "Create a CloudFront content delivery network distribution in front of an S3 bucket, load balancer, or other web origin.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "CloudFront is a global service; this only affects the provider used to create it.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "cloudfront",
+    "key_field": "target_origin_id",
+    "key_label": "Distribution Name",
+    "key_description": "An identifier for this distribution within the deployment (does not appear in AWS).",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Settings",
+        "fields": [
+          {
+            "id": "enabled",
+            "label": "Enabled",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "comment",
+            "label": "Description",
+            "type": "text",
+            "required": false
+          },
+          {
+            "id": "aliases",
+            "label": "Alternate Domain Names (CNAMEs)",
+            "type": "list",
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "default_root_object",
+            "label": "Default Root Object",
+            "description": "Object requested when a viewer requests the root URL, e.g. index.html.",
+            "type": "text",
+            "required": false,
+            "placeholder": "index.html"
+          },
+          {
+            "id": "price_class",
+            "label": "Price Class",
+            "type": "select",
+            "default": "PriceClass_All",
+            "options": [
+              { "value": "PriceClass_All", "label": "Use all edge locations (best performance)" },
+              { "value": "PriceClass_200", "label": "Use North America, Europe, Asia, Middle East, and Africa" },
+              { "value": "PriceClass_100", "label": "Use only North America and Europe" }
+            ]
+          },
+          {
+            "id": "is_ipv6_enabled",
+            "label": "IPv6",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "http_version",
+            "label": "Supported HTTP Versions",
+            "type": "select",
+            "default": "http2",
+            "options": [
+              { "value": "http1.1", "label": "HTTP/1.1" },
+              { "value": "http2", "label": "HTTP/2, HTTP/1.1" },
+              { "value": "http2and3", "label": "HTTP/2, HTTP/1.1, HTTP/3" },
+              { "value": "http3", "label": "HTTP/3, HTTP/2, HTTP/1.1" }
+            ]
+          },
+          {
+            "id": "web_acl_id",
+            "label": "AWS WAF Web ACL",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "origins",
+        "label": "Origins",
+        "fields": [
+          {
+            "id": "origins",
+            "label": "Origin",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "origin_id",
+                "label": "Origin Name",
+                "type": "text",
+                "required": true,
+                "placeholder": "my-origin"
+              },
+              {
+                "id": "is_s3_origin",
+                "label": "This is an Amazon S3 bucket origin",
+                "description": "Off for a custom origin (load balancer, web server, or an S3 static website endpoint — website endpoints don't support the S3 REST API OAC/OAI use).",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "domain_name",
+                "label": "Origin Domain",
+                "description": "The bucket's REST endpoint (bucket-name.s3.amazonaws.com), or the custom origin's domain name.",
+                "type": "text",
+                "required": true,
+                "placeholder": "my-bucket.s3.amazonaws.com"
+              },
+              {
+                "id": "origin_path",
+                "label": "Origin Path",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "origin_access_control_id",
+                "label": "Origin Access Control",
+                "description": "Recommended for S3 origins.",
+                "type": "text",
+                "required": false,
+                "depends_on": { "field": "is_s3_origin", "value": true }
+              },
+              {
+                "id": "s3_origin_access_identity",
+                "label": "Origin Access Identity (legacy)",
+                "description": "Legacy alternative to Origin Access Control.",
+                "type": "text",
+                "required": false,
+                "depends_on": { "field": "is_s3_origin", "value": true }
+              },
+              {
+                "id": "origin_protocol_policy",
+                "label": "Protocol",
+                "type": "select",
+                "default": "https-only",
+                "depends_on": { "field": "is_s3_origin", "value": false },
+                "options": [
+                  { "value": "https-only", "label": "HTTPS Only" },
+                  { "value": "http-only", "label": "HTTP Only" },
+                  { "value": "match-viewer", "label": "Match Viewer" }
+                ]
+              },
+              {
+                "id": "http_port",
+                "label": "HTTP Port",
+                "type": "number",
+                "default": 80,
+                "depends_on": { "field": "is_s3_origin", "value": false }
+              },
+              {
+                "id": "https_port",
+                "label": "HTTPS Port",
+                "type": "number",
+                "default": 443,
+                "depends_on": { "field": "is_s3_origin", "value": false }
+              },
+              {
+                "id": "origin_ssl_protocols",
+                "label": "Minimum Origin SSL Protocols",
+                "type": "list",
+                "default": ["TLSv1.2"],
+                "depends_on": { "field": "is_s3_origin", "value": false }
+              },
+              {
+                "id": "custom_headers",
+                "label": "Custom Headers",
+                "type": "map",
+                "required": false,
+                "default": {}
+              },
+              {
+                "id": "connection_attempts",
+                "label": "Connection Attempts",
+                "type": "number",
+                "default": 3,
+                "validation": { "min": 1, "max": 3 }
+              },
+              {
+                "id": "connection_timeout",
+                "label": "Connection Timeout (seconds)",
+                "type": "number",
+                "default": 10,
+                "validation": { "min": 1, "max": 10 }
+              },
+              {
+                "id": "origin_shield_enabled",
+                "label": "Enable Origin Shield",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "origin_shield_region",
+                "label": "Origin Shield Region",
+                "type": "select",
+                "required": false,
+                "depends_on": { "field": "origin_shield_enabled", "value": true },
+                "data_source": {
+                  "resource": "ec2.regions",
+                  "params": {},
+                  "display": { "value_key": "name", "label_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "origin_groups",
+        "label": "Origin Groups (Failover)",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "origin_groups",
+            "label": "Origin Group",
+            "description": "Pairs a primary and a secondary origin so CloudFront fails over automatically on the configured status codes.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "origin_group_id",
+                "label": "Origin Group Name",
+                "type": "text",
+                "required": true,
+                "placeholder": "my-origin-group"
+              },
+              {
+                "id": "failover_status_codes",
+                "label": "Failover Status Codes",
+                "description": "Response status codes from the primary origin that trigger failover to the secondary.",
+                "type": "list",
+                "default": [500, 502, 503, 504]
+              },
+              {
+                "id": "primary_origin_id",
+                "label": "Primary Origin",
+                "description": "Must match one of the origin names above.",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "secondary_origin_id",
+                "label": "Secondary Origin",
+                "description": "Must match one of the origin names above.",
+                "type": "text",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "default_cache_behavior",
+        "label": "Default Cache Behavior",
+        "fields": [
+          {
+            "id": "target_origin_id",
+            "label": "Origin",
+            "description": "Must match one of the origin names above.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "viewer_protocol_policy",
+            "label": "Viewer Protocol Policy",
+            "type": "select",
+            "default": "redirect-to-https",
+            "options": [
+              { "value": "redirect-to-https", "label": "Redirect HTTP to HTTPS" },
+              { "value": "https-only", "label": "HTTPS Only" },
+              { "value": "allow-all", "label": "HTTP and HTTPS" }
+            ]
+          },
+          {
+            "id": "allowed_methods",
+            "label": "Allowed HTTP Methods",
+            "type": "list",
+            "default": ["GET", "HEAD"]
+          },
+          {
+            "id": "cached_methods",
+            "label": "Cached HTTP Methods",
+            "type": "list",
+            "default": ["GET", "HEAD"]
+          },
+          {
+            "id": "compress",
+            "label": "Compress objects automatically",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "cache_policy_id",
+            "label": "Cache Policy",
+            "description": "Defaults to AWS's managed 'CachingOptimized' policy.",
+            "type": "text",
+            "default": "658327ea-f89d-4fab-a63d-7e88639e58f6"
+          },
+          {
+            "id": "origin_request_policy_id",
+            "label": "Origin Request Policy",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "response_headers_policy_id",
+            "label": "Response Headers Policy",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "field_level_encryption_id",
+            "label": "Field-Level Encryption Config",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "realtime_log_config_arn",
+            "label": "Real-time Log Configuration",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "ordered_cache_behaviors",
+        "label": "Path-Based Cache Behaviors",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "ordered_cache_behaviors",
+            "label": "Cache Behavior",
+            "description": "Evaluated in order, before falling back to the default cache behavior, for requests matching the path pattern.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "path_pattern",
+                "label": "Path Pattern",
+                "type": "text",
+                "required": true,
+                "placeholder": "/api/*"
+              },
+              {
+                "id": "target_origin_id",
+                "label": "Origin",
+                "description": "Must match one of the origin names, or an origin group name, above.",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "viewer_protocol_policy",
+                "label": "Viewer Protocol Policy",
+                "type": "select",
+                "default": "redirect-to-https",
+                "options": [
+                  { "value": "redirect-to-https", "label": "Redirect HTTP to HTTPS" },
+                  { "value": "https-only", "label": "HTTPS Only" },
+                  { "value": "allow-all", "label": "HTTP and HTTPS" }
+                ]
+              },
+              {
+                "id": "allowed_methods",
+                "label": "Allowed HTTP Methods",
+                "type": "list",
+                "default": ["GET", "HEAD"]
+              },
+              {
+                "id": "cached_methods",
+                "label": "Cached HTTP Methods",
+                "type": "list",
+                "default": ["GET", "HEAD"]
+              },
+              {
+                "id": "compress",
+                "label": "Compress objects automatically",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "cache_policy_id",
+                "label": "Cache Policy",
+                "description": "Defaults to AWS's managed 'CachingOptimized' policy.",
+                "type": "text",
+                "default": "658327ea-f89d-4fab-a63d-7e88639e58f6"
+              },
+              {
+                "id": "origin_request_policy_id",
+                "label": "Origin Request Policy",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "response_headers_policy_id",
+                "label": "Response Headers Policy",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "field_level_encryption_id",
+                "label": "Field-Level Encryption Config",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "realtime_log_config_arn",
+                "label": "Real-time Log Configuration",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "certificate",
+        "label": "Custom SSL Certificate",
+        "fields": [
+          {
+            "id": "use_default_certificate",
+            "label": "Use the default CloudFront certificate",
+            "description": "Off to use a custom SSL certificate from ACM for the alternate domain names set above.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "acm_certificate_arn",
+            "label": "ACM Certificate",
+            "description": "Must be a certificate in us-east-1.",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "use_default_certificate", "value": false }
+          },
+          {
+            "id": "ssl_support_method",
+            "label": "Security Policy Support",
+            "type": "select",
+            "default": "sni-only",
+            "depends_on": { "field": "use_default_certificate", "value": false },
+            "options": [
+              { "value": "sni-only", "label": "SNI Only" },
+              { "value": "vip", "label": "Legacy Clients Support (dedicated IP)" },
+              { "value": "static-ip", "label": "Static IP" }
+            ]
+          },
+          {
+            "id": "minimum_protocol_version",
+            "label": "Security Policy",
+            "type": "select",
+            "default": "TLSv1.2_2021",
+            "depends_on": { "field": "use_default_certificate", "value": false },
+            "options": [
+              { "value": "TLSv1.2_2021", "label": "TLSv1.2_2021" },
+              { "value": "TLSv1.2_2019", "label": "TLSv1.2_2019" },
+              { "value": "TLSv1.2_2018", "label": "TLSv1.2_2018" },
+              { "value": "TLSv1.1_2016", "label": "TLSv1.1_2016" },
+              { "value": "TLSv1_2016", "label": "TLSv1_2016" },
+              { "value": "TLSv1", "label": "TLSv1" },
+              { "value": "SSLv3", "label": "SSLv3" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "restrictions",
+        "label": "Geographic Restrictions",
+        "fields": [
+          {
+            "id": "geo_restriction_type",
+            "label": "Restriction Type",
+            "type": "select",
+            "default": "none",
+            "options": [
+              { "value": "none", "label": "None" },
+              { "value": "whitelist", "label": "Allow list" },
+              { "value": "blacklist", "label": "Block list" }
+            ]
+          },
+          {
+            "id": "geo_restriction_locations",
+            "label": "Countries",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "geo_restriction_type", "operator": "neq", "value": "none" }
+          }
+        ]
+      },
+      {
+        "id": "logging",
+        "label": "Standard Logging",
+        "fields": [
+          {
+            "id": "enable_logging",
+            "label": "Enable standard logging",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "logging_bucket",
+            "label": "S3 Bucket for Logs",
+            "type": "text",
+            "required": false,
+            "placeholder": "my-logs-bucket.s3.amazonaws.com",
+            "depends_on": { "field": "enable_logging", "value": true }
+          },
+          {
+            "id": "logging_prefix",
+            "label": "Log Prefix",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "enable_logging", "value": true }
+          },
+          {
+            "id": "logging_include_cookies",
+            "label": "Include cookies in logs",
+            "type": "boolean",
+            "default": false,
+            "depends_on": { "field": "enable_logging", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "custom_errors",
+        "label": "Custom Error Responses",
+        "fields": [
+          {
+            "id": "custom_error_responses",
+            "label": "Custom Error Response",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "error_code",
+                "label": "HTTP Error Code",
+                "type": "number",
+                "required": true
+              },
+              {
+                "id": "response_code",
+                "label": "Response HTTP Code",
+                "type": "number",
+                "required": false
+              },
+              {
+                "id": "response_page_path",
+                "label": "Response Page Path",
+                "type": "text",
+                "required": false
+              },
+              {
+                "id": "error_caching_min_ttl",
+                "label": "Error Caching Minimum TTL",
+                "type": "number",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

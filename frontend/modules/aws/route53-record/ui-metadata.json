@@ -1,0 +1,296 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "route53-record",
+  "version": "1.0.0",
+  "display": {
+    "label": "Route 53 Record",
+    "icon": "dns",
+    "description": "Create a DNS record in an existing Route 53 hosted zone.",
+    "category": "global"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "text",
+      "required": true,
+      "default": "us-east-1",
+      "placeholder": "us-east-1"
+    }
+  ],
+  "resource": {
+    "variable": "route53_record",
+    "key_field": "name",
+    "key_label": "Record Name",
+    "key_description": "The record name, e.g. www.example.com, or example.com for the zone apex.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Record",
+        "fields": [
+          {
+            "id": "zone_id",
+            "label": "Hosted Zone",
+            "description": "The hosted zone to create this record in.",
+            "type": "select",
+            "required": true,
+            "placeholder": "Z1D633PJN98FT9",
+            "data_source": {
+              "resource": "route53.zones",
+              "params": {},
+              "display": { "value_key": "id", "label_key": "name", "description_key": "private_zone" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "name",
+            "label": "Record Name",
+            "type": "text",
+            "required": true,
+            "placeholder": "www.example.com"
+          },
+          {
+            "id": "type",
+            "label": "Record Type",
+            "type": "select",
+            "required": true,
+            "default": "A",
+            "options": [
+              { "value": "A", "label": "A – IPv4 address" },
+              { "value": "AAAA", "label": "AAAA – IPv6 address" },
+              { "value": "CNAME", "label": "CNAME – Canonical name" },
+              { "value": "MX", "label": "MX – Mail exchange" },
+              { "value": "TXT", "label": "TXT – Text" },
+              { "value": "NS", "label": "NS – Name server" },
+              { "value": "SOA", "label": "SOA – Start of authority" },
+              { "value": "SRV", "label": "SRV – Service locator" },
+              { "value": "PTR", "label": "PTR – Pointer" },
+              { "value": "CAA", "label": "CAA – Certification authority authorization" },
+              { "value": "DS", "label": "DS – Delegation signer" },
+              { "value": "NAPTR", "label": "NAPTR – Naming authority pointer" },
+              { "value": "HTTPS", "label": "HTTPS – HTTPS service binding" },
+              { "value": "SVCB", "label": "SVCB – Service binding" },
+              { "value": "TLSA", "label": "TLSA – TLS authentication" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "value",
+        "label": "Value / Route Traffic To",
+        "fields": [
+          {
+            "id": "is_alias",
+            "label": "Route traffic to an AWS resource (Alias)",
+            "description": "Alias to a CloudFront distribution, load balancer, S3 website endpoint, or another record in this zone, at no extra charge and with automatic health-aware routing.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "alias_name",
+            "label": "Alias Target",
+            "description": "DNS name of the target, e.g. the CloudFront distribution's domain name.",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "is_alias", "value": true }
+          },
+          {
+            "id": "alias_zone_id",
+            "label": "Alias Target Hosted Zone ID",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "is_alias", "value": true }
+          },
+          {
+            "id": "alias_evaluate_target_health",
+            "label": "Evaluate target health",
+            "type": "boolean",
+            "default": false,
+            "depends_on": { "field": "is_alias", "value": true }
+          },
+          {
+            "id": "records",
+            "label": "Value",
+            "description": "One or more values for this record.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "is_alias", "value": false }
+          },
+          {
+            "id": "ttl",
+            "label": "TTL (seconds)",
+            "type": "number",
+            "default": 300,
+            "depends_on": { "field": "is_alias", "value": false }
+          }
+        ]
+      },
+      {
+        "id": "routing",
+        "label": "Routing Policy",
+        "fields": [
+          {
+            "id": "routing_policy_type",
+            "label": "Routing Policy",
+            "type": "select",
+            "default": "SIMPLE",
+            "options": [
+              { "value": "SIMPLE", "label": "Simple" },
+              { "value": "WEIGHTED", "label": "Weighted" },
+              { "value": "LATENCY", "label": "Latency" },
+              { "value": "FAILOVER", "label": "Failover" },
+              { "value": "GEOLOCATION", "label": "Geolocation" },
+              { "value": "GEOPROXIMITY", "label": "Geoproximity" },
+              { "value": "CIDR", "label": "IP-based (CIDR collection)" },
+              { "value": "MULTIVALUE", "label": "Multivalue answer" }
+            ]
+          },
+          {
+            "id": "set_identifier",
+            "label": "Record ID",
+            "description": "Distinguishes this record from others sharing the same name/type and routing policy.",
+            "type": "text",
+            "required": false
+          },
+          {
+            "id": "health_check_id",
+            "label": "Health Check ID",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "weighted_weight",
+            "label": "Weight",
+            "type": "number",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "WEIGHTED" }
+          },
+          {
+            "id": "latency_region",
+            "label": "Region",
+            "type": "select",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "LATENCY" },
+            "data_source": {
+              "resource": "ec2.regions",
+              "params": {},
+              "display": { "value_key": "name", "label_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "failover_type",
+            "label": "Failover Record Type",
+            "type": "select",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "FAILOVER" },
+            "options": [
+              { "value": "PRIMARY", "label": "Primary" },
+              { "value": "SECONDARY", "label": "Secondary" }
+            ]
+          },
+          {
+            "id": "geolocation_continent",
+            "label": "Continent",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "GEOLOCATION" }
+          },
+          {
+            "id": "geolocation_country",
+            "label": "Country",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "GEOLOCATION" }
+          },
+          {
+            "id": "geolocation_subdivision",
+            "label": "US State",
+            "description": "Requires Country to be US.",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "GEOLOCATION" }
+          },
+          {
+            "id": "geoproximity_aws_region",
+            "label": "AWS Region (bias origin)",
+            "type": "select",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "GEOPROXIMITY" },
+            "data_source": {
+              "resource": "ec2.regions",
+              "params": {},
+              "display": { "value_key": "name", "label_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "geoproximity_local_zone_group",
+            "label": "Local Zone Group (bias origin)",
+            "description": "Use instead of AWS Region for a resource in a Local Zone.",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "GEOPROXIMITY" }
+          },
+          {
+            "id": "geoproximity_latitude",
+            "label": "Latitude (bias origin)",
+            "description": "Use instead of AWS Region/Local Zone Group for a resource outside AWS.",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "GEOPROXIMITY" }
+          },
+          {
+            "id": "geoproximity_longitude",
+            "label": "Longitude (bias origin)",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "GEOPROXIMITY" }
+          },
+          {
+            "id": "geoproximity_bias",
+            "label": "Bias",
+            "description": "-99 to 99. Expands (positive) or shrinks (negative) the region routed to this resource.",
+            "type": "number",
+            "required": false,
+            "validation": { "min": -99, "max": 99 },
+            "depends_on": { "field": "routing_policy_type", "value": "GEOPROXIMITY" }
+          },
+          {
+            "id": "cidr_collection_id",
+            "label": "CIDR Collection ID",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "CIDR" }
+          },
+          {
+            "id": "cidr_location_name",
+            "label": "CIDR Location Name",
+            "type": "text",
+            "required": false,
+            "depends_on": { "field": "routing_policy_type", "value": "CIDR" }
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced",
+        "fields": [
+          {
+            "id": "allow_overwrite",
+            "label": "Allow overwrite",
+            "description": "Allow overwriting an existing record of the same name/type not managed by this deployment.",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      }
+    ]
+  }
+}
