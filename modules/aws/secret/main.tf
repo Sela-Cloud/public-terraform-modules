@@ -44,5 +44,9 @@ resource "aws_secretsmanager_secret_rotation" "this" {
       condition     = var.rotation_lambda_arn != null
       error_message = "rotation_lambda_arn must be provided to enable AWS Secrets Manager secret rotation."
     }
+    precondition {
+      condition     = !(var.rotation_period_days != null && var.rotation_schedule_expression != null)
+      error_message = "Set only one of rotation_period_days or rotation_schedule_expression, not both."
+    }
   }
 }

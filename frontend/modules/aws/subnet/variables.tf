@@ -8,7 +8,7 @@ variable "subnet" {
   description = "Map of AWS Subnet configurations to deploy, keyed by subnet name."
   type = map(object({
     name                                           = optional(string, "subnet-default")
-    vpc_id                                         = optional(string, "")
+    vpc_id                                         = optional(string, null)
     cidr_block                                     = optional(string, "10.0.1.0/24")
     availability_zone                              = optional(string, null)
     availability_zone_id                           = optional(string, null)
@@ -26,7 +26,7 @@ variable "subnet" {
   default = {
     "subnet-default" = {
       name                                           = "subnet-default"
-      vpc_id                                         = ""
+      vpc_id                                         = null
       cidr_block                                     = "10.0.1.0/24"
       availability_zone                              = null
       availability_zone_id                           = null
