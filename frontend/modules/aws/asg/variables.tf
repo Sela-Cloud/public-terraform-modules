@@ -1,4 +1,4 @@
-variable "aws_region" {
+variable "region" {
   description = "The AWS Region in which the resources will be created."
   type        = string
 }
@@ -60,11 +60,7 @@ variable "asg" {
       disabled              = optional(bool, false)
     })), [])
 
-    # Dynamic Scale-in control framework
-    autoscaling_scale_in_control = optional(object({
-      disabled        = optional(bool, false) # Disables scale-in capability if true
-      time_window_sec = optional(number, 600)
-    }), {})
+    tags = optional(map(string), {})
   }))
   default = {}
 }

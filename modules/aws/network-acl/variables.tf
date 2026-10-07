@@ -11,7 +11,7 @@ variable "name" {
 variable "vpc_id" {
   description = "The ID of the associated VPC."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "subnet_ids" {

@@ -27,12 +27,6 @@
       }
     }
   ],
-  "provides": [
-    {
-      "data_source": "iam.users",
-      "value_field": "name"
-    }
-  ],
   "resource": {
     "variable": "iam_user",
     "key_field": "name",
