@@ -45,6 +45,7 @@ variable "global_external_alb" {
       mig_name                  = optional(string)
       mig_region                = optional(string)
       port_name                 = optional(string, "http")
+      timeout_sec               = optional(number, 30)
       enable_health_check       = optional(bool, false)
       health_check_type         = optional(string, "tcp")
       health_check_port         = optional(number, 80)
