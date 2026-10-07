@@ -32,3 +32,13 @@ output "infrastructure_configuration_id" {
   description = "The ID of the Infrastructure Configuration."
   value       = aws_imagebuilder_infrastructure_configuration.this.id
 }
+
+output "distribution_configuration_arn" {
+  description = "The ARN of the Distribution Configuration, if any distributions are configured."
+  value       = try(aws_imagebuilder_distribution_configuration.this[0].arn, null)
+}
+
+output "distribution_configuration_id" {
+  description = "The ID of the Distribution Configuration, if any distributions are configured."
+  value       = try(aws_imagebuilder_distribution_configuration.this[0].id, null)
+}

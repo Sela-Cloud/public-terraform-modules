@@ -103,10 +103,85 @@
           {
             "id": "components",
             "label": "Build Components",
-            "description": "List of Image Builder component ARNs to apply during build.",
+            "description": "List of Image Builder component ARNs to apply during build. At least one is required by AWS.",
             "type": "list",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "label": "Storage (Output AMI)",
+        "description": "Customize block device mappings (e.g. root volume size) for the resulting AMI.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "block_device_mappings",
+            "label": "Block Device Mapping",
+            "type": "repeatable",
             "required": false,
-            "default": []
+            "default": [],
+            "fields": [
+              {
+                "id": "device_name",
+                "label": "Device Name",
+                "type": "text",
+                "required": true,
+                "placeholder": "/dev/xvda"
+              },
+              {
+                "id": "ebs",
+                "label": "EBS Volume",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "volume_size",
+                    "label": "Volume Size (GiB)",
+                    "type": "number",
+                    "required": false,
+                    "nullable": true,
+                    "validation": { "min": 1 }
+                  },
+                  {
+                    "id": "volume_type",
+                    "label": "Volume Type",
+                    "type": "select",
+                    "required": false,
+                    "nullable": true,
+                    "options": [
+                      { "value": "gp3", "label": "gp3" },
+                      { "value": "gp2", "label": "gp2" },
+                      { "value": "io1", "label": "io1" },
+                      { "value": "io2", "label": "io2" },
+                      { "value": "st1", "label": "st1" },
+                      { "value": "sc1", "label": "sc1" },
+                      { "value": "standard", "label": "standard" }
+                    ]
+                  },
+                  {
+                    "id": "delete_on_termination",
+                    "label": "Delete on Termination",
+                    "type": "boolean",
+                    "default": true
+                  },
+                  {
+                    "id": "encrypted",
+                    "label": "Encrypted",
+                    "type": "boolean",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "kms_key_id",
+                    "label": "KMS Key ID",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -121,7 +196,6 @@
             "description": "IAM instance profile name attached to the build instance (must have EC2ImageBuilderProfile policies).",
             "type": "text",
             "required": true,
-            "default": "",
             "placeholder": "EC2ImageBuilderInstanceProfile"
           },
           {
@@ -134,13 +208,20 @@
           },
           {
             "id": "subnet_id",
-            "label": "Subnet ID",
-            "description": "VPC Subnet ID where build instances will be launched.",
-            "type": "text",
+            "label": "Subnet",
+            "description": "VPC Subnet where build instances will be launched.",
+            "type": "select",
             "required": false,
             "default": null,
             "nullable": true,
-            "placeholder": "subnet-0123456789abcdef0"
+            "placeholder": "subnet-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "cidr" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "security_group_ids",
@@ -181,6 +262,56 @@
         ]
       },
       {
+        "id": "build_instance_security",
+        "label": "Build Instance Security & Logging",
+        "description": "Instance metadata (IMDSv2) hardening and build log storage for the build/test instances.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "http_tokens",
+            "label": "HTTP Tokens (IMDSv2)",
+            "description": "Whether IMDSv2 session tokens are required on build instances. Leave unset to use the AWS default.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "required", "label": "Required (IMDSv2 enforced)" },
+              { "value": "optional", "label": "Optional (IMDSv1 & IMDSv2)" }
+            ]
+          },
+          {
+            "id": "http_put_response_hop_limit",
+            "label": "HTTP PUT Response Hop Limit",
+            "description": "Desired HTTP PUT response hop limit for metadata requests (1-64).",
+            "type": "number",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "http_tokens", "operator": "neq", "value": null },
+            "validation": { "min": 1, "max": 64 }
+          },
+          {
+            "id": "logging_s3_bucket_name",
+            "label": "Build Logs S3 Bucket",
+            "description": "S3 bucket to store build logs. Leave blank to skip logging configuration.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "my-build-logs-bucket"
+          },
+          {
+            "id": "logging_s3_key_prefix",
+            "label": "Build Logs S3 Key Prefix",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "eib/",
+            "depends_on": { "field": "logging_s3_bucket_name", "operator": "neq", "value": null }
+          }
+        ]
+      },
+      {
         "id": "schedule",
         "label": "Pipeline Schedule",
         "description": "Automated schedule expression for regular image builds.",
@@ -194,6 +325,74 @@
             "default": null,
             "nullable": true,
             "placeholder": "cron(0 0 ? * SUN *)"
+          }
+        ]
+      },
+      {
+        "id": "distribution",
+        "label": "Distribution (AMI Sharing & Regions)",
+        "description": "Copy the built AMI to other regions and optionally share it with other AWS accounts. Leave empty to only build in this region with no distribution.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "distributions",
+            "label": "Distribution Target",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "region",
+                "label": "Target Region",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "ec2.regions",
+                  "params": {},
+                  "display": { "value_key": "name", "label_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "ami_name",
+                "label": "Output AMI Name",
+                "description": "Supports Image Builder variables, e.g. {{ imagebuilder:buildDate }}.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "golden-ami-{{ imagebuilder:buildDate }}"
+              },
+              {
+                "id": "ami_description",
+                "label": "Output AMI Description",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "ami_tags",
+                "label": "Output AMI Tags",
+                "type": "map",
+                "required": false,
+                "default": {}
+              },
+              {
+                "id": "kms_key_id",
+                "label": "KMS Key ID",
+                "description": "Encrypt the copied AMI's snapshot with this KMS key.",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "launch_permission_account_ids",
+                "label": "Share with AWS Account IDs",
+                "type": "list",
+                "required": false,
+                "default": []
+              }
+            ]
           }
         ]
       },

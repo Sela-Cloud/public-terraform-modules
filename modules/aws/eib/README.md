@@ -56,9 +56,9 @@ module "image_builder" {
 | `description` | Description for Image Builder resources | `string` | `null` | no |
 | `parent_image` | Parent image AMI ID or base image ARN | `string` | `"arn:aws:imagebuilder:..."` | no |
 | `recipe_version` | Version of the image recipe | `string` | `"1.0.0"` | no |
-| `components` | List of Image Builder component ARNs | `list(string)` | `[]` | no |
+| `components` | List of Image Builder component ARNs. AWS requires at least one | `list(string)` | `[]` | no |
 | `instance_types` | List of EC2 instance types for build instance | `list(string)` | `["t3.medium"]` | no |
-| `instance_profile_name` | IAM instance profile name | `string` | `""` | no |
+| `instance_profile_name` | IAM instance profile name. Required by AWS | `string` | `null` | no |
 | `subnet_id` | Subnet ID for the build instance | `string` | `null` | no |
 | `security_group_ids` | List of security group IDs | `list(string)` | `[]` | no |
 | `key_pair` | Key pair name for build instance | `string` | `null` | no |
@@ -67,6 +67,12 @@ module "image_builder" {
 | `schedule_expression` | Cron or rate schedule expression | `string` | `null` | no |
 | `pipeline_status` | Status of image pipeline (`ENABLED`, `DISABLED`) | `string` | `"ENABLED"` | no |
 | `tags` | A map of tags to assign to the resources | `map(string)` | `{}` | no |
+| `block_device_mappings` | Customize block device mappings (e.g. root volume size) for the output AMI | `list(object)` | `[]` | no |
+| `http_tokens` | Whether IMDSv2 is required on build instances (`optional`, `required`) | `string` | `null` | no |
+| `http_put_response_hop_limit` | HTTP PUT response hop limit for build instance metadata | `number` | `null` | no |
+| `logging_s3_bucket_name` | S3 bucket to store build logs | `string` | `null` | no |
+| `logging_s3_key_prefix` | S3 key prefix for build logs | `string` | `null` | no |
+| `distributions` | Per-region AMI distribution settings (sharing, copying, tagging) | `list(object)` | `[]` | no |
 
 ## Outputs
 
@@ -79,3 +85,5 @@ module "image_builder" {
 | `recipe_id` | The ID of the Image Recipe |
 | `infrastructure_configuration_arn` | The ARN of the Infrastructure Configuration |
 | `infrastructure_configuration_id` | The ID of the Infrastructure Configuration |
+| `distribution_configuration_arn` | The ARN of the Distribution Configuration, if configured |
+| `distribution_configuration_id` | The ID of the Distribution Configuration, if configured |

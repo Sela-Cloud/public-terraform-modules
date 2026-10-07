@@ -35,9 +35,9 @@ variable "instance_types" {
 }
 
 variable "instance_profile_name" {
-  description = "IAM instance profile name associated with the build instance."
+  description = "IAM instance profile name associated with the build instance. Required by AWS."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "subnet_id" {
@@ -91,4 +91,56 @@ variable "tags" {
   description = "A map of tags to assign to the resources."
   type        = map(string)
   default     = {}
+}
+
+variable "block_device_mappings" {
+  description = "Customize block device mappings (e.g. root volume size) for the resulting AMI."
+  type = list(object({
+    device_name = string
+    ebs = optional(object({
+      volume_size           = optional(number, null)
+      volume_type           = optional(string, null)
+      delete_on_termination = optional(bool, true)
+      encrypted             = optional(bool, null)
+      kms_key_id            = optional(string, null)
+    }), null)
+  }))
+  default = []
+}
+
+variable "http_tokens" {
+  description = "Whether IMDSv2 session tokens are required for build instances. Valid values: 'optional', 'required'. Null leaves instance_metadata_options unconfigured."
+  type        = string
+  default     = null
+}
+
+variable "http_put_response_hop_limit" {
+  description = "HTTP PUT response hop limit for build instance metadata requests (1-64). Only used when http_tokens is set."
+  type        = number
+  default     = null
+}
+
+variable "logging_s3_bucket_name" {
+  description = "S3 bucket name to store build logs. Null skips logging configuration."
+  type        = string
+  default     = null
+}
+
+variable "logging_s3_key_prefix" {
+  description = "S3 key prefix for build logs. Only used when logging_s3_bucket_name is set."
+  type        = string
+  default     = null
+}
+
+variable "distributions" {
+  description = "Per-region AMI distribution settings. When non-empty, creates a distribution configuration and attaches it to the pipeline."
+  type = list(object({
+    region                        = string
+    ami_name                      = optional(string, null)
+    ami_description               = optional(string, null)
+    ami_tags                      = optional(map(string), {})
+    kms_key_id                    = optional(string, null)
+    launch_permission_account_ids = optional(list(string), [])
+  }))
+  default = []
 }

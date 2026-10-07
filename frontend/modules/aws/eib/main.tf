@@ -3,7 +3,7 @@
  *****************************************/
 
 module "eib" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/eib?ref=v0.8.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/eib?ref=aws-eib"
   for_each = var.eib
 
   name                          = coalesce(each.value.name, each.key)
@@ -21,4 +21,11 @@ module "eib" {
   schedule_expression           = each.value.schedule_expression
   pipeline_status               = each.value.pipeline_status
   tags                          = each.value.tags
+
+  block_device_mappings       = each.value.block_device_mappings
+  http_tokens                 = each.value.http_tokens
+  http_put_response_hop_limit = each.value.http_put_response_hop_limit
+  logging_s3_bucket_name      = each.value.logging_s3_bucket_name
+  logging_s3_key_prefix       = each.value.logging_s3_key_prefix
+  distributions               = each.value.distributions
 }
