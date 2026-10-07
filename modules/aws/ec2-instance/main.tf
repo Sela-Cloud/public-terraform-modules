@@ -35,7 +35,7 @@ data "aws_subnet" "selected" {
 
 locals {
   ami_id   = coalesce(var.ami, try(data.aws_ami.amazon_linux_2023[0].id, null))
-  vpc_id   = coalesce(var.vpc_id, try(data.aws_subnet.selected[0].vpc_id, null))
+  vpc_id   = var.vpc_id != null ? var.vpc_id : try(data.aws_subnet.selected[0].vpc_id, null)
   key_name = try(aws_key_pair.this[0].key_name, var.key_name)
   security_group_ids = compact(concat(
     var.vpc_security_group_ids,
