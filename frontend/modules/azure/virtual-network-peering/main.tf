@@ -1,5 +1,5 @@
 module "virtual_network_peering" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/virtual-network-peering?ref=v0.8.11"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/virtual-network-peering?ref=v0.8.13"
   for_each = var.virtual_network_peering
 
   name                                   = each.value.name
