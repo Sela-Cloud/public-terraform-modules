@@ -674,5 +674,10 @@
         ]
       }
     ]
+  },
+  "destroy": {
+    "targets": [
+      "module.artifact_registry[\"{key}\"]"
+    ]
   }
 }

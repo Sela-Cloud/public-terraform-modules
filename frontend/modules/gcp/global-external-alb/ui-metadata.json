@@ -926,5 +926,10 @@
         ]
       }
     ]
+  },
+  "destroy": {
+    "targets": [
+      "module.global_external_alb[\"{key}\"]"
+    ]
   }
 }

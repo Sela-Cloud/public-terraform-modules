@@ -142,6 +142,7 @@ The `ui-metadata.json` file resides in the root directory of the module and inst
 | `provides` | `array` | No | What a resource of this module can be *used as* by another module's field. See [`provides` Block](#provides-block). |
 | `satellites` | `array` | No | Secondary resources the module creates that have no independent lifecycle. See [`satellites` Block](#satellites-block). |
 | `deprecated` | `boolean` | No | Hides the module from the new-request picker while keeping existing resources editable. See [`deprecated`](#deprecated). |
+| `destroy` | `object` | No | The Terraform addresses that make up one resource, for wrappers whose shape the platform cannot infer. See [`destroy` Block](#destroy-block). |
 
 ---
 
@@ -440,6 +441,58 @@ real IAM bindings go uncaptured and unmentioned. Declaring satellites lets the U
 
 Declaring a satellite does not make Terraform adopt it — `import` still covers exactly the one
 resource named by `import.target`. It only makes the omission visible.
+
+---
+
+### `destroy` Block
+
+**Optional.** Destroying one resource from Lookup runs a targeted `terraform destroy` — narrowed to
+that resource, because a workspace holds every resource of one module in one environment and an
+untargeted destroy would remove them all. The platform works out the address from `main.tf`, and it
+can do that for the usual shape: **exactly one module block with `for_each = var.<resource variable>`**.
+The address is then `module.<label>["<key>"]`.
+
+A wrapper that does not have that shape must declare its addresses here, or a destroy is refused
+with *"Could not find the module block iterating var.… in this workspace's main.tf"*. That happens
+when:
+
+- several module blocks iterate a **filtered** copy of the variable (`for k, v in var.x : k => v if …`);
+- a block iterates a **local** derived from the variable, such as child objects keyed `<parent>-<child>`;
+- the wrapper declares resources **beside** the module block.
+
+```json
+"destroy": {
+  "targets": [
+    "module.gke_autopilot[\"{key}\"]",
+    "module.gke_standard_cluster[\"{key}\"]",
+    "module.gke_standard_node_pool[\"{key}-{node_pools[].name}\"]"
+  ]
+}
+```
+
+Each target is an address template:
+
+| Placeholder | Becomes |
+| :--- | :--- |
+| `{key}` | The resource's map key in tfvars. **Required** in every target. |
+| `{field}` | A scalar value from the resource's tfvars entry. |
+| `{list[].field}` | One address per element of a list field — e.g. one per node pool. At most one per target. An empty list yields no address (a cluster with no node pools has none to destroy). |
+
+List every block that can hold part of the resource, even ones that will not apply to a given
+entry: above, a cluster is either autopilot or standard, and targeting the one it is not is a no-op.
+
+**What stops a wrong declaration from doing damage.** Every destroy is planned first
+(`terraform plan -destroy`), and the plan is refused unless:
+
+- every change is a **delete** — a destroy that would create or update anything is not a destroy;
+- every deleted address is **at or under one of the targets** — `module.x["a"]` covers
+  `module.x["a"].…` but never `module.x["a2"]`;
+- for declared targets, it deletes **at least one** resource — matching nothing almost always means
+  the declaration is wrong, and carrying on would remove the code while the resource keeps running.
+
+The apply then runs that saved plan file, so what was checked is exactly what runs. The validator
+(`frontend/validate_metadata.py`) also checks, on the module's own PR, that each target names a block
+`main.tf` declares and that every placeholder is a real field.
 
 ---
 
