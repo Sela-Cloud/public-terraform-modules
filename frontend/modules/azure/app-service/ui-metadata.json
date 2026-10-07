@@ -141,11 +141,24 @@
           },
           {
             "id": "service_plan_id",
-            "label": "Existing Service Plan ID",
-            "description": "Resource ID of an existing App Service Plan to attach to (bypasses plan creation).",
-            "type": "text",
+            "label": "Existing Service Plan",
+            "description": "Select an existing App Service Plan to attach to (bypasses plan creation).",
+            "type": "select",
             "required": false,
-            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Web/serverFarms/asp-shared"
+            "nullable": true,
+            "data_source": {
+              "resource": "web.servicePlans",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "sku"
+              }
+            }
           },
           {
             "id": "zone_balancing_enabled",
