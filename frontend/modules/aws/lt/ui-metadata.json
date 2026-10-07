@@ -1,0 +1,270 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "lt",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Launch Template",
+    "icon": "server",
+    "description": "Create and manage Amazon EC2 Launch Templates with AMIs, instance sizing, storage mappings, and network configurations",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "lt",
+    "key_field": "name",
+    "key_label": "Launch Template Name",
+    "key_description": "Unique identifier name for the launch template. Serves as map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core launch template identification and version management.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Launch Template Name",
+            "description": "The name of the launch template.",
+            "type": "text",
+            "required": true,
+            "default": "lt-default",
+            "placeholder": "my-app-launch-template",
+            "validation": {
+              "min": 1,
+              "max": 128,
+              "pattern": "^[a-zA-Z0-9()._-]+$",
+              "pattern_error": "Name must contain only alphanumeric characters, dots, underscores, dashes, and parentheses."
+            }
+          },
+          {
+            "id": "name_prefix",
+            "label": "Name Prefix",
+            "description": "Creates a unique name beginning with the specified prefix. Conflicts with name.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "my-app-"
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "description": "Description of the launch template.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "Launch template for web application tier"
+          },
+          {
+            "id": "update_default_version",
+            "label": "Update Default Version",
+            "description": "Whether to update Default Version each time the template is updated.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "compute",
+        "label": "Compute & Instance Settings",
+        "description": "AMI selection, instance sizing, key pairs, and IAM instance profile.",
+        "fields": [
+          {
+            "id": "image_id",
+            "label": "AMI ID",
+            "description": "The AMI ID to use to launch the instance (e.g., ami-0c55b159cbfafe1f0).",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "ami-0c55b159cbfafe1f0"
+          },
+          {
+            "id": "instance_type",
+            "label": "Instance Type",
+            "description": "The EC2 instance type to use for instances launched from this template.",
+            "type": "text",
+            "required": false,
+            "default": "t3.micro",
+            "placeholder": "t3.micro"
+          },
+          {
+            "id": "key_name",
+            "label": "Key Pair Name",
+            "description": "The name of the EC2 Key Pair to use for SSH access.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "my-ec2-key"
+          },
+          {
+            "id": "iam_instance_profile_name",
+            "label": "IAM Instance Profile Name",
+            "description": "The name of the IAM instance profile to associate with the instance.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "ec2-instance-role"
+          },
+          {
+            "id": "iam_instance_profile_arn",
+            "label": "IAM Instance Profile ARN",
+            "description": "The ARN of the IAM instance profile to associate with the instance.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "arn:aws:iam::123456789012:instance-profile/..."
+          },
+          {
+            "id": "ebs_optimized",
+            "label": "EBS Optimized",
+            "description": "If true, launched instances will be EBS-optimized.",
+            "type": "boolean",
+            "required": false,
+            "default": null,
+            "nullable": true
+          },
+          {
+            "id": "enable_monitoring",
+            "label": "Detailed Monitoring",
+            "description": "Enable detailed 1-minute CloudWatch monitoring metrics.",
+            "type": "boolean",
+            "required": false,
+            "default": null,
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "network",
+        "label": "Networking & Security",
+        "description": "Security groups and network configurations.",
+        "fields": [
+          {
+            "id": "vpc_security_group_ids",
+            "label": "VPC Security Group IDs",
+            "description": "A list of security group IDs to associate with instances.",
+            "type": "list",
+            "required": false,
+            "default": null,
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "user_data",
+        "label": "User Data",
+        "description": "Bootstrap shell script or cloud-init configuration executed on first boot.",
+        "fields": [
+          {
+            "id": "user_data",
+            "label": "User Data Script",
+            "description": "The user data script (plain text or base64 encoded).",
+            "type": "textarea",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "#!/bin/bash\nyum update -y"
+          }
+        ]
+      },
+      {
+        "id": "metadata",
+        "label": "Metadata Options (IMDSv2)",
+        "description": "Instance Metadata Service security configuration.",
+        "fields": [
+          {
+            "id": "enable_metadata_options",
+            "label": "Configure Metadata Options",
+            "description": "Whether to configure instance metadata options.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "http_endpoint",
+            "label": "HTTP Endpoint",
+            "description": "Enable or disable the HTTP metadata endpoint.",
+            "type": "select",
+            "required": false,
+            "default": "enabled",
+            "options": [
+              { "value": "enabled", "label": "Enabled" },
+              { "value": "disabled", "label": "Disabled" }
+            ]
+          },
+          {
+            "id": "http_tokens",
+            "label": "HTTP Tokens (IMDSv2)",
+            "description": "Whether IMDSv2 session tokens are required.",
+            "type": "select",
+            "required": false,
+            "default": "required",
+            "options": [
+              { "value": "required", "label": "Required (IMDSv2 enforced)" },
+              { "value": "optional", "label": "Optional (IMDSv1 & IMDSv2)" }
+            ]
+          },
+          {
+            "id": "http_put_response_hop_limit",
+            "label": "HTTP PUT Response Hop Limit",
+            "description": "Desired HTTP PUT response hop limit for metadata requests (1-64).",
+            "type": "number",
+            "required": false,
+            "default": 1
+          },
+          {
+            "id": "instance_metadata_tags",
+            "label": "Instance Metadata Tags",
+            "description": "Enables or disables access to instance tags from instance metadata.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "enabled", "label": "Enabled" },
+              { "value": "disabled", "label": "Disabled" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags assigned to the launch template.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value tags assigned to the launch template.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
