@@ -1,0 +1,32 @@
+module "kubernetes_cluster" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/kubernetes-cluster?ref=v0.8.14"
+  for_each = var.kubernetes_cluster
+
+  name                                             = each.value.name
+  resource_group_name                              = each.value.resource_group_name
+  location                                         = each.value.location
+  dns_prefix                                       = each.value.dns_prefix
+  dns_prefix_private_cluster                       = each.value.dns_prefix_private_cluster
+  kubernetes_version                               = each.value.kubernetes_version
+  sku_tier                                         = each.value.sku_tier
+  automatic_upgrade_channel                        = each.value.automatic_upgrade_channel
+  node_os_upgrade_channel                          = each.value.node_os_upgrade_channel
+  private_cluster_enabled                          = each.value.private_cluster_enabled
+  private_dns_zone_id                              = each.value.private_dns_zone_id
+  private_cluster_public_fqdn_enabled              = each.value.private_cluster_public_fqdn_enabled
+  azure_policy_enabled                             = each.value.azure_policy_enabled
+  oidc_issuer_enabled                              = each.value.oidc_issuer_enabled
+  workload_identity_enabled                        = each.value.workload_identity_enabled
+  local_account_disabled                           = each.value.local_account_disabled
+  role_based_access_control_enabled                = each.value.role_based_access_control_enabled
+  identity_type                                    = each.value.identity_type
+  identity_ids                                     = each.value.identity_ids
+  default_node_pool                                = each.value.default_node_pool
+  network_profile                                  = each.value.network_profile
+  api_server_authorized_ip_ranges                  = each.value.api_server_authorized_ip_ranges
+  azure_active_directory_role_based_access_control = each.value.azure_active_directory_role_based_access_control
+  log_analytics_workspace_id                       = each.value.log_analytics_workspace_id
+  key_vault_secrets_provider                       = each.value.key_vault_secrets_provider
+  node_pools                                       = each.value.node_pools
+  tags                                             = each.value.tags
+}
