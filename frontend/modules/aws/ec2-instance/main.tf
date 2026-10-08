@@ -10,6 +10,7 @@ module "ec2_instance" {
   ami                                  = each.value.ami
   instance_type                        = each.value.instance_type
   key_name                             = each.value.key_name
+  vpc_id                               = each.value.vpc_id
   subnet_id                            = each.value.subnet_id
   vpc_security_group_ids               = each.value.vpc_security_group_ids
   associate_public_ip_address          = each.value.associate_public_ip_address
