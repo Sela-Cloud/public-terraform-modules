@@ -1,0 +1,222 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "sns",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS SNS Topic",
+    "icon": "bell",
+    "description": "Provision Amazon Simple Notification Service (SNS) pub/sub topics with KMS encryption and subscriptions",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "sns",
+    "key_field": "name",
+    "key_label": "Topic Name",
+    "key_description": "Unique identifier name for the SNS topic. Serves as map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Topic name, display name, and FIFO settings.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Topic Name",
+            "description": "The name of the SNS topic. For FIFO topics, the name must end with '.fifo'.",
+            "type": "text",
+            "required": true,
+            "default": "sns-default",
+            "placeholder": "my-notifications-topic",
+            "validation": {
+              "min": 1,
+              "max": 256,
+              "pattern": "^[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*$",
+              "pattern_error": "Topic name must contain only alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "name_prefix",
+            "label": "Name Prefix",
+            "description": "Creates a unique name beginning with the specified prefix. Conflicts with name.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "my-topic-"
+          },
+          {
+            "id": "display_name",
+            "label": "Display Name",
+            "description": "The display name for SMS message sender ID.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "Alerts"
+          },
+          {
+            "id": "fifo_topic",
+            "label": "FIFO Topic",
+            "description": "Designates whether the topic is FIFO (first-in-first-out). Name must end with '.fifo'.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "content_based_deduplication",
+            "label": "Content-Based Deduplication",
+            "description": "Enables content-based message deduplication for FIFO topics.",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": {
+              "field": "fifo_topic",
+              "value": true,
+              "operator": "eq"
+            }
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Encryption & Policies",
+        "description": "Server-side encryption and IAM access policies.",
+        "fields": [
+          {
+            "id": "kms_master_key_id",
+            "label": "KMS Master Key ID",
+            "description": "KMS CMK ID, ARN, or alias (e.g., alias/aws/sns) for server-side encryption.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "alias/aws/sns"
+          },
+          {
+            "id": "policy",
+            "label": "Topic IAM Policy",
+            "description": "The fully-formed IAM Policy document as a JSON string.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": []\n}"
+          },
+          {
+            "id": "delivery_policy",
+            "label": "Delivery Policy",
+            "description": "SNS delivery retry policy as a JSON string.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "default": null,
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "subscriptions",
+        "label": "Subscriptions",
+        "description": "Endpoints subscribed to this topic.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "subscriptions",
+            "label": "Subscription",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Name",
+                "description": "Identifies this subscription within the request -- not sent to AWS. Must be unique among this topic's subscriptions.",
+                "type": "text",
+                "required": true,
+                "placeholder": "ops-email"
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "email", "label": "Email" },
+                  { "value": "email-json", "label": "Email (JSON)" },
+                  { "value": "sms", "label": "SMS" },
+                  { "value": "sqs", "label": "SQS Queue" },
+                  { "value": "lambda", "label": "Lambda Function" },
+                  { "value": "application", "label": "Mobile Push (Application)" },
+                  { "value": "http", "label": "HTTP" },
+                  { "value": "https", "label": "HTTPS" },
+                  { "value": "firehose", "label": "Kinesis Data Firehose" }
+                ]
+              },
+              {
+                "id": "endpoint",
+                "label": "Endpoint",
+                "description": "Format depends on the protocol: an email address, phone number, URL, or the ARN of an SQS queue / Lambda function / Firehose delivery stream.",
+                "type": "text",
+                "required": true,
+                "placeholder": "devops@example.com"
+              },
+              {
+                "id": "raw_message_delivery",
+                "label": "Raw Message Delivery",
+                "description": "Deliver the raw message body without wrapping it in an SNS JSON envelope. Only meaningful for SQS and HTTP/S endpoints.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "filter_policy",
+                "label": "Filter Policy",
+                "description": "JSON message filter policy -- only matching messages are delivered to this subscription.",
+                "type": "text",
+                "multiline": true,
+                "required": false,
+                "nullable": true,
+                "placeholder": "{\n  \"event_type\": [\"order_placed\"]\n}"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags assigned to the SNS topic.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value tags assigned to the SNS topic.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
