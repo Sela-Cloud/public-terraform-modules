@@ -2,6 +2,11 @@
 # Fallback AMI Data Source
 ################################################################################
 
+locals {
+  is_arm64 = can(regex("^(t4g|c[67]g|m[67]g|r[67]g|a1|c7gd|m7gd|r7gd|x2gd)", var.instance_type))
+  ami_arch = local.is_arm64 ? "arm64" : "x86_64"
+}
+
 data "aws_ami" "amazon_linux_2023" {
   count       = var.ami == null ? 1 : 0
   most_recent = true
@@ -9,7 +14,7 @@ data "aws_ami" "amazon_linux_2023" {
 
   filter {
     name   = "name"
-    values = ["al2023-ami-2023.*-x86_64"]
+    values = ["al2023-ami-2023.*-${local.ami_arch}"]
   }
 
   filter {
@@ -18,8 +23,19 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
+################################################################################
+# Subnet Data Source
+# Automatically discovers VPC ID and Availability Zone when subnet_id is given
+################################################################################
+
+data "aws_subnet" "selected" {
+  count = var.subnet_id != null && var.vpc_id == null ? 1 : 0
+  id    = var.subnet_id
+}
+
 locals {
   ami_id   = coalesce(var.ami, try(data.aws_ami.amazon_linux_2023[0].id, null))
+  vpc_id   = var.vpc_id != null ? var.vpc_id : try(data.aws_subnet.selected[0].vpc_id, null)
   key_name = try(aws_key_pair.this[0].key_name, var.key_name)
   security_group_ids = compact(concat(
     var.vpc_security_group_ids,
@@ -55,10 +71,10 @@ resource "aws_key_pair" "this" {
 ################################################################################
 
 resource "aws_security_group" "this" {
-  count       = var.create_security_group && var.vpc_id != null ? 1 : 0
+  count       = var.create_security_group && local.vpc_id != null ? 1 : 0
   name        = coalesce(var.security_group_name, "${var.name}-sg")
   description = var.security_group_description
-  vpc_id      = var.vpc_id
+  vpc_id      = local.vpc_id
 
   tags = merge(
     var.tags,
@@ -70,7 +86,7 @@ resource "aws_security_group" "this" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ssh" {
-  for_each = var.create_security_group && var.vpc_id != null ? toset(var.ssh_cidr_blocks) : []
+  for_each = var.create_security_group && local.vpc_id != null ? toset(var.ssh_cidr_blocks) : []
 
   security_group_id = aws_security_group.this[0].id
   description       = "Allow inbound SSH access"
@@ -81,7 +97,7 @@ resource "aws_vpc_security_group_ingress_rule" "ssh" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "all" {
-  count = var.create_security_group && var.vpc_id != null ? 1 : 0
+  count = var.create_security_group && local.vpc_id != null ? 1 : 0
 
   security_group_id = aws_security_group.this[0].id
   description       = "Allow all outbound traffic"
@@ -244,7 +260,7 @@ resource "aws_instance" "this" {
 resource "aws_ebs_volume" "this" {
   for_each = { for disk in var.ebs_block_device : disk.device_name => disk }
 
-  availability_zone = coalesce(var.availability_zone, aws_instance.this.availability_zone)
+  availability_zone = coalesce(var.availability_zone, try(data.aws_subnet.selected[0].availability_zone, null), aws_instance.this.availability_zone)
   size              = each.value.volume_size
   type              = each.value.volume_type
   encrypted         = each.value.encrypted

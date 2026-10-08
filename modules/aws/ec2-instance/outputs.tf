@@ -144,3 +144,9 @@ output "ssh_command" {
   value       = "ssh -i <path-to-private-key> ${var.ssh_user}@${coalesce(try(aws_eip.this[0].public_ip, null), aws_instance.this.public_ip, aws_instance.this.private_ip)}"
 }
 
+output "vpc_id" {
+  description = "The VPC ID associated with the instance/security group."
+  value       = local.vpc_id
+}
+
+

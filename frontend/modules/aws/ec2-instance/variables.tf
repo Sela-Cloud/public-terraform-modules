@@ -11,6 +11,7 @@ variable "ec2_instance" {
     ami                                  = optional(string, null)
     instance_type                        = optional(string, "t3.micro")
     key_name                             = optional(string, null)
+    vpc_id                               = optional(string, null)
     subnet_id                            = optional(string, null)
     vpc_security_group_ids               = optional(list(string), [])
     associate_public_ip_address          = optional(bool, false)
