@@ -1,5 +1,5 @@
 module "kubernetes_cluster" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/kubernetes-cluster?ref=v0.9.0"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/kubernetes-cluster?ref=azure-kubernetes-cluster"
   for_each = var.kubernetes_cluster
 
   name                                             = each.value.name
@@ -27,6 +27,6 @@ module "kubernetes_cluster" {
   azure_active_directory_role_based_access_control = each.value.azure_active_directory_role_based_access_control
   log_analytics_workspace_id                       = each.value.log_analytics_workspace_id
   key_vault_secrets_provider                       = each.value.key_vault_secrets_provider
-  node_pools                                       = each.value.node_pools
+  node_pools                                       = { for np in coalesce(each.value.node_pools, []) : np.name => np }
   tags                                             = each.value.tags
 }

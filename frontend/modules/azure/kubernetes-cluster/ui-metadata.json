@@ -100,8 +100,22 @@
             "id": "kubernetes_version",
             "label": "Kubernetes Version",
             "description": "Specific Kubernetes control plane version (leave empty for Azure default).",
-            "type": "text",
-            "placeholder": "1.30"
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "container.kubernetesVersions",
+              "params": {
+                "location": {
+                  "from_field": "location"
+                }
+              },
+              "display": {
+                "value_key": "version",
+                "label_key": "version",
+                "description_key": "description"
+              }
+            }
           },
           {
             "id": "automatic_upgrade_channel",
@@ -137,23 +151,34 @@
                 "description": "Unique name of the system node pool (1-12 lowercase letters/numbers).",
                 "type": "text",
                 "default": "system",
-                "required": true
+                "required": true,
+                "validation": {
+                  "min": 1,
+                  "max": 12,
+                  "pattern": "^[a-z][a-z0-9]{0,11}$",
+                  "pattern_error": "Node pool name must begin with a lowercase letter, contain only lowercase letters and numbers, and be between 1 and 12 characters in length."
+                }
               },
               {
                 "id": "vm_size",
                 "label": "VM SKU Size",
                 "description": "Virtual machine size for the nodes.",
                 "type": "select",
+                "required": true,
                 "default": "Standard_D2s_v5",
-                "options": [
-                  { "value": "Standard_D2s_v5", "label": "Standard_D2s_v5 (2 vCPU, 8 GiB RAM)" },
-                  { "value": "Standard_D4s_v5", "label": "Standard_D4s_v5 (4 vCPU, 16 GiB RAM)" },
-                  { "value": "Standard_D8s_v5", "label": "Standard_D8s_v5 (8 vCPU, 32 GiB RAM)" },
-                  { "value": "Standard_D16s_v5", "label": "Standard_D16s_v5 (16 vCPU, 64 GiB RAM)" },
-                  { "value": "Standard_B2s", "label": "Standard_B2s (2 vCPU, 4 GiB RAM - Dev/Test)" },
-                  { "value": "Standard_DS2_v2", "label": "Standard_DS2_v2 (2 vCPU, 7 GiB RAM)" },
-                  { "value": "Standard_DS3_v2", "label": "Standard_DS3_v2 (4 vCPU, 14 GiB RAM)" }
-                ]
+                "data_source": {
+                  "resource": "compute.vmSizes",
+                  "params": {
+                    "location": {
+                      "from_field": "location"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  }
+                }
               },
               {
                 "id": "auto_scaling_enabled",
@@ -185,10 +210,28 @@
               },
               {
                 "id": "vnet_subnet_id",
-                "label": "Subnet Resource ID",
-                "description": "Subnet ID for custom VNet Azure CNI integration (optional).",
-                "type": "text",
-                "placeholder": "/subscriptions/.../subnets/snet-aks-nodes"
+                "label": "Subnet",
+                "description": "Subnet for custom VNet Azure CNI integration (optional).",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "network.subnets",
+                  "params": {
+                    "vnet": {
+                      "from_field": "virtual_network_name"
+                    },
+                    "resource_group": {
+                      "from_field": "resource_group_name"
+                    }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "addressPrefix"
+                  },
+                  "allow_custom": true
+                }
               }
             ]
           }
@@ -200,6 +243,28 @@
         "description": "CNI network plugin, network policies, and private cluster configuration.",
         "collapsed": false,
         "fields": [
+          {
+            "id": "virtual_network_name",
+            "label": "Virtual Network",
+            "description": "Virtual Network containing the AKS subnets (optional, used to select Subnet).",
+            "type": "select",
+            "ui_only": true,
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "network.virtualNetworks",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "addressSpace"
+              }
+            }
+          },
           {
             "id": "network_profile",
             "label": "Networking Profile",
@@ -314,24 +379,250 @@
           },
           {
             "id": "log_analytics_workspace_id",
-            "label": "Log Analytics Workspace ID",
-            "description": "Resource ID of the Log Analytics Workspace for Container Insights monitoring.",
-            "type": "text",
-            "placeholder": "/subscriptions/.../workspaces/law-prod-containers"
+            "label": "Log Analytics Workspace",
+            "description": "Log Analytics Workspace for Container Insights monitoring.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "operationalinsights.workspaces",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              }
+            }
           }
         ]
       },
       {
         "id": "node_pools_section",
         "label": "Additional Node Pools",
-        "description": "Map of secondary worker node pools (spot instances, GPU nodes, or dedicated user pools).",
+        "description": "Secondary worker node pools (spot instances, user workloads, or dedicated computing pools).",
         "collapsed": true,
         "fields": [
           {
             "id": "node_pools",
             "label": "Worker Node Pools",
-            "description": "Map of secondary worker node pool configurations.",
-            "type": "map"
+            "description": "List of secondary worker node pool configurations.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Node Pool Name",
+                "description": "Unique name of the node pool (1-12 lowercase letters/numbers).",
+                "type": "text",
+                "required": true,
+                "placeholder": "worker1",
+                "validation": {
+                  "min": 1,
+                  "max": 12,
+                  "pattern": "^[a-z][a-z0-9]{0,11}$",
+                  "pattern_error": "Node pool name must begin with a lowercase letter, contain only lowercase letters and numbers, and be between 1 and 12 characters in length."
+                }
+              },
+              {
+                "id": "vm_size",
+                "label": "VM SKU Size",
+                "description": "Virtual machine size / SKU for the worker nodes.",
+                "type": "select",
+                "required": true,
+                "default": "Standard_D2s_v5",
+                "data_source": {
+                  "resource": "compute.vmSizes",
+                  "params": {
+                    "location": {
+                      "from_field": "location"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  }
+                }
+              },
+              {
+                "id": "mode",
+                "label": "Node Pool Mode",
+                "description": "User mode for application workloads or System mode for cluster services.",
+                "type": "select",
+                "default": "User",
+                "options": [
+                  {
+                    "value": "User",
+                    "label": "User (Application Workloads)"
+                  },
+                  {
+                    "value": "System",
+                    "label": "System (Infrastructure / Ingress)"
+                  }
+                ]
+              },
+              {
+                "id": "auto_scaling_enabled",
+                "label": "Enable Autoscaling",
+                "description": "Enable Kubernetes cluster autoscaler on this worker pool.",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "min_count",
+                "label": "Minimum Node Count",
+                "description": "Minimum number of nodes when autoscaling is enabled.",
+                "type": "number",
+                "default": 1,
+                "depends_on": {
+                  "field": "auto_scaling_enabled",
+                  "operator": "eq",
+                  "value": true
+                }
+              },
+              {
+                "id": "max_count",
+                "label": "Maximum Node Count",
+                "description": "Maximum number of nodes when autoscaling is enabled.",
+                "type": "number",
+                "default": 5,
+                "depends_on": {
+                  "field": "auto_scaling_enabled",
+                  "operator": "eq",
+                  "value": true
+                }
+              },
+              {
+                "id": "node_count",
+                "label": "Node Count",
+                "description": "Fixed number of nodes when autoscaling is disabled.",
+                "type": "number",
+                "nullable": true,
+                "depends_on": {
+                  "field": "auto_scaling_enabled",
+                  "operator": "eq",
+                  "value": false
+                }
+              },
+              {
+                "id": "os_disk_size_gb",
+                "label": "OS Disk Size (GB)",
+                "description": "Size of the OS disk in gigabytes.",
+                "type": "number",
+                "default": 128
+              },
+              {
+                "id": "os_disk_type",
+                "label": "OS Disk Type",
+                "description": "Type of OS disk: Managed or Ephemeral.",
+                "type": "select",
+                "default": "Managed",
+                "options": [
+                  {
+                    "value": "Managed",
+                    "label": "Managed"
+                  },
+                  {
+                    "value": "Ephemeral",
+                    "label": "Ephemeral"
+                  }
+                ]
+              },
+              {
+                "id": "os_sku",
+                "label": "OS SKU",
+                "description": "Operating system image for the nodes.",
+                "type": "select",
+                "default": "Ubuntu",
+                "options": [
+                  {
+                    "value": "Ubuntu",
+                    "label": "Ubuntu Linux"
+                  },
+                  {
+                    "value": "AzureLinux",
+                    "label": "Azure Linux (CBL-Mariner)"
+                  }
+                ]
+              },
+              {
+                "id": "vnet_subnet_id",
+                "label": "Subnet",
+                "description": "Subnet for nodes in this pool.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "network.subnets",
+                  "params": {
+                    "vnet": {
+                      "from_field": "virtual_network_name"
+                    },
+                    "resource_group": {
+                      "from_field": "resource_group_name"
+                    }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "addressPrefix"
+                  },
+                  "allow_custom": true
+                }
+              },
+              {
+                "id": "priority",
+                "label": "Scale Set Priority",
+                "description": "Regular for standard on-demand VMs or Spot for discounted excess capacity.",
+                "type": "select",
+                "default": "Regular",
+                "options": [
+                  {
+                    "value": "Regular",
+                    "label": "Regular (On-Demand)"
+                  },
+                  {
+                    "value": "Spot",
+                    "label": "Spot (Discounted / Preemptible)"
+                  }
+                ]
+              },
+              {
+                "id": "eviction_policy",
+                "label": "Spot Eviction Policy",
+                "description": "Eviction policy when Spot priority is selected.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "options": [
+                  {
+                    "value": "Delete",
+                    "label": "Delete"
+                  },
+                  {
+                    "value": "Deallocate",
+                    "label": "Deallocate"
+                  }
+                ],
+                "depends_on": {
+                  "field": "priority",
+                  "operator": "eq",
+                  "value": "Spot"
+                }
+              },
+              {
+                "id": "zones",
+                "label": "Availability Zones",
+                "description": "Availability zones for node placement (e.g. ['1', '2', '3']).",
+                "type": "list",
+                "default": [
+                  "1",
+                  "2",
+                  "3"
+                ]
+              }
+            ]
           }
         ]
       },
