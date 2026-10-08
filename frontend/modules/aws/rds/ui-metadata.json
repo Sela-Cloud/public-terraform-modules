@@ -181,7 +181,7 @@
           {
             "id": "vpc_id",
             "label": "VPC",
-            "description": "The VPC where the RDS database and security group reside.",
+            "description": "The VPC where the RDS database and security group reside. Required when Create Security Group (below) is enabled -- which it is by default.",
             "type": "select",
             "required": false,
             "placeholder": "vpc-0123456789abcdef0",
@@ -196,7 +196,7 @@
           {
             "id": "subnet_ids",
             "label": "Subnet IDs",
-            "description": "Subnet IDs spanning multiple Availability Zones for the DB subnet group.",
+            "description": "At least 2 subnets, in different Availability Zones -- AWS rejects a DB subnet group built from fewer. Required when Create DB Subnet Group (below) is enabled -- which it is by default.",
             "type": "list",
             "required": false,
             "data_source": {
@@ -210,7 +210,7 @@
           {
             "id": "create_db_subnet_group",
             "label": "Create DB Subnet Group",
-            "description": "Whether to automatically create a dedicated DB subnet group.",
+            "description": "Whether to automatically create a dedicated DB subnet group. When on, Subnet IDs (above) is required.",
             "type": "boolean",
             "required": false,
             "default": true
@@ -218,7 +218,7 @@
           {
             "id": "create_security_group",
             "label": "Create Security Group",
-            "description": "Whether to create a dedicated security group for the RDS instance.",
+            "description": "Whether to create a dedicated security group for the RDS instance. When on, VPC (above) is required.",
             "type": "boolean",
             "required": false,
             "default": true
