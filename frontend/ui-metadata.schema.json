@@ -68,6 +68,23 @@
         }
       }
     },
+    "destroy": {
+      "type": "object",
+      "description": "How to destroy one resource of this module, for wrappers the platform cannot infer it from. Needed when main.tf does not have exactly one module block with for_each = var.<resource variable> -- for example several blocks iterating a filtered map, or a child map keyed by the resource. Every destroy is checked against its own plan before it runs, so a wrong declaration is refused rather than widened.",
+      "required": ["targets"],
+      "additionalProperties": false,
+      "properties": {
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Terraform addresses that together make up one resource. {key} is the resource's map key, {field} a value from its entry, and {list[].field} expands to one address per element of a list in the entry, e.g. module.gke_standard_node_pool[\"{key}-{node_pools[].name}\"].",
+          "items": {
+            "type": "string",
+            "pattern": "\\{key\\}"
+          }
+        }
+      }
+    },
     "import": {
       "$ref": "#/definitions/import"
     },

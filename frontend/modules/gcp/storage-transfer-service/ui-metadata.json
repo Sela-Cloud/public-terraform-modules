@@ -1068,5 +1068,10 @@
         ]
       }
     ]
+  },
+  "destroy": {
+    "targets": [
+      "module.storage_transfer_service[\"{key}\"]"
+    ]
   }
 }

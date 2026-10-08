@@ -86,6 +86,11 @@ variable "backend_services" {
 
     port_name = optional(string, "http")
 
+    # How long the load balancer waits for a backend's complete response, first request byte to
+    # last response byte. Not the health check's timeout. 30 keeps what this module always set;
+    # Google's own default for Cloud Run backends is 3600, which a long-running service may want.
+    timeout_sec = optional(number, 30)
+
     enable_health_check = optional(bool, false)
     health_check_type   = optional(string, "tcp")
     health_check_port   = optional(number, 80)
@@ -156,6 +161,14 @@ variable "backend_services" {
       for svc in values(var.backend_services) : contains(["tcp", "http"], svc.health_check_type)
     ])
     error_message = "backend_services health_check_type must be 'tcp' or 'http'."
+  }
+
+  validation {
+    condition = alltrue([
+      for svc in values(var.backend_services) :
+      svc.timeout_sec >= 1 && svc.timeout_sec <= 2147483647 && floor(svc.timeout_sec) == svc.timeout_sec
+    ])
+    error_message = "backend_services timeout_sec must be a whole number of seconds from 1 to 2147483647."
   }
 
   # The API rejects a timeout longer than the interval, but only at apply time and without naming
