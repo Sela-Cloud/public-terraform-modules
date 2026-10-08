@@ -115,7 +115,8 @@
             "id": "policy",
             "label": "Topic IAM Policy",
             "description": "The fully-formed IAM Policy document as a JSON string.",
-            "type": "textarea",
+            "type": "text",
+            "multiline": true,
             "required": false,
             "default": null,
             "nullable": true,
@@ -125,10 +126,79 @@
             "id": "delivery_policy",
             "label": "Delivery Policy",
             "description": "SNS delivery retry policy as a JSON string.",
-            "type": "textarea",
+            "type": "text",
+            "multiline": true,
             "required": false,
             "default": null,
             "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "subscriptions",
+        "label": "Subscriptions",
+        "description": "Endpoints subscribed to this topic.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "subscriptions",
+            "label": "Subscription",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Name",
+                "description": "Identifies this subscription within the request -- not sent to AWS. Must be unique among this topic's subscriptions.",
+                "type": "text",
+                "required": true,
+                "placeholder": "ops-email"
+              },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "email", "label": "Email" },
+                  { "value": "email-json", "label": "Email (JSON)" },
+                  { "value": "sms", "label": "SMS" },
+                  { "value": "sqs", "label": "SQS Queue" },
+                  { "value": "lambda", "label": "Lambda Function" },
+                  { "value": "application", "label": "Mobile Push (Application)" },
+                  { "value": "http", "label": "HTTP" },
+                  { "value": "https", "label": "HTTPS" },
+                  { "value": "firehose", "label": "Kinesis Data Firehose" }
+                ]
+              },
+              {
+                "id": "endpoint",
+                "label": "Endpoint",
+                "description": "Format depends on the protocol: an email address, phone number, URL, or the ARN of an SQS queue / Lambda function / Firehose delivery stream.",
+                "type": "text",
+                "required": true,
+                "placeholder": "devops@example.com"
+              },
+              {
+                "id": "raw_message_delivery",
+                "label": "Raw Message Delivery",
+                "description": "Deliver the raw message body without wrapping it in an SNS JSON envelope. Only meaningful for SQS and HTTP/S endpoints.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "filter_policy",
+                "label": "Filter Policy",
+                "description": "JSON message filter policy -- only matching messages are delivered to this subscription.",
+                "type": "text",
+                "multiline": true,
+                "required": false,
+                "nullable": true,
+                "placeholder": "{\n  \"event_type\": [\"order_placed\"]\n}"
+              }
+            ]
           }
         ]
       },

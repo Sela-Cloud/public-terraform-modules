@@ -3,10 +3,10 @@
  *****************************************/
 
 module "sns" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/sns?ref=v0.8.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/sns?ref=aws-sns"
   for_each = var.sns
 
-  name                        = coalesce(each.value.name, each.key)
+  name                        = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)
   name_prefix                 = each.value.name_prefix
   display_name                = each.value.display_name
   kms_master_key_id           = each.value.kms_master_key_id

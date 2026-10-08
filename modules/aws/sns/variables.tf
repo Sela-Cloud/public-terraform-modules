@@ -47,14 +47,15 @@ variable "policy" {
 }
 
 variable "subscriptions" {
-  description = "Map of SNS topic subscriptions to create."
-  type = map(object({
+  description = "SNS topic subscriptions to create. 'name' is a Terraform-only identifier for each subscription (not sent to AWS) -- it just needs to be unique within this topic's list."
+  type = list(object({
+    name                 = string
     protocol             = string
     endpoint             = string
     raw_message_delivery = optional(bool, false)
     filter_policy        = optional(string, null)
   }))
-  default = {}
+  default = []
 }
 
 variable "tags" {

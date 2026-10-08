@@ -44,12 +44,13 @@ module "fifo_sns_topic" {
     ]
   })
 
-  subscriptions = {
-    ops_email = {
+  subscriptions = [
+    {
+      name     = "ops_email"
       protocol = "email"
       endpoint = "devops@example.com"
     }
-  }
+  ]
 
   tags = {
     Environment = "production"
@@ -61,15 +62,15 @@ module "fifo_sns_topic" {
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| `name` | The name of the SNS topic | `string` | `"sns-default"` | no |
+| `name` | The name of the SNS topic. Set at most one of name/name_prefix. Must end in `.fifo` when `fifo_topic` is true, and must not otherwise | `string` | `"sns-default"` | no |
 | `name_prefix` | Prefix for the SNS topic name | `string` | `null` | no |
 | `display_name` | The display name for SNS topic | `string` | `null` | no |
 | `kms_master_key_id` | KMS CMK ID or alias for encryption | `string` | `null` | no |
 | `fifo_topic` | Whether to create a FIFO topic | `bool` | `false` | no |
-| `content_based_deduplication` | Enables deduplication for FIFO topics | `bool` | `false` | no |
+| `content_based_deduplication` | Enables deduplication for FIFO topics. Can only be true when `fifo_topic` is true | `bool` | `false` | no |
 | `delivery_policy` | SNS delivery policy as JSON string | `string` | `null` | no |
 | `policy` | IAM policy JSON string to apply to topic | `string` | `null` | no |
-| `subscriptions` | Map of subscriptions to create | `map(object)` | `{}` | no |
+| `subscriptions` | List of subscriptions to create. Each needs a unique `name` (Terraform-only, not sent to AWS) | `list(object)` | `[]` | no |
 | `tags` | A map of tags to assign to the resource | `map(string)` | `{}` | no |
 
 ## Outputs
