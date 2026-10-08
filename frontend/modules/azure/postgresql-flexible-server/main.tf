@@ -1,5 +1,5 @@
 module "postgresql_flexible_server" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/postgresql-flexible-server?ref=v0.9.3"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/postgresql-flexible-server?ref=v0.9.4"
   for_each = var.postgresql_flexible_server
 
   name                              = each.value.name

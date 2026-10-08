@@ -1,5 +1,5 @@
 module "firewall" {
-  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/firewall?ref=v0.9.3"
+  source                  = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/firewall?ref=v0.9.4"
   for_each                = var.firewall
   project_id              = var.project_id
   name                    = each.value.name

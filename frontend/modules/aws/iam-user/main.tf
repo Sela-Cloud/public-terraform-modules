@@ -3,7 +3,7 @@
  *****************************************/
 
 module "iam_user" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/iam-user?ref=v0.9.3"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/iam-user?ref=v0.9.4"
   for_each = var.iam_user
 
   name                 = coalesce(each.value.name, each.key)

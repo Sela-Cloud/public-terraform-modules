@@ -1,5 +1,5 @@
 module "dns_a_record" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/dns-a-record?ref=azure-dns-a-record"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/dns-a-record?ref=v0.9.4"
   for_each = var.dns_a_record
 
   name                = each.value.name

@@ -1,5 +1,5 @@
 module "application_gateway" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/application-gateway?ref=v0.9.3"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/application-gateway?ref=v0.9.4"
   for_each = var.application_gateway
 
   name                              = each.value.name

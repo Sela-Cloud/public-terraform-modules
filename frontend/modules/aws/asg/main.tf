@@ -4,7 +4,7 @@
 
 module "asg" {
   # Points to your local or remote AWS autoscaling child module
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/asg?ref=v0.9.3"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/asg?ref=v0.9.4"
   for_each = var.asg
 
   hostname                  = each.value.hostname
