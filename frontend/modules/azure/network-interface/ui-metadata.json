@@ -240,13 +240,25 @@
               },
               {
                 "id": "public_ip_address_id",
-                "label": "Public IP Address ID",
-                "description": "Reference to an Azure Public IP Address resource.",
-                "type": "text",
+                "label": "Public IP Address",
+                "description": "Reference to an available Azure Public IP Address resource.",
+                "type": "select",
                 "required": false,
                 "default": null,
                 "nullable": true,
-                "placeholder": "/subscriptions/.../publicIPAddresses/..."
+                "data_source": {
+                  "resource": "network.publicIPAddresses",
+                  "params": {
+                    "available_only": {
+                      "static": "true"
+                    }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "ipAddress"
+                  }
+                }
               },
               {
                 "id": "primary",
@@ -294,13 +306,21 @@
           },
           {
             "id": "network_security_group_id",
-            "label": "Network Security Group ID",
-            "description": "The ID of a Network Security Group to associate with this Network Interface.",
-            "type": "text",
+            "label": "Network Security Group",
+            "description": "The Network Security Group to associate with this Network Interface.",
+            "type": "select",
             "required": false,
             "default": null,
             "nullable": true,
-            "placeholder": "/subscriptions/.../networkSecurityGroups/..."
+            "data_source": {
+              "resource": "network.networkSecurityGroups",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              }
+            }
           },
           {
             "id": "dns_servers",

@@ -1,0 +1,267 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "mssql-managed-instance",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure SQL Managed Instance",
+    "icon": "azure-sql-mi",
+    "description": "Fully isolated, enterprise-scale Azure SQL Managed Instance with dedicated virtual network integration.",
+    "category": "database"
+  },
+  "resource": {
+    "variable": "mssql_managed_instance",
+    "key_field": "name",
+    "key_label": "Managed Instance Name",
+    "key_description": "The unique name for the Azure SQL Managed Instance. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Instance identity, region, and administrator credentials.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Managed Instance Name",
+            "description": "Name of the Azure SQL Managed Instance (globally unique).",
+            "type": "text",
+            "required": true,
+            "placeholder": "sqlmi-my-workload"
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Managed Instance.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Managed Instance should exist.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" },
+              { "value": "israelcentral", "label": "Israel Central (Tel Aviv)" }
+            ]
+          },
+          {
+            "id": "administrator_login",
+            "label": "Administrator Login",
+            "description": "Administrator login username for the Managed Instance.",
+            "type": "text",
+            "default": "sqladmin"
+          },
+          {
+            "id": "administrator_login_password",
+            "label": "Administrator Password",
+            "description": "Password for the administrator login user.",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "compute_and_storage",
+        "label": "Compute, Storage & Licensing",
+        "description": "SKU size, vCores, storage capacity, and Azure Hybrid Benefit licensing.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "sku_name",
+            "label": "SKU Name",
+            "description": "SKU tier and generation for the Managed Instance.",
+            "type": "select",
+            "required": true,
+            "default": "GP_Gen5",
+            "options": [
+              { "value": "GP_Gen5", "label": "General Purpose (Gen5)" },
+              { "value": "BC_Gen5", "label": "Business Critical (Gen5)" },
+              { "value": "GP_G8IM", "label": "General Purpose (G8IM)" },
+              { "value": "BC_G8IM", "label": "Business Critical (G8IM)" }
+            ]
+          },
+          {
+            "id": "vcores",
+            "label": "vCores",
+            "description": "Number of vCores allocated to the Managed Instance.",
+            "type": "number",
+            "required": true,
+            "default": 4
+          },
+          {
+            "id": "storage_size_in_gb",
+            "label": "Storage Size (GB)",
+            "description": "Storage capacity in GB (multiples of 32 between 32 and 16384).",
+            "type": "number",
+            "required": true,
+            "default": 32
+          },
+          {
+            "id": "license_type",
+            "label": "License Type",
+            "description": "License model: LicenseIncluded or BasePrice (Azure Hybrid Benefit).",
+            "type": "select",
+            "required": true,
+            "default": "LicenseIncluded",
+            "options": [
+              { "value": "LicenseIncluded", "label": "License Included" },
+              { "value": "BasePrice", "label": "Base Price (Azure Hybrid Benefit)" }
+            ]
+          },
+          {
+            "id": "storage_account_type",
+            "label": "Storage Account Type",
+            "description": "Backup storage redundancy type.",
+            "type": "select",
+            "default": "GRS",
+            "options": [
+              { "value": "GRS", "label": "Geo-Redundant (GRS)" },
+              { "value": "LRS", "label": "Locally Redundant (LRS)" },
+              { "value": "ZRS", "label": "Zone-Redundant (ZRS)" }
+            ]
+          },
+          {
+            "id": "storage_iops",
+            "label": "Storage IOPS",
+            "description": "Storage IOPS allocated (if custom sizing).",
+            "type": "number"
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Dedicated Subnet & Networking",
+        "description": "VNet delegated subnet and endpoint options.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "subnet_id",
+            "label": "Dedicated Subnet ID",
+            "description": "Subnet ID delegated to Microsoft.Sql/managedInstances.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "public_data_endpoint_enabled",
+            "label": "Public Data Endpoint",
+            "description": "Enable public internet data endpoint for the Managed Instance.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "proxy_override",
+            "label": "Proxy Override",
+            "description": "Connection routing override (Default, Proxy, Redirect).",
+            "type": "select",
+            "default": "Default",
+            "options": [
+              { "value": "Default", "label": "Default" },
+              { "value": "Proxy", "label": "Proxy" },
+              { "value": "Redirect", "label": "Redirect" }
+            ]
+          },
+          {
+            "id": "minimum_tls_version",
+            "label": "Minimum TLS Version",
+            "description": "Minimum TLS version required.",
+            "type": "select",
+            "default": "1.2",
+            "options": [
+              { "value": "1.2", "label": "TLS 1.2" },
+              { "value": "1.1", "label": "TLS 1.1" },
+              { "value": "1.0", "label": "TLS 1.0" }
+            ]
+          },
+          {
+            "id": "zone_redundant_enabled",
+            "label": "Zone Redundant",
+            "description": "Enable multi-zone redundancy for high availability.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "dns_zone_partner_id",
+            "label": "DNS Zone Partner ID",
+            "description": "Resource ID of another Managed Instance sharing DNS zone.",
+            "type": "text"
+          },
+          {
+            "id": "maintenance_configuration_name",
+            "label": "Maintenance Configuration Name",
+            "description": "Maintenance window configuration name.",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "settings",
+        "label": "Database Settings & Collation",
+        "description": "Collation and timezone configurations.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "collation",
+            "label": "Collation",
+            "description": "Database server collation.",
+            "type": "text",
+            "default": "SQL_Latin1_General_CP1_CI_AS"
+          },
+          {
+            "id": "timezone_id",
+            "label": "Timezone ID",
+            "description": "Timezone identifier (e.g. UTC, Central Standard Time).",
+            "type": "text",
+            "default": "UTC"
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for governance and cost tracking.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value pairs to assign to the Managed Instance.",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}
