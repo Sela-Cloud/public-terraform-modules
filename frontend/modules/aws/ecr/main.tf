@@ -3,7 +3,7 @@
  *****************************************/
 
 module "ecr" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ecr?ref=v0.9.0"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ecr?ref=v0.9.3"
   for_each = var.ecr
 
   name                 = coalesce(each.value.name, each.key)

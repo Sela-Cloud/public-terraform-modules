@@ -1,5 +1,5 @@
 module "mysql_flexible_server" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/mysql-flexible-server?ref=azure-mysql-flexible-server"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/mysql-flexible-server?ref=v0.9.3"
   for_each = var.mysql_flexible_server
 
   name                              = each.value.name

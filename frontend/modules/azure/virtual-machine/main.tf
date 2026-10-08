@@ -1,5 +1,5 @@
 module "virtual_machine" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/virtual-machine?ref=azure-virtual-machine"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/virtual-machine?ref=v0.9.3"
   for_each = var.virtual_machine
 
   name                             = each.value.name

@@ -1,5 +1,5 @@
 module "bastion_host" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/bastion-host?ref=azure-bastion-host"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/bastion-host?ref=v0.9.3"
   for_each = var.bastion_host
 
   name                      = each.value.name

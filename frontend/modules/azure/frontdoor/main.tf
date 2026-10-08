@@ -1,5 +1,5 @@
 module "frontdoor" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/frontdoor?ref=azure-frontdoor"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/frontdoor?ref=v0.9.3"
   for_each = var.frontdoor
 
   name                        = each.value.name

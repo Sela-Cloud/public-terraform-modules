@@ -1,5 +1,5 @@
 module "gke_autopilot" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/gke-autopilot?ref=v0.9.0"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/gke-autopilot?ref=v0.9.3"
   for_each = var.gke_autopilot_cluster
 
   project_id                          = var.project_id

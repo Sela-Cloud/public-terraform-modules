@@ -3,7 +3,7 @@
  *****************************************/
 
 module "vpc" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/vpc?ref=v0.9.0"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/vpc?ref=v0.9.3"
   for_each = var.vpc
 
   name                                 = coalesce(each.value.name, each.key)

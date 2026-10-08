@@ -1,5 +1,5 @@
 module "cloud_sql_instance" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/cloud-sql-instance?ref=v0.9.0"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/cloud-sql-instance?ref=v0.9.3"
   for_each = var.cloud_sql_instance
 
   project_id                                    = var.project_id

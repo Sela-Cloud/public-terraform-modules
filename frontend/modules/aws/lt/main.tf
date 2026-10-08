@@ -3,7 +3,7 @@
  *****************************************/
 
 module "lt" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/lt?ref=aws-lt"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/lt?ref=v0.9.3"
   for_each = var.lt
 
   name                        = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)
