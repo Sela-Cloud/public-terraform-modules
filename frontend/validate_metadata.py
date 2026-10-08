@@ -117,6 +117,7 @@ KNOWN_DATA_SOURCES = {
     "keyvault.vaults",
     "managedIdentity.userAssignedIdentities",
     "network.applicationSecurityGroups",
+    "network.networkInterfaces",
     "network.networkSecurityGroups",
     "network.publicIPAddresses",
     "network.routeTables",

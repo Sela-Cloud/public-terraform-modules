@@ -823,6 +823,7 @@ the environment's own subscription, taken from its verified target — never fro
 | `network.applicationSecurityGroups` | Application security groups | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location` | NSG rule `source_asg_ids`, `destination_asg_ids` |
 | `network.routeTables` | Route tables | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `routes` (count) | Subnet `route_table_id` |
 | `network.publicIPAddresses` | Public IP addresses | `resource_group`, `location`, `available_only` (all optional) | `name`, `id`, `resourceGroup`, `location`, `ipAddress`, `allocation`, `sku`, `inUse` | Network Interface `public_ip_address_id`, Load Balancer / Application Gateway frontend IP |
+| `network.networkInterfaces` | Network interfaces | `resource_group`, `location`, `available_only` (all optional) | `name`, `id`, `resourceGroup`, `location`, `privateIpAddress`, `subnet`, `inUse`, `attachedTo` | Virtual Machine `network_interface_ids` |
 | `privatedns.privateZones` | Private DNS zones (global — no location filter) | `resource_group`, `suffix` (both optional) | `name`, `id`, `resourceGroup`, `recordSets`, `linkedNetworks` | MySQL / PostgreSQL Flexible Server `private_dns_zone_id` |
 
 **Compute & storage**
@@ -865,6 +866,9 @@ are then sorted by resource group, then name, because names repeat across groups
   address for a *new* NIC, load balancer or gateway should pass `"available_only": { "static": "true" }`, or the
   dropdown offers addresses that are already attached and the apply fails on the conflict. `ipAddress`
   is empty for an unattached *dynamic* address; that is normal.
+- **`network.networkInterfaces`** — a NIC attaches to one VM at a time. A field choosing NICs for
+  a *new* VM should pass `"available_only": { "static": "true" }`; `attachedTo` names the VM an
+  attached one belongs to. Submit `id` — `network_interface_ids` takes full ids.
 - **`privatedns.privateZones`** — use `suffix` so only zones the service accepts are offered:
   `"suffix": { "static": ".postgres.database.azure.com" }` for PostgreSQL Flexible Server,
   `.mysql.database.azure.com` for MySQL Flexible Server.
