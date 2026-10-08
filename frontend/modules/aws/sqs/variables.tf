@@ -7,7 +7,7 @@ variable "region" {
 variable "sqs" {
   description = "Map of AWS SQS queue configurations to deploy, keyed by queue name."
   type = map(object({
-    name                              = optional(string, "sqs-default")
+    name                              = optional(string, null)
     name_prefix                       = optional(string, null)
     visibility_timeout_seconds        = optional(number, 30)
     message_retention_seconds         = optional(number, 345600)
@@ -28,7 +28,7 @@ variable "sqs" {
   }))
   default = {
     "sqs-default" = {
-      name                              = "sqs-default"
+      name                              = null
       name_prefix                       = null
       visibility_timeout_seconds        = 30
       message_retention_seconds         = 345600

@@ -3,10 +3,10 @@
  *****************************************/
 
 module "sqs" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/sqs?ref=v0.8.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/sqs?ref=aws-sqs"
   for_each = var.sqs
 
-  name                              = coalesce(each.value.name, each.key)
+  name                              = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)
   name_prefix                       = each.value.name_prefix
   visibility_timeout_seconds        = each.value.visibility_timeout_seconds
   message_retention_seconds         = each.value.message_retention_seconds
