@@ -1,0 +1,176 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "mssql-server",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure SQL Logical Server & Databases",
+    "icon": "azure-sql",
+    "description": "Azure SQL Logical Server with managed relational SQL databases and firewall rules.",
+    "category": "database"
+  },
+  "resource": {
+    "variable": "mssql_server",
+    "key_field": "name",
+    "key_label": "SQL Server Name",
+    "key_description": "The unique name for the Azure SQL Logical Server. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Server identity, region, and admin credentials.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "SQL Server Name",
+            "description": "Name of the Azure SQL Server (globally unique).",
+            "type": "text",
+            "required": true,
+            "placeholder": "sql-my-workload"
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the SQL Server.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the SQL Server should exist.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" },
+              { "value": "israelcentral", "label": "Israel Central (Tel Aviv)" }
+            ]
+          },
+          {
+            "id": "server_version",
+            "label": "Server Version",
+            "description": "SQL Server version.",
+            "type": "select",
+            "default": "12.0",
+            "options": [
+              { "value": "12.0", "label": "12.0 (v12)" },
+              { "value": "2.0", "label": "2.0 (v11)" }
+            ]
+          },
+          {
+            "id": "administrator_login",
+            "label": "Administrator Login",
+            "description": "Administrator login name for the SQL Server.",
+            "type": "text",
+            "default": "sqladmin"
+          },
+          {
+            "id": "administrator_login_password",
+            "label": "Administrator Password",
+            "description": "Password for the administrator login user.",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "security_and_network",
+        "label": "Security & Networking",
+        "description": "TLS, firewall rules, and network access policies.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "minimum_tls_version",
+            "label": "Minimum TLS Version",
+            "description": "Minimum TLS version required for client connections.",
+            "type": "select",
+            "default": "1.2",
+            "options": [
+              { "value": "1.2", "label": "TLS 1.2 (Recommended)" },
+              { "value": "1.1", "label": "TLS 1.1" },
+              { "value": "1.0", "label": "TLS 1.0" }
+            ]
+          },
+          {
+            "id": "public_network_access_enabled",
+            "label": "Allow Public Network Access",
+            "description": "Whether public internet access to the SQL Server is allowed.",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "id": "allow_azure_services_access",
+            "label": "Allow Azure Services Access",
+            "description": "Whether to allow Azure services and resources to access this server.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "connection_policy",
+            "label": "Connection Policy",
+            "description": "The connection policy the server will use.",
+            "type": "select",
+            "default": "Default",
+            "options": [
+              { "value": "Default", "label": "Default" },
+              { "value": "Proxy", "label": "Proxy" },
+              { "value": "Redirect", "label": "Redirect" }
+            ]
+          },
+          {
+            "id": "outbound_network_restriction_enabled",
+            "label": "Outbound Network Restriction",
+            "description": "Whether outbound network traffic is restricted.",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags for governance and cost tracking.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value pairs to assign to the SQL Server.",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}

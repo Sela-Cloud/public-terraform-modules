@@ -29,7 +29,7 @@ VERSION = re.compile(r"^v\d+\.\d+(\.\d+)?$")
 
 #: A source into this repository. The ref is captured so it can be reported, then replaced.
 REPO_SOURCE = re.compile(
-    r'(?P<head>source\s*=\s*"git::https://github\.com/Sela-Cloud/public-terraform-modules//'
+    r'(?P<head>source\s*=\s*"git::https://github\.com/Sela-Cloud/public-terraform-modules(?:\.git)?//'
     r'[^"?]+\?ref=)(?P<ref>[^"]+)(?P<tail>")'
 )
 

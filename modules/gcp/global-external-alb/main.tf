@@ -107,7 +107,7 @@ resource "google_compute_backend_service" "this" {
   protocol                        = "HTTP"
   port_name                       = contains(["umig", "mig"], each.value.target_type) ? each.value.port_name : null
   load_balancing_scheme           = "EXTERNAL_MANAGED"
-  timeout_sec                     = 30
+  timeout_sec                     = each.value.timeout_sec
   connection_draining_timeout_sec = 300
   enable_cdn                      = each.value.enable_cdn
   health_checks                   = contains(keys(google_compute_health_check.this), each.key) ? [google_compute_health_check.this[each.key].id] : null

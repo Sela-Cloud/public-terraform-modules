@@ -94,6 +94,10 @@ KNOWN_DATA_SOURCES = {
     "ec2.subnets",
     "ec2.vpc",
     "ec2.vpcs",
+    "ec2.eip",
+    "ec2.eips",
+    "route53.zone",
+    "route53.zones",
     # AWS IAM. `iam.roles` is also a Google identifier (listed below) — one name, two meanings,
     # which is fine because the platform dispatches by the environment's cloud. This list only
     # answers whether an identifier is real anywhere. (No double quotes in comments inside this
@@ -107,11 +111,24 @@ KNOWN_DATA_SOURCES = {
     "iam.users",
     # Azure. Implemented in services/clouds/azure/lookups.py.
     "azure.resourceGroups",
+    "compute.vmSizes",
+    "container.kubernetesVersions",
+    "keyvault.certificates",
+    "keyvault.vaults",
+    "managedIdentity.userAssignedIdentities",
+    "network.applicationSecurityGroups",
+    "network.networkSecurityGroups",
+    "network.publicIPAddresses",
+    "network.routeTables",
     "network.subnets",
     "network.virtualNetworks",
     "network.virtualNetworks.subnets",
     "network.vnets",
+    "operationalinsights.workspaces",
+    "privatedns.privateZones",
     "resources.resourceGroups",
+    "storage.storageAccounts",
+    "web.servicePlans",
     "gke.clusters",
     "iam.customRoles",
     "iam.custom_roles",
@@ -770,12 +787,90 @@ def validate_module(root: str, name: str, report: Report) -> dict:
     # ---- provides ----
     check_provides(name, meta, report)
 
+    # ---- destroy targets ----
+    check_destroy(name, meta, main_text, report)
+
     # ---- import block ----
     imp = meta.get("import")
     if isinstance(imp, dict):
         validate_import(root, name, meta, imp, main_text, module_blocks, labels, report)
 
     return result
+
+
+_DESTROY_PLACEHOLDER = re.compile(r"\{([^{}]+)\}")
+_DESTROY_EXPANSION = re.compile(r"^(\w+)\[\]\.(\w+)$")
+
+
+def check_destroy(name, meta, main_text, report):
+    """`destroy.targets` must name blocks main.tf has, and placeholders the metadata can fill.
+
+    The platform renders these templates to destroy one resource, then checks the plan before it
+    runs. A wrong template is therefore refused at destroy time rather than destroying the wrong
+    thing -- but refused in production, by a user who only wanted a cluster gone. Catching it here
+    turns that into a failed check on the module's own PR.
+    """
+    destroy = meta.get("destroy")
+    if destroy is None:
+        return
+    targets = destroy.get("targets") if isinstance(destroy, dict) else None
+    if not isinstance(targets, list) or not targets:
+        report.error(name, "destroy", "destroy.targets must be a non-empty list of addresses")
+        return
+
+    blocks = top_level_blocks(main_text) if main_text else []
+    declared = set()
+    for block in blocks:
+        if block.type == "module" and block.labels:
+            declared.add("module." + block.labels[0])
+        elif block.type == "resource" and len(block.labels) >= 2:
+            declared.add(block.labels[0] + "." + block.labels[1])
+
+    ids = all_field_ids(meta)
+
+    def subfields(field_id):
+        found = set()
+
+        def walk(fields):
+            for field in fields or []:
+                if not isinstance(field, dict):
+                    continue
+                if field.get("id") == field_id:
+                    found.update(f.get("id") for f in field.get("fields") or [] if isinstance(f, dict))
+                walk(field.get("fields"))
+
+        for section in meta.get("resource", {}).get("sections", []) or []:
+            walk(section.get("fields"))
+        return found
+
+    for target in targets:
+        if not isinstance(target, str) or "{key}" not in target:
+            report.error(name, "destroy", "destroy target %r must contain {key}" % (target,))
+            continue
+        head = target.split("[", 1)[0].split(".")
+        block = ".".join(head[:2])
+        if block not in declared:
+            report.error(
+                name,
+                "destroy",
+                "destroy target %s names %s, which main.tf does not declare" % (target, block),
+            )
+        placeholders = _DESTROY_PLACEHOLDER.findall(target)
+        expansions = [p for p in placeholders if _DESTROY_EXPANSION.match(p)]
+        if len(expansions) > 1:
+            report.error(name, "destroy", "destroy target %s expands over more than one list" % target)
+        for placeholder in placeholders:
+            expansion = _DESTROY_EXPANSION.match(placeholder)
+            if expansion:
+                lst, sub = expansion.groups()
+                if lst not in ids:
+                    report.error(name, "destroy", "%s: %s is not a field of this module" % (target, lst))
+                elif sub not in subfields(lst):
+                    report.error(name, "destroy", "%s: %s has no sub-field %s" % (target, lst, sub))
+            elif placeholder != "key" and placeholder not in ids:
+                report.error(
+                    name, "destroy", "%s: {%s} is not a field of this module" % (target, placeholder)
+                )
 
 
 def check_data_sources(name, meta, report):

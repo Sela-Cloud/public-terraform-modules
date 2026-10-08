@@ -120,12 +120,12 @@ variable "cloud_dns_record" {
   validation {
     condition = alltrue([
       for record in values(var.cloud_dns_record) :
-      upper(record.type) != "TXT" || alltrue([
+      !contains(["TXT", "SPF"], upper(record.type)) || alltrue([
         for value in concat(record.rrdatas, flatten([for target in record.wrr_targets : target.rrdatas]), flatten([for target in record.geo_targets : target.rrdatas])) :
         !strcontains(value, " ") || can(regex("^\\\".*\\\"$", value))
       ])
     ])
-    error_message = "TXT record data containing spaces must be quoted."
+    error_message = "TXT and SPF record data containing spaces must be quoted."
   }
 
 }

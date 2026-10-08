@@ -142,6 +142,7 @@ The `ui-metadata.json` file resides in the root directory of the module and inst
 | `provides` | `array` | No | What a resource of this module can be *used as* by another module's field. See [`provides` Block](#provides-block). |
 | `satellites` | `array` | No | Secondary resources the module creates that have no independent lifecycle. See [`satellites` Block](#satellites-block). |
 | `deprecated` | `boolean` | No | Hides the module from the new-request picker while keeping existing resources editable. See [`deprecated`](#deprecated). |
+| `destroy` | `object` | No | The Terraform addresses that make up one resource, for wrappers whose shape the platform cannot infer. See [`destroy` Block](#destroy-block). |
 
 ---
 
@@ -443,6 +444,58 @@ resource named by `import.target`. It only makes the omission visible.
 
 ---
 
+### `destroy` Block
+
+**Optional.** Destroying one resource from Lookup runs a targeted `terraform destroy` — narrowed to
+that resource, because a workspace holds every resource of one module in one environment and an
+untargeted destroy would remove them all. The platform works out the address from `main.tf`, and it
+can do that for the usual shape: **exactly one module block with `for_each = var.<resource variable>`**.
+The address is then `module.<label>["<key>"]`.
+
+A wrapper that does not have that shape must declare its addresses here, or a destroy is refused
+with *"Could not find the module block iterating var.… in this workspace's main.tf"*. That happens
+when:
+
+- several module blocks iterate a **filtered** copy of the variable (`for k, v in var.x : k => v if …`);
+- a block iterates a **local** derived from the variable, such as child objects keyed `<parent>-<child>`;
+- the wrapper declares resources **beside** the module block.
+
+```json
+"destroy": {
+  "targets": [
+    "module.gke_autopilot[\"{key}\"]",
+    "module.gke_standard_cluster[\"{key}\"]",
+    "module.gke_standard_node_pool[\"{key}-{node_pools[].name}\"]"
+  ]
+}
+```
+
+Each target is an address template:
+
+| Placeholder | Becomes |
+| :--- | :--- |
+| `{key}` | The resource's map key in tfvars. **Required** in every target. |
+| `{field}` | A scalar value from the resource's tfvars entry. |
+| `{list[].field}` | One address per element of a list field — e.g. one per node pool. At most one per target. An empty list yields no address (a cluster with no node pools has none to destroy). |
+
+List every block that can hold part of the resource, even ones that will not apply to a given
+entry: above, a cluster is either autopilot or standard, and targeting the one it is not is a no-op.
+
+**What stops a wrong declaration from doing damage.** Every destroy is planned first
+(`terraform plan -destroy`), and the plan is refused unless:
+
+- every change is a **delete** — a destroy that would create or update anything is not a destroy;
+- every deleted address is **at or under one of the targets** — `module.x["a"]` covers
+  `module.x["a"].…` but never `module.x["a2"]`;
+- for declared targets, it deletes **at least one** resource — matching nothing almost always means
+  the declaration is wrong, and carrying on would remove the code while the resource keeps running.
+
+The apply then runs that saved plan file, so what was checked is exactly what runs. The validator
+(`frontend/validate_metadata.py`) also checks, on the module's own PR, that each target names a block
+`main.tf` declares and that every placeholder is a real field.
+
+---
+
 ### `deprecated`
 
 **Optional, defaults to `false`.** Restructuring a module in a way that changes Terraform
@@ -620,11 +673,18 @@ From `RESOURCE_HANDLERS` in `applications/api/services/clouds/aws/lookups.py`.
 | :--- | :--- | :--- | :--- | :--- |
 | `ec2.vpcs` | `ec2.vpc` | VPCs in one region | `region` (or `location`) | `id`, `name`, `cidr`, `isDefault`, `state` |
 | `ec2.regions` | `aws.regions` | Regions this account has enabled | — | `name`, `description`, `endpoint`, `optInStatus` |
+| `ec2.subnets` | `ec2.subnet` | Subnets in one region, optionally narrowed to one VPC | `region` (or `location`), `vpc`/`vpc_id`/`network` | `id`, `name`, `cidr`, `availabilityZone`, `vpcId`, `state` |
+| `ec2.eips` | `ec2.eip` | Elastic IP addresses in one region | `region` (or `location`) | `id` (allocation id), `name`, `public_ip`, `associated` |
+| `iam.groups` | `iam.group` | IAM groups (not region-scoped) | — | `id`, `name`, `arn`, `path` |
+| `iam.users` | `iam.user` | IAM users (not region-scoped) | — | `id`, `name`, `arn`, `path` |
+| `iam.roles` | `iam.role` | IAM roles (not region-scoped) | — | `id`, `name`, `arn`, `path` |
+| `iam.policies` | `iam.policy` | IAM policies, customer-managed by default | `scope` (`local`\|`aws`\|`all`, default `local`) | `id` (the ARN), `name`, `arn`, `path` |
+| `route53.zones` | `route53.zone` | Route 53 hosted zones (not region-scoped) | — | `id`, `name`, `private_zone` |
 
-**Two so far, and that is deliberate.** The GCP list above has thirty-six because forty-one modules
-accumulated them one at a time, each written because a real field needed it. Adding AWS handlers
-speculatively would be writing code for fields nobody has declared. If a module you are writing
-needs a lookup that is not here, ask for it — a handler is small, and these two are the worked
+**Nine so far, and that is deliberate.** The GCP list above has thirty-six because forty-one
+modules accumulated them one at a time, each written because a real field needed it. Adding AWS
+handlers speculatively would be writing code for fields nobody has declared. If a module you are
+writing needs a lookup that is not here, ask for it — a handler is small, and these are the worked
 examples to copy.
 
 ###### `ec2.regions`
@@ -721,9 +781,135 @@ the environment's own subscription, taken from its verified target — never fro
 | `network.virtualNetworks` | `network.vnets` | Virtual networks, in one resource group or the whole subscription | `resource_group` (optional), `location` (optional) | `name`, `id`, `resourceGroup`, `location`, `addressSpace` |
 | `network.subnets` | `network.virtualNetworks.subnets` | Subnets of one virtual network | `vnet` (a name **or** a full id), `resource_group` (required when `vnet` is a name) | `name`, `id`, `addressPrefix`, `vnet`, `resourceGroup` |
 
+**Networking & security**
+
+| Resource Identifier | Returns | Parameters | Response Keys | Typical fields |
+| :--- | :--- | :--- | :--- | :--- |
+| `network.networkSecurityGroups` | Network security groups | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location` | Subnet / Network Interface `network_security_group_id` |
+| `network.applicationSecurityGroups` | Application security groups | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location` | NSG rule `source_asg_ids`, `destination_asg_ids` |
+| `network.routeTables` | Route tables | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `routes` (count) | Subnet `route_table_id` |
+| `network.publicIPAddresses` | Public IP addresses | `resource_group`, `location`, `available_only` (all optional) | `name`, `id`, `resourceGroup`, `location`, `ipAddress`, `allocation`, `sku`, `inUse` | Network Interface `public_ip_address_id`, Load Balancer / Application Gateway frontend IP |
+| `privatedns.privateZones` | Private DNS zones (global — no location filter) | `resource_group`, `suffix` (both optional) | `name`, `id`, `resourceGroup`, `recordSets`, `linkedNetworks` | MySQL / PostgreSQL Flexible Server `private_dns_zone_id` |
+
+**Compute & storage**
+
+| Resource Identifier | Returns | Parameters | Response Keys | Typical fields |
+| :--- | :--- | :--- | :--- | :--- |
+| `compute.vmSizes` | VM sizes this subscription can deploy in the region, smallest first | `location` (**required**) | `name`, `family`, `vCPUs`, `memoryGB`, `description` | Virtual Machine `size`, AKS `vm_size` |
+| `storage.storageAccounts` | Storage accounts | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `kind`, `sku`, `primaryBlobEndpoint` | VM boot diagnostics, Storage Mover target, MSSQL auditing |
+
+**Web & containers**
+
+| Resource Identifier | Returns | Parameters | Response Keys | Typical fields |
+| :--- | :--- | :--- | :--- | :--- |
+| `web.servicePlans` | App Service plans | `resource_group`, `location`, `os_type` (`Linux` / `Windows`) (all optional) | `name`, `id`, `resourceGroup`, `location`, `osType`, `sku`, `tier` | App Service `service_plan_id` |
+| `container.kubernetesVersions` | AKS minor versions offered in the region, newest first | `location` (**required**), `include_preview` (optional) | `name`, `version`, `latestPatch`, `isDefault`, `isPreview`, `description` | AKS `kubernetes_version` |
+| `operationalinsights.workspaces` | Log Analytics workspaces | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `customerId` | AKS `log_analytics_workspace_id`, App Service diagnostics |
+
+**Identity, secrets & databases**
+
+| Resource Identifier | Returns | Parameters | Response Keys | Typical fields |
+| :--- | :--- | :--- | :--- | :--- |
+| `managedIdentity.userAssignedIdentities` | User-assigned managed identities | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `clientId`, `principalId` | `identity_ids` on VM, AKS, App Service, Application Gateway, databases |
+| `keyvault.vaults` | Key vaults | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `vaultUri` | Feeds `keyvault.certificates` |
+| `keyvault.certificates` | Certificates in one vault | `vault` (a name **or** a full id), `resource_group` (required when `vault` is a name) | `name`, `id`, `secretId`, `secretIdWithVersion`, `contentType`, `enabled`, `vault`, `resourceGroup` | Application Gateway SSL `key_vault_secret_id`, Front Door custom domain certificate |
+
 `resource_group` also accepts `resource_group_name`; `vnet` also accepts `virtual_network`,
-`virtual_network_name` and `network`. `location` accepts the portal's spelling (`East US`) as well
-as the API's (`eastus`).
+`virtual_network_name` and `network`; `vault` also accepts `key_vault`, `key_vault_name` and
+`key_vault_id`; `suffix` also accepts `name_suffix`; `os_type` also accepts `os`. `location`
+accepts the portal's spelling (`East US`) as well as the API's (`eastus`). Boolean params
+(`available_only`, `include_preview`) take `true`. A fixed value is given with `static` rather
+than `from_field` — e.g. `"available_only": { "static": "true" }`.
+
+Every lookup that takes `resource_group` lists the whole subscription when it is omitted — results
+are then sorted by resource group, then name, because names repeat across groups. Give
+`description_key: "resourceGroup"` in that case so two `web-nsg`s can be told apart.
+
+**Notes on the individual lookups**
+
+- **`network.publicIPAddresses`** — a public IP attaches to one thing at a time. A field choosing an
+  address for a *new* NIC, load balancer or gateway should pass `"available_only": { "static": "true" }`, or the
+  dropdown offers addresses that are already attached and the apply fails on the conflict. `ipAddress`
+  is empty for an unattached *dynamic* address; that is normal.
+- **`privatedns.privateZones`** — use `suffix` so only zones the service accepts are offered:
+  `"suffix": { "static": ".postgres.database.azure.com" }` for PostgreSQL Flexible Server,
+  `.mysql.database.azure.com` for MySQL Flexible Server.
+- **`compute.vmSizes`** — read from Azure's SKU list, which reports sizes this subscription is barred
+  from in that region (`NotAvailableForSubscription`); those are left out. A size restricted only in
+  some zones is still offered. Returns an empty list until a region is chosen, so feed `location`
+  from the form's region field.
+- **`container.kubernetesVersions`** — one row per minor version (`1.30`). Submit `version`:
+  `kubernetes_version = "1.30"` lets AKS pick the latest patch, which is usually what you want.
+  `latestPatch` is for the description. Preview versions are hidden unless `include_preview` is
+  `true`; they carry no support.
+- **`operationalinsights.workspaces`** — `id` is the ARM id, which `log_analytics_workspace_id`
+  takes. `customerId` is the workspace's own GUID — the thing some settings call "workspace ID". Pick
+  the one your variable means.
+- **`managedIdentity.userAssignedIdentities`** — `id` goes in `identity_ids`; `clientId` and
+  `principalId` are there for app settings and role assignments.
+- **`keyvault.certificates`** — returns only secrets backing a *certificate* (content type
+  `application/x-pkcs12` or `application/x-pem-file`), never secret values. Submit `secretId`: it is
+  versionless, so Application Gateway and Front Door pick up a renewed certificate automatically.
+  Use `secretIdWithVersion` only to pin one version. Chain it from `keyvault.vaults` with
+  `value_key: "id"` and drop the `resource_group` param — the id carries it. Read through Azure
+  Resource Manager, so the Reader role used by every other lookup is enough; no Key Vault data-plane
+  role is needed.
+
+**Example — App Gateway certificate, chained from the vault:**
+
+```json
+[
+  {
+    "id": "key_vault_id",
+    "label": "Key vault",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "keyvault.vaults",
+      "display": { "value_key": "id", "label_key": "name", "description_key": "resourceGroup" }
+    }
+  },
+  {
+    "id": "ssl_certificate_secret_id",
+    "label": "SSL certificate",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "keyvault.certificates",
+      "params": { "vault": { "from_field": "key_vault_id" } },
+      "display": { "value_key": "secretId", "label_key": "name", "description_key": "contentType" }
+    }
+  }
+]
+```
+
+**Example — VM size and AKS version, fed by the region field:**
+
+```json
+[
+  {
+    "id": "size",
+    "label": "VM size",
+    "type": "select",
+    "required": true,
+    "data_source": {
+      "resource": "compute.vmSizes",
+      "params": { "location": { "from_field": "location" } },
+      "display": { "value_key": "name", "label_key": "name", "description_key": "description" }
+    }
+  },
+  {
+    "id": "kubernetes_version",
+    "label": "Kubernetes version",
+    "type": "select",
+    "data_source": {
+      "resource": "container.kubernetesVersions",
+      "params": { "location": { "from_field": "location" } },
+      "display": { "value_key": "version", "label_key": "version", "description_key": "description" }
+    }
+  }
+]
+```
 
 **Choose `value_key` by what the module's variable takes — this is the Azure-specific decision.**
 AWS is simple: resources are opaque ids, so the value is always `id`. Azure is not. Names are
