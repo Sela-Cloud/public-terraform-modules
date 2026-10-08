@@ -5,6 +5,7 @@
 variable "function_name" {
   description = "Unique name for the Lambda Function."
   type        = string
+  default     = "my-lambda-function"
 }
 
 variable "description" {
