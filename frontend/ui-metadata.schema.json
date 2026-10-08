@@ -236,6 +236,9 @@
           "description": "Whether the field is mandatory. Default: inferred from Terraform optional().",
           "default": false
         },
+        "required_if": {
+          "$ref": "#/definitions/depends_on"
+        },
         "default": {
           "description": "Pre-filled default value. Type should match the field type."
         },

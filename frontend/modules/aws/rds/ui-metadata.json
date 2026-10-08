@@ -184,6 +184,7 @@
             "description": "The VPC where the RDS database and security group reside. Required when Create Security Group (below) is enabled -- which it is by default.",
             "type": "select",
             "required": false,
+            "required_if": { "field": "create_security_group", "value": true },
             "placeholder": "vpc-0123456789abcdef0",
             "data_source": {
               "resource": "ec2.vpcs",
@@ -199,6 +200,8 @@
             "description": "At least 2 subnets, in different Availability Zones -- AWS rejects a DB subnet group built from fewer. Required when Create DB Subnet Group (below) is enabled -- which it is by default.",
             "type": "list",
             "required": false,
+            "required_if": { "field": "create_db_subnet_group", "value": true },
+            "validation": { "min": 2 },
             "data_source": {
               "resource": "ec2.subnets",
               "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
