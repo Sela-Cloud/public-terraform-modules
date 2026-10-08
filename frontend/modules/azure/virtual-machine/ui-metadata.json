@@ -111,17 +111,52 @@
             "description": "List of Network Interface IDs attached to this Virtual Machine.",
             "type": "list",
             "required": true,
-            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/networkInterfaces/..."
+            "data_source": {
+              "resource": "network.networkInterfaces",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                },
+                "location": {
+                  "from_field": "location"
+                },
+                "available_only": {
+                  "static": "true"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "privateIpAddress"
+              },
+              "allow_custom": true
+            }
           },
           {
             "id": "primary_network_interface_id",
             "label": "Primary Network Interface ID",
             "description": "The ID of the primary network interface if multiple interfaces are attached.",
-            "type": "text",
+            "type": "select",
             "required": false,
             "default": null,
             "nullable": true,
-            "placeholder": "/subscriptions/.../networkInterfaces/..."
+            "data_source": {
+              "resource": "network.networkInterfaces",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                },
+                "location": {
+                  "from_field": "location"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "privateIpAddress"
+              },
+              "allow_custom": true
+            }
           }
         ]
       },
