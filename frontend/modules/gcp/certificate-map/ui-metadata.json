@@ -122,5 +122,10 @@
         ]
       }
     ]
+  },
+  "destroy": {
+    "targets": [
+      "module.certificate_map[\"{key}\"]"
+    ]
   }
 }

@@ -816,5 +816,12 @@
     ]
   },
   "deprecated": true,
-  "deprecation_note": "Superseded by gke-autopilot-cluster, gke-standard-cluster and gke-node-pool. One entry here drives three module blocks, so a single request owns several independently-meaningful resources \u2014 you cannot delete one without the others, and the inventory shows one row for many. Existing resources keep working; create new ones with the replacements."
+  "deprecation_note": "Superseded by gke-autopilot-cluster, gke-standard-cluster and gke-node-pool. One entry here drives three module blocks, so a single request owns several independently-meaningful resources \u2014 you cannot delete one without the others, and the inventory shows one row for many. Existing resources keep working; create new ones with the replacements.",
+  "destroy": {
+    "targets": [
+      "module.gke_autopilot[\"{key}\"]",
+      "module.gke_standard_cluster[\"{key}\"]",
+      "module.gke_standard_node_pool[\"{key}-{node_pools[].name}\"]"
+    ]
+  }
 }
