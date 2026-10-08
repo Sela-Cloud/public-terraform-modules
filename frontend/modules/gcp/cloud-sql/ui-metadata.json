@@ -776,5 +776,12 @@
     ]
   },
   "deprecated": true,
-  "deprecation_note": "Superseded by cloud-sql-instance, cloud-sql-database and cloud-sql-user. One entry here drives three module blocks, so a single request owns several independently-meaningful resources \u2014 you cannot delete one without the others, and the inventory shows one row for many. Existing resources keep working; create new ones with the replacements."
+  "deprecation_note": "Superseded by cloud-sql-instance, cloud-sql-database and cloud-sql-user. One entry here drives three module blocks, so a single request owns several independently-meaningful resources \u2014 you cannot delete one without the others, and the inventory shows one row for many. Existing resources keep working; create new ones with the replacements.",
+  "destroy": {
+    "targets": [
+      "module.cloud_sql_instance[\"{key}\"]",
+      "module.cloud_sql_database[\"{key}-{databases[].name}\"]",
+      "module.cloud_sql_user[\"{key}-{iam_users[].name}\"]"
+    ]
+  }
 }

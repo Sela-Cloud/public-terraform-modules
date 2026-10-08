@@ -1,0 +1,634 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "regional-internal-lb",
+  "version": "1.0.0",
+  "display": {
+    "label": "Regional Internal Load Balancer",
+    "icon": "load-balancer",
+    "description": "A regional internal Application Load Balancer (HTTPS) reachable only from inside your VPC, routing to instance-group or serverless backends in one region. Needs a proxy-only subnet in that region.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "project_id",
+      "label": "Project ID",
+      "type": "text",
+      "required": true,
+      "placeholder": "my-gcp-project"
+    }
+  ],
+  "resource": {
+    "variable": "regional_internal_lb",
+    "key_field": "name",
+    "key_label": "Load balancer name",
+    "key_description": "Base name used to derive the address, URL map, proxy, and forwarding rule names.",
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Load balancer configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Load balancer name",
+            "type": "text",
+            "required": true,
+            "placeholder": "internal-api",
+            "validation": {
+              "min": 1,
+              "max": 40,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "pattern_error": "Use lowercase letters, numbers, and hyphens; start with a letter."
+            }
+          },
+          {
+            "id": "region",
+            "label": "Region",
+            "description": "The load balancer serves in this one region, and every backend must be in it too.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.regions",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "network",
+            "label": "VPC network",
+            "description": "The network clients reach the load balancer from. It needs a proxy-only subnet (purpose: regional managed proxy) in this region \u2014 create one with the Subnet module first if it has none. For a Shared VPC, enter the host network as projects/HOST_PROJECT/global/networks/NAME.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.networks",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnetwork",
+            "label": "Subnet",
+            "description": "The subnet the load balancer's internal IP comes from. Pick an ordinary subnet, not the proxy-only one. For a Shared VPC, enter projects/HOST_PROJECT/regions/REGION/subnetworks/NAME.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "compute.subnetworks",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "region": {
+                  "from_field": "region"
+                },
+                "vpc": {
+                  "from_field": "network"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "backend_project_id",
+            "label": "Backend project ID",
+            "description": "The project where the backend services, instance groups and NEGs live. Leave empty to use the project above; it differs under Shared VPC.",
+            "type": "text",
+            "nullable": true
+          },
+          {
+            "id": "certificate_names",
+            "label": "Certificate Manager certificates",
+            "description": "Names of existing regional Certificate Manager certificates in this region and project. A global certificate will not work here. To use one from another project, enter projects/PROJECT/locations/REGION/certificates/NAME.",
+            "type": "list",
+            "required": true
+          },
+          {
+            "id": "create_http_redirect",
+            "label": "Redirect HTTP to HTTPS",
+            "description": "Also listen on port 80, on the same IP, and redirect to HTTPS.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "allow_global_access",
+            "label": "Allow access from other regions",
+            "description": "Off, only clients in this region can reach the load balancer.",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "id": "labels",
+            "label": "Labels",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "address",
+        "label": "Internal IP address",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "existing_address_name",
+            "label": "Reuse an existing internal IP",
+            "description": "Select a reserved internal address in this region to reuse it, or leave empty to reserve a new one. It must be in the subnet above, with purpose 'shared load balancer VIP' if HTTP redirect is on.",
+            "type": "select",
+            "nullable": true,
+            "data_source": {
+              "resource": "compute.addresses",
+              "params": {
+                "project_id": {
+                  "from_field": "project_id"
+                },
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "description"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "address",
+            "label": "Specific IP to reserve",
+            "description": "An unused IP from the subnet above. Leave empty to let Google choose one. Ignored when reusing an existing IP.",
+            "type": "text",
+            "nullable": true,
+            "placeholder": "10.0.0.10"
+          }
+        ]
+      },
+      {
+        "id": "backend-services",
+        "label": "Backend services",
+        "description": "Instance-group or serverless backends in the load balancer's region, served over HTTP.",
+        "fields": [
+          {
+            "id": "backend_services",
+            "label": "Backend services",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "service_name",
+                "label": "Backend name",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "pattern": "^[a-z][a-z0-9-]*$",
+                  "pattern_error": "Use lowercase letters, numbers, and hyphens."
+                }
+              },
+              {
+                "id": "target_type",
+                "label": "Backend target type",
+                "type": "select",
+                "required": true,
+                "default": "umig",
+                "options": [
+                  {
+                    "value": "umig",
+                    "label": "Unmanaged instance group"
+                  },
+                  {
+                    "value": "cloud_run",
+                    "label": "Cloud Run service (network endpoint group created for you)"
+                  },
+                  {
+                    "value": "neg",
+                    "label": "Existing network endpoint group"
+                  },
+                  {
+                    "value": "mig",
+                    "label": "Managed instance group (regional)"
+                  }
+                ]
+              },
+              {
+                "id": "umig_zone",
+                "label": "Instance group zone",
+                "type": "select",
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "umig"
+                },
+                "data_source": {
+                  "resource": "compute.zones",
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "region": {
+                      "from_field": "region"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                },
+                "description": "A zone of the load balancer's region."
+              },
+              {
+                "id": "umig_name",
+                "label": "Instance group",
+                "type": "select",
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "umig"
+                },
+                "data_source": {
+                  "resource": "compute.unmanagedInstanceGroups",
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "zone": {
+                      "from_field": "umig_zone"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "mig_name",
+                "label": "Managed instance group",
+                "type": "select",
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "mig"
+                },
+                "data_source": {
+                  "resource": "compute.managedInstanceGroups",
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "region": {
+                      "from_field": "region"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                },
+                "description": "A regional managed instance group in the load balancer's region."
+              },
+              {
+                "id": "port_name",
+                "label": "Named port",
+                "type": "text",
+                "default": "http",
+                "depends_on": {
+                  "field": "target_type",
+                  "value": [
+                    "umig",
+                    "mig"
+                  ],
+                  "operator": "in"
+                }
+              },
+              {
+                "id": "neg_name",
+                "label": "Network endpoint group",
+                "description": "An existing network endpoint group in the load balancer's region, created and owned outside this load balancer.",
+                "type": "select",
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "neg"
+                },
+                "data_source": {
+                  "resource": "compute.networkEndpointGroups",
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "region": {
+                      "from_field": "region"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "cloud_run_service",
+                "label": "Cloud Run service",
+                "description": "A Cloud Run service in the load balancer's region. The load balancer builds the serverless network endpoint group for it.",
+                "type": "select",
+                "depends_on": {
+                  "field": "target_type",
+                  "value": "cloud_run"
+                },
+                "data_source": {
+                  "resource": "run.services",
+                  "params": {
+                    "project_id": {
+                      "from_field": "project_id"
+                    },
+                    "region": {
+                      "from_field": "region"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "description"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "timeout_sec",
+                "label": "Backend timeout (seconds)",
+                "description": "How long the load balancer waits for this backend's full response before giving up. Not the health check timeout. Cloud Run services handling long requests usually want this raised \u2014 Google's default for them is 3600.",
+                "type": "number",
+                "default": 30,
+                "validation": {
+                  "min": 1,
+                  "max": 2147483647
+                }
+              },
+              {
+                "id": "enable_health_check",
+                "label": "Enable health check",
+                "type": "boolean",
+                "default": false,
+                "depends_on": {
+                  "field": "target_type",
+                  "value": [
+                    "cloud_run"
+                  ],
+                  "operator": "not_in"
+                },
+                "description": "Probes come from 35.191.0.0/16; allow it, and the proxy-only subnet's range, to the backends' port in the firewall."
+              },
+              {
+                "id": "health_check_type",
+                "label": "Health check protocol",
+                "type": "select",
+                "default": "tcp",
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                },
+                "options": [
+                  {
+                    "value": "tcp",
+                    "label": "TCP (connection succeeds)"
+                  },
+                  {
+                    "value": "http",
+                    "label": "HTTP (path returns 200)"
+                  }
+                ]
+              },
+              {
+                "id": "health_check_port",
+                "label": "Health check port",
+                "type": "number",
+                "default": 80,
+                "validation": {
+                  "min": 1,
+                  "max": 65535
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              },
+              {
+                "id": "health_check_request_path",
+                "label": "Health check path",
+                "description": "Path the HTTP check requests; it must return 200.",
+                "type": "text",
+                "default": "/",
+                "placeholder": "/healthz",
+                "depends_on": {
+                  "field": "health_check_type",
+                  "value": "http"
+                }
+              },
+              {
+                "id": "health_check_interval_sec",
+                "label": "Check interval (seconds)",
+                "description": "How often each backend is probed.",
+                "type": "number",
+                "default": 5,
+                "validation": {
+                  "min": 1
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              },
+              {
+                "id": "health_check_timeout_sec",
+                "label": "Timeout (seconds)",
+                "description": "How long to wait for a probe before counting it as failed. Cannot exceed the check interval.",
+                "type": "number",
+                "default": 5,
+                "validation": {
+                  "min": 1
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              },
+              {
+                "id": "health_check_healthy_threshold",
+                "label": "Healthy threshold",
+                "description": "Consecutive successes before an unhealthy backend receives traffic again.",
+                "type": "number",
+                "default": 2,
+                "validation": {
+                  "min": 1
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              },
+              {
+                "id": "health_check_unhealthy_threshold",
+                "label": "Unhealthy threshold",
+                "description": "Consecutive failures before a healthy backend stops receiving traffic.",
+                "type": "number",
+                "default": 2,
+                "validation": {
+                  "min": 1
+                },
+                "depends_on": {
+                  "field": "enable_health_check",
+                  "value": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "routing",
+        "label": "Routing",
+        "description": "Domains, hosts, and path-based routing to backends. Backend names entered above are the keys used here.",
+        "fields": [
+          {
+            "id": "default_service",
+            "label": "Default backend (used when no domain matches)",
+            "description": "Must match a backend service name defined above.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "domains",
+            "label": "Domains",
+            "type": "repeatable",
+            "fields": [
+              {
+                "id": "matcher_key",
+                "label": "Domain identifier",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "pattern": "^[a-z][a-z0-9-]*$",
+                  "pattern_error": "Use lowercase letters, numbers, and hyphens."
+                }
+              },
+              {
+                "id": "hosts",
+                "label": "Hostnames",
+                "type": "list",
+                "required": true
+              },
+              {
+                "id": "default_service",
+                "label": "Default backend for this domain",
+                "description": "Must match a backend service name defined above.",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "route_rules",
+                "label": "Path routing rules",
+                "type": "repeatable",
+                "fields": [
+                  {
+                    "id": "priority",
+                    "label": "Priority",
+                    "description": "Lower values are evaluated first.",
+                    "type": "number",
+                    "required": true,
+                    "default": 100,
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "service",
+                    "label": "Backend name",
+                    "description": "Must match a backend service name defined above.",
+                    "type": "text",
+                    "required": true
+                  },
+                  {
+                    "id": "paths",
+                    "label": "Paths",
+                    "type": "list",
+                    "required": true
+                  },
+                  {
+                    "id": "match_mode",
+                    "label": "Match mode",
+                    "type": "select",
+                    "nullable": true,
+                    "options": [
+                      {
+                        "value": "PREFIX_MATCH",
+                        "label": "Prefix match"
+                      },
+                      {
+                        "value": "PATH_TEMPLATE_MATCH",
+                        "label": "Path template match"
+                      },
+                      {
+                        "value": "FULL_PATH_MATCH",
+                        "label": "Full path match"
+                      },
+                      {
+                        "value": "REGEX_MATCH",
+                        "label": "Regex match"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "path_rewrite",
+                    "label": "Path prefix rewrite",
+                    "type": "text"
+                  },
+                  {
+                    "id": "path_template_rewrite",
+                    "label": "Path template rewrite",
+                    "type": "text"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "destroy": {
+    "targets": [
+      "module.regional_internal_lb[\"{key}\"]"
+    ]
+  }
+}
