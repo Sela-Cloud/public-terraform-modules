@@ -37,7 +37,7 @@ CLOUD_PROVIDERS = {
 
 #: A reference to a child module in this same repository, by git ref.
 CHILD_SOURCE = re.compile(
-    r'source\s*=\s*"git::https://github\.com/Sela-Cloud/public-terraform-modules//'
+    r'source\s*=\s*"git::https://github\.com/Sela-Cloud/public-terraform-modules(?:\.git)?//'
     r'(?P<path>modules/[^"?]+)\?ref=[^"]+"'
 )
 REQUIRED_PROVIDER = re.compile(r'source\s*=\s*"(?:registry\.terraform\.io/)?hashicorp/(?P<name>[a-z0-9-]+)"')

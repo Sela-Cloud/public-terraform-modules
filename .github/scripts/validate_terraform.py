@@ -34,7 +34,7 @@ PROVIDERS = ("gcp", "aws", "azure")
 
 #: A reference to a module in this repository by git ref — what gets rewritten to a local path.
 REPO_SOURCE = re.compile(
-    r'(?P<lead>source\s*=\s*)"git::https://github\.com/Sela-Cloud/public-terraform-modules//'
+    r'(?P<lead>source\s*=\s*)"git::https://github\.com/Sela-Cloud/public-terraform-modules(?:\.git)?//'
     r'(?P<path>[^"?]+)\?ref=[^"]+"'
 )
 

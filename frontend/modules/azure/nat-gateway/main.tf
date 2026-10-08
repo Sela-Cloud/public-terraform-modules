@@ -1,5 +1,5 @@
 module "nat_gateway" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/nat-gateway?ref=azure-nat-gateway"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/nat-gateway?ref=azure-nat-gateway"
   for_each = var.nat_gateway
 
   name                    = each.value.name
