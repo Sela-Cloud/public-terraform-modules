@@ -553,13 +553,14 @@ Supported `type` values:
 | `description` | `string` | Tooltip or help description text under the input. |
 | `type` | `string` | One of `"text"`, `"select"`, `"boolean"`, `"number"`, `"map"`, `"list"`, `"object"`, `"repeatable"`. |
 | `required` | `boolean` | Whether input is mandatory (default: `false`). |
+| `required_if` | `object` | Mandatory only while this condition holds — same shape as `depends_on`. See [Conditional Requirement](#2b-conditional-requirement-required_if). |
 | `default` | `any` | Default initial value. |
 | `placeholder` | `string` | Input placeholder text. |
 | `nullable` | `boolean` | Allows setting value to `null` (renders 'None' option). |
 | `locked_after_create` | `boolean` | Disables the field while editing a resource already managed by Terraform; use it for create-time-only values. |
 | `ui_only` | `boolean` | Marks a control that does not map to any Terraform attribute or global. See [`ui_only` Controls](#4-ui_only-controls). |
 | `options` | `array` | Options array for `select` type: `[{"value": "...", "label": "...", "description": "..."}]`. |
-| `validation` | `object` | Client validation rules (`min`, `max`, `pattern`, `pattern_error`). |
+| `validation` | `object` | Client validation rules (`min`, `max`, `pattern`, `pattern_error`). `min`/`max` are string length on `"text"`, numeric bounds on `"number"`, and item count on `"list"`. |
 | `depends_on` | `object` | Conditional visibility condition based on another field. |
 | `data_source` | `object` | Dynamic API data fetching rules for dropdowns. |
 | `fields` | `array` | Sub-fields for `"object"` or `"repeatable"` types. |
@@ -587,6 +588,39 @@ Operators: `"eq"`, `"neq"`, `"in"`, `"not_in"`.
   "field": "enable_custom_domain",
   "value": true,
   "operator": "eq"
+}
+```
+
+#### 2b. Conditional Requirement (`required_if`)
+
+A field whose requirement tracks a sibling toggle, not a fixed `required: true`/`false`. `rds`'s
+`vpc_id` is the worked example: it is only mandatory while `create_security_group` is on — and that
+toggle defaults to `true`, so leaving `vpc_id` plain `required: false` let a form reach
+`terraform plan` with the toggle on and the field blank, where the module's own precondition caught
+it only after submission. `required_if` catches the same gap in the form itself, before submission,
+without making the field unconditionally mandatory (it is still a plain optional field whenever the
+condition does not hold).
+
+```json
+{
+  "id": "vpc_id",
+  "type": "select",
+  "required": false,
+  "required_if": { "field": "create_security_group", "value": true }
+}
+```
+
+Same shape and same operators as `depends_on` (`"eq"`, `"neq"`, `"in"`, `"not_in"`, default `"eq"`).
+Combine with `validation.min` on a `"list"` field for a minimum item count rather than just
+presence — `rds`'s `subnet_ids` needs at least 2 (AWS rejects a DB subnet group built from fewer):
+
+```json
+{
+  "id": "subnet_ids",
+  "type": "list",
+  "required": false,
+  "required_if": { "field": "create_db_subnet_group", "value": true },
+  "validation": { "min": 2 }
 }
 ```
 
