@@ -182,12 +182,51 @@
                 "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/publicIPPrefixes/pipp-lb"
               },
               {
-                "id": "subnet_id",
-                "label": "Subnet ID",
-                "description": "Resource ID of the Subnet (for Internal Load Balancer).",
-                "type": "text",
+                "id": "virtual_network_name",
+                "label": "Virtual Network",
+                "description": "Virtual Network containing the Subnet (for Internal Load Balancer).",
+                "type": "select",
+                "ui_only": true,
                 "required": false,
-                "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/snet-app"
+                "nullable": true,
+                "data_source": {
+                  "resource": "network.virtualNetworks",
+                  "params": {
+                    "resource_group": {
+                      "from_field": "resource_group_name"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "addressSpace"
+                  }
+                }
+              },
+              {
+                "id": "subnet_id",
+                "label": "Subnet",
+                "description": "Resource ID of the Subnet (for Internal Load Balancer).",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "network.subnets",
+                  "params": {
+                    "vnet": {
+                      "from_field": "virtual_network_name"
+                    },
+                    "resource_group": {
+                      "from_field": "resource_group_name"
+                    }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "addressPrefix"
+                  },
+                  "allow_custom": true
+                }
               },
               {
                 "id": "private_ip_address",
