@@ -1,5 +1,5 @@
 module "network_security_group" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/network-security-group?ref=v0.9.4"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/network-security-group?ref=v0.9.5"
   for_each = var.network_security_group
 
   name                = each.value.name

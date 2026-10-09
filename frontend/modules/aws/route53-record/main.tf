@@ -3,7 +3,7 @@
  *****************************************/
 
 module "route53_record" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/route53-record?ref=v0.9.4"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/route53-record?ref=v0.9.5"
   for_each = var.route53_record
 
   zone_id                       = each.value.zone_id

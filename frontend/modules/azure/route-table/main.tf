@@ -1,5 +1,5 @@
 module "route_table" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/route-table?ref=azure-route-table"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/route-table?ref=v0.9.5"
   for_each = var.route_table
 
   name                          = each.value.name

@@ -1,5 +1,5 @@
 module "key_vault" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/key-vault?ref=azure-key-vault"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/key-vault?ref=v0.9.5"
   for_each = var.key_vault
 
   name                            = each.value.name

@@ -3,7 +3,7 @@
  *****************************************/
 
 module "resource_group" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/resource-group?ref=v0.9.4"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/resource-group?ref=v0.9.5"
 
   for_each = var.resource_group
 

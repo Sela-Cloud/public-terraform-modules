@@ -1,5 +1,5 @@
 module "secret" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/secret?ref=v0.9.4"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/secret?ref=v0.9.5"
   for_each = var.secret
 
   project_id          = var.project_id

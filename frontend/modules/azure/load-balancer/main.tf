@@ -1,5 +1,5 @@
 module "load_balancer" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/load-balancer?ref=v0.9.4"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/load-balancer?ref=v0.9.5"
   for_each = var.load_balancer
 
   name                       = each.value.name

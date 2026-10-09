@@ -1,5 +1,5 @@
 module "container_app" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/container-app?ref=azure-container-app"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/container-app?ref=v0.9.5"
   for_each = var.container_app
 
   name                         = each.value.name

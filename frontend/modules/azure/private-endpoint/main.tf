@@ -1,5 +1,5 @@
 module "private_endpoint" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/private-endpoint?ref=azure-private-endpoint"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/private-endpoint?ref=v0.9.5"
   for_each = var.private_endpoint
 
   name                          = each.value.name

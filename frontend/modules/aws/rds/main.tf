@@ -3,7 +3,7 @@
  *****************************************/
 
 module "rds" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/rds?ref=v0.9.4"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/rds?ref=v0.9.5"
   for_each = var.rds
 
   identifier        = coalesce(each.value.identifier, each.key)
