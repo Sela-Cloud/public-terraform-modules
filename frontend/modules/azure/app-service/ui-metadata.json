@@ -193,12 +193,51 @@
             "default": true
           },
           {
-            "id": "virtual_network_subnet_id",
-            "label": "VNet Integration Subnet ID",
-            "description": "Resource ID of a delegated subnet for outbound regional VNet integration.",
-            "type": "text",
+            "id": "virtual_network_name",
+            "label": "Virtual Network",
+            "description": "Virtual Network containing the delegated integration subnet.",
+            "type": "select",
+            "ui_only": true,
             "required": false,
-            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/snet-appservice"
+            "nullable": true,
+            "data_source": {
+              "resource": "network.virtualNetworks",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "addressSpace"
+              }
+            }
+          },
+          {
+            "id": "virtual_network_subnet_id",
+            "label": "VNet Integration Subnet",
+            "description": "Delegated subnet for outbound regional VNet integration.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "network.subnets",
+              "params": {
+                "vnet": {
+                  "from_field": "virtual_network_name"
+                },
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "addressPrefix"
+              },
+              "allow_custom": true
+            }
           },
           {
             "id": "client_affinity_enabled",
