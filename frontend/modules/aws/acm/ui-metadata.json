@@ -1,0 +1,186 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "acm",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS ACM Certificate",
+    "icon": "shield-check",
+    "description": "Provision and validate public and private SSL/TLS certificates using AWS Certificate Manager (ACM)",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "acm",
+    "key_field": "name",
+    "key_label": "Certificate Identifier",
+    "key_description": "Unique identifier name for the ACM certificate. Serves as map key.",
+    "sections": [
+      {
+        "id": "domain",
+        "label": "Domain Configuration",
+        "description": "Primary domain name, alternative names, and key cryptography algorithm.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Certificate Name",
+            "description": "Name identifier applied to the certificate as a Name tag.",
+            "type": "text",
+            "required": true,
+            "default": "acm-certificate-default",
+            "placeholder": "my-domain-cert",
+            "validation": {
+              "min": 1,
+              "max": 128,
+              "pattern": "^[a-zA-Z0-9-_.]+$",
+              "pattern_error": "Name must contain only alphanumeric characters, dots, dashes, and underscores."
+            }
+          },
+          {
+            "id": "domain_name",
+            "label": "Primary Domain Name",
+            "description": "Fully qualified domain name (FQDN) for which the certificate is issued.",
+            "type": "text",
+            "required": true,
+            "default": "example.com",
+            "placeholder": "api.example.com",
+            "validation": {
+              "min": 3,
+              "max": 253,
+              "pattern": "^(\\*\\.)?([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}$",
+              "pattern_error": "Must be a valid domain name (e.g. example.com or *.example.com)."
+            }
+          },
+          {
+            "id": "subject_alternative_names",
+            "label": "Subject Alternative Names (SANs)",
+            "description": "List of additional domain names or wildcard domains to include in the certificate.",
+            "type": "list",
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "key_algorithm",
+            "label": "Key Algorithm",
+            "description": "Cryptographic algorithm and key size for the certificate.",
+            "type": "select",
+            "required": false,
+            "default": "RSA_2048",
+            "options": [
+              { "value": "RSA_2048", "label": "RSA 2048 (Recommended/Universal)" },
+              { "value": "RSA_3072", "label": "RSA 3072" },
+              { "value": "RSA_4096", "label": "RSA 4096" },
+              { "value": "ECDSA_P256", "label": "ECDSA P-256 (High Performance)" },
+              { "value": "ECDSA_P384", "label": "ECDSA P-384" },
+              { "value": "ECDSA_P521", "label": "ECDSA P-521" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "validation",
+        "label": "Validation & Route 53",
+        "description": "Domain validation method and automated Route 53 DNS record generation.",
+        "fields": [
+          {
+            "id": "validation_method",
+            "label": "Validation Method",
+            "description": "Method to validate domain ownership (DNS recommended for automated renewals).",
+            "type": "select",
+            "required": false,
+            "default": "DNS",
+            "options": [
+              { "value": "DNS", "label": "DNS (Automated via CNAME records)" },
+              { "value": "EMAIL", "label": "Email (Approval email sent to WHOIS contacts)" }
+            ]
+          },
+          {
+            "id": "create_route53_records",
+            "label": "Create Route 53 Records",
+            "description": "Automatically create DNS validation CNAME records in Amazon Route 53.",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": {
+              "field": "validation_method",
+              "value": "DNS",
+              "operator": "eq"
+            }
+          },
+          {
+            "id": "zone_id",
+            "label": "Route 53 Hosted Zone ID",
+            "description": "Route 53 Hosted Zone ID to create validation records in (e.g., Z1234567890ABCDEF).",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "Z1234567890ABCDEF",
+            "depends_on": {
+              "field": "create_route53_records",
+              "value": true,
+              "operator": "eq"
+            }
+          },
+          {
+            "id": "validate_certificate",
+            "label": "Wait for Validation",
+            "description": "Wait for certificate validation to complete before concluding Terraform deployment.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "private_ca",
+        "label": "Private Certificate Authority",
+        "description": "Optional integration with AWS Private Certificate Authority (ACM PCA).",
+        "fields": [
+          {
+            "id": "certificate_authority_arn",
+            "label": "Private CA ARN",
+            "description": "The ARN of an AWS ACM Private CA to issue private enterprise certificates.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "arn:aws:acm-pca:us-east-1:123456789012:certificate-authority/..."
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags assigned to the ACM certificate.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value tags assigned to the certificate.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
