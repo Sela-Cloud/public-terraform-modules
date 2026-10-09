@@ -484,6 +484,8 @@
             "description": "Linux specific authentication configuration.",
             "type": "object",
             "required": false,
+            "default": null,
+            "nullable": true,
             "fields": [
               {
                 "id": "disable_password_authentication",
@@ -501,6 +503,8 @@
             "description": "Windows specific guest OS configuration. (Required when deploying a Windows Virtual Machine).",
             "type": "object",
             "required": false,
+            "default": null,
+            "nullable": true,
             "fields": [
               {
                 "id": "provision_vm_agent",

@@ -1,3 +1,13 @@
+locals {
+  is_windows = (
+    lower(coalesce(try(var.storage_os_disk.os_type, null), "")) == "windows"
+    || contains(["windows_client", "windows_server"], lower(coalesce(var.license_type, "")))
+    || can(regex("(?i)windows", coalesce(try(var.storage_image_reference.publisher, null), "")))
+    || can(regex("(?i)windows", coalesce(try(var.storage_image_reference.offer, null), "")))
+    || (var.os_profile_windows_config != null && var.os_profile_linux_config == null)
+  )
+}
+
 resource "azurerm_virtual_machine" "vm" {
   name                             = var.name
   resource_group_name              = var.resource_group_name
@@ -63,7 +73,7 @@ resource "azurerm_virtual_machine" "vm" {
   }
 
   dynamic "os_profile_linux_config" {
-    for_each = var.os_profile_linux_config != null ? [var.os_profile_linux_config] : []
+    for_each = var.os_profile != null && !local.is_windows ? [coalesce(var.os_profile_linux_config, { disable_password_authentication = false, ssh_keys = [] })] : []
     content {
       disable_password_authentication = coalesce(os_profile_linux_config.value.disable_password_authentication, false)
 
@@ -78,7 +88,7 @@ resource "azurerm_virtual_machine" "vm" {
   }
 
   dynamic "os_profile_windows_config" {
-    for_each = var.os_profile_windows_config != null ? [var.os_profile_windows_config] : []
+    for_each = var.os_profile != null && local.is_windows ? [coalesce(var.os_profile_windows_config, { provision_vm_agent = true, enable_automatic_upgrades = true, timezone = null })] : []
     content {
       provision_vm_agent        = coalesce(os_profile_windows_config.value.provision_vm_agent, true)
       enable_automatic_upgrades = coalesce(os_profile_windows_config.value.enable_automatic_upgrades, true)
