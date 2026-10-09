@@ -1,5 +1,5 @@
 module "virtual_network" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/virtual-network?ref=v0.9.3"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/virtual-network?ref=v0.9.4"
   for_each = var.virtual_network
 
   name                           = each.value.name

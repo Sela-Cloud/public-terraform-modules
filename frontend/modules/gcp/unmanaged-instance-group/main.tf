@@ -3,7 +3,7 @@
  *****************************************/
 
 module "unmanaged_instance_group" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/unmanaged-instance-group?ref=v0.9.3"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/unmanaged-instance-group?ref=v0.9.4"
   for_each = var.unmanaged_instance_group
 
   project_id  = var.project_id

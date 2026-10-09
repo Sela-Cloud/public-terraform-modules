@@ -14,7 +14,7 @@ locals {
 }
 
 module "regional_internal_lb" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/regional-internal-lb?ref=v0.9.3"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/regional-internal-lb?ref=v0.9.4"
   for_each = local.load_balancers
 
   project_id            = var.project_id
