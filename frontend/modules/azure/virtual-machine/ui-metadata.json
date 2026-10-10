@@ -627,16 +627,21 @@
                 "description": "Whether boot diagnostics should be enabled.",
                 "type": "boolean",
                 "required": true,
-                "default": true
+                "default": false
               },
               {
                 "id": "storage_uri",
                 "label": "Storage Account URI",
-                "description": "Custom storage account blob endpoint. Leave empty for Azure managed boot diagnostics storage.",
+                "description": "Storage Account Blob Endpoint (primaryBlobEndpoint) for boot diagnostics storage.",
                 "type": "select",
                 "required": false,
                 "default": null,
                 "nullable": true,
+                "depends_on": {
+                  "field": "enabled",
+                  "operator": "eq",
+                  "value": true
+                },
                 "data_source": {
                   "resource": "storage.storageAccounts",
                   "params": {},

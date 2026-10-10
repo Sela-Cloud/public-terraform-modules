@@ -68,7 +68,7 @@ This module manages the Azure Virtual Machine resource with support for managed 
 
 ```hcl
 module "virtual_machine" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/virtual-machine?ref=v0.7.6"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine?ref=azure-virtual-machine-fix"
 
   name                  = "vm-app-prod"
   resource_group_name   = "rg-compute-prod"
@@ -102,7 +102,7 @@ module "virtual_machine" {
 
 ```hcl
 module "virtual_machine" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/virtual-machine?ref=v0.7.6"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine?ref=azure-virtual-machine-fix"
 
   name                  = "vm-win-prod"
   resource_group_name   = "rg-compute-prod"

@@ -1,6 +1,7 @@
 output "virtual_machines" {
   description = "Map of created Virtual Machines and their attributes."
   value       = module.virtual_machine
+  sensitive   = true
 }
 
 output "virtual_machine_ids" {

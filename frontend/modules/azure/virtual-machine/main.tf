@@ -1,5 +1,5 @@
 module "virtual_machine" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine?ref=v0.9.5"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine?ref=azure-virtual-machine-fix"
   for_each = var.virtual_machine
 
   name                             = each.value.name
@@ -21,6 +21,6 @@ module "virtual_machine" {
   os_profile_linux_config          = each.value.os_profile_linux_config
   os_profile_windows_config        = each.value.os_profile_windows_config
   identity                         = each.value.identity
-  boot_diagnostics                 = each.value.boot_diagnostics
+  boot_diagnostics                 = each.value.boot_diagnostics != null && try(each.value.boot_diagnostics.enabled, false) ? each.value.boot_diagnostics : null
   tags                             = each.value.tags
 }
