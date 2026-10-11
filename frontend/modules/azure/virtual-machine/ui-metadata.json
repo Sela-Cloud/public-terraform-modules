@@ -111,17 +111,52 @@
             "description": "List of Network Interface IDs attached to this Virtual Machine.",
             "type": "list",
             "required": true,
-            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/networkInterfaces/..."
+            "data_source": {
+              "resource": "network.networkInterfaces",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                },
+                "location": {
+                  "from_field": "location"
+                },
+                "available_only": {
+                  "static": "true"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "privateIpAddress"
+              },
+              "allow_custom": true
+            }
           },
           {
             "id": "primary_network_interface_id",
             "label": "Primary Network Interface ID",
             "description": "The ID of the primary network interface if multiple interfaces are attached.",
-            "type": "text",
+            "type": "select",
             "required": false,
             "default": null,
             "nullable": true,
-            "placeholder": "/subscriptions/.../networkInterfaces/..."
+            "data_source": {
+              "resource": "network.networkInterfaces",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                },
+                "location": {
+                  "from_field": "location"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "privateIpAddress"
+              },
+              "allow_custom": true
+            }
           }
         ]
       },
@@ -233,41 +268,38 @@
           {
             "id": "storage_image_reference",
             "label": "Image Reference",
-            "description": "Marketplace or custom image specification.",
+            "description": "Marketplace or custom image specification. Supports Windows Server, Linux (Ubuntu, Debian, RHEL), and custom gallery images.",
             "type": "object",
             "required": false,
             "fields": [
               {
                 "id": "publisher",
                 "label": "Publisher",
-                "description": "Image publisher.",
+                "description": "Marketplace image publisher. Examples: 'MicrosoftWindowsServer' (Windows), 'Canonical' (Ubuntu), 'RedHat' (RHEL), 'Debian' (Debian).",
                 "type": "text",
                 "required": false,
-                "default": "Canonical",
-                "placeholder": "Canonical"
+                "placeholder": "e.g. MicrosoftWindowsServer or Canonical"
               },
               {
                 "id": "offer",
                 "label": "Offer",
-                "description": "Image offer.",
+                "description": "Marketplace image offer. Examples: 'WindowsServer' (Windows), '0001-com-ubuntu-server-jammy' (Ubuntu 22.04), 'RHEL' (Red Hat).",
                 "type": "text",
                 "required": false,
-                "default": "0001-com-ubuntu-server-jammy",
-                "placeholder": "0001-com-ubuntu-server-jammy"
+                "placeholder": "e.g. WindowsServer or 0001-com-ubuntu-server-jammy"
               },
               {
                 "id": "sku",
                 "label": "SKU",
-                "description": "Image SKU.",
+                "description": "Marketplace image SKU. Examples: '2022-datacenter-azure-edition', '2019-datacenter' (Windows), '22_04-lts' (Ubuntu).",
                 "type": "text",
                 "required": false,
-                "default": "22_04-lts",
-                "placeholder": "22_04-lts"
+                "placeholder": "e.g. 2022-datacenter-azure-edition or 22_04-lts"
               },
               {
                 "id": "version",
                 "label": "Version",
-                "description": "Image version.",
+                "description": "Marketplace image version. Use 'latest' for the newest patch version.",
                 "type": "text",
                 "required": false,
                 "default": "latest",
@@ -276,7 +308,7 @@
               {
                 "id": "id",
                 "label": "Custom Image ID",
-                "description": "Resource ID of a custom image or Azure Compute Gallery image.",
+                "description": "Resource ID of a custom image or Azure Compute Gallery image. (Leave blank when using Marketplace publisher/offer/sku).",
                 "type": "text",
                 "required": false,
                 "default": null,
@@ -452,6 +484,8 @@
             "description": "Linux specific authentication configuration.",
             "type": "object",
             "required": false,
+            "default": null,
+            "nullable": true,
             "fields": [
               {
                 "id": "disable_password_authentication",
@@ -466,9 +500,11 @@
           {
             "id": "os_profile_windows_config",
             "label": "Windows Configuration",
-            "description": "Windows specific configuration.",
+            "description": "Windows specific guest OS configuration. (Required when deploying a Windows Virtual Machine).",
             "type": "object",
             "required": false,
+            "default": null,
+            "nullable": true,
             "fields": [
               {
                 "id": "provision_vm_agent",

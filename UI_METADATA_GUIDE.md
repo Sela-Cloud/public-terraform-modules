@@ -553,13 +553,14 @@ Supported `type` values:
 | `description` | `string` | Tooltip or help description text under the input. |
 | `type` | `string` | One of `"text"`, `"select"`, `"boolean"`, `"number"`, `"map"`, `"list"`, `"object"`, `"repeatable"`. |
 | `required` | `boolean` | Whether input is mandatory (default: `false`). |
+| `required_if` | `object` | Mandatory only while this condition holds — same shape as `depends_on`. See [Conditional Requirement](#2b-conditional-requirement-required_if). |
 | `default` | `any` | Default initial value. |
 | `placeholder` | `string` | Input placeholder text. |
 | `nullable` | `boolean` | Allows setting value to `null` (renders 'None' option). |
 | `locked_after_create` | `boolean` | Disables the field while editing a resource already managed by Terraform; use it for create-time-only values. |
 | `ui_only` | `boolean` | Marks a control that does not map to any Terraform attribute or global. See [`ui_only` Controls](#4-ui_only-controls). |
 | `options` | `array` | Options array for `select` type: `[{"value": "...", "label": "...", "description": "..."}]`. |
-| `validation` | `object` | Client validation rules (`min`, `max`, `pattern`, `pattern_error`). |
+| `validation` | `object` | Client validation rules (`min`, `max`, `pattern`, `pattern_error`). `min`/`max` are string length on `"text"`, numeric bounds on `"number"`, and item count on `"list"`. |
 | `depends_on` | `object` | Conditional visibility condition based on another field. |
 | `data_source` | `object` | Dynamic API data fetching rules for dropdowns. |
 | `fields` | `array` | Sub-fields for `"object"` or `"repeatable"` types. |
@@ -587,6 +588,39 @@ Operators: `"eq"`, `"neq"`, `"in"`, `"not_in"`.
   "field": "enable_custom_domain",
   "value": true,
   "operator": "eq"
+}
+```
+
+#### 2b. Conditional Requirement (`required_if`)
+
+A field whose requirement tracks a sibling toggle, not a fixed `required: true`/`false`. `rds`'s
+`vpc_id` is the worked example: it is only mandatory while `create_security_group` is on — and that
+toggle defaults to `true`, so leaving `vpc_id` plain `required: false` let a form reach
+`terraform plan` with the toggle on and the field blank, where the module's own precondition caught
+it only after submission. `required_if` catches the same gap in the form itself, before submission,
+without making the field unconditionally mandatory (it is still a plain optional field whenever the
+condition does not hold).
+
+```json
+{
+  "id": "vpc_id",
+  "type": "select",
+  "required": false,
+  "required_if": { "field": "create_security_group", "value": true }
+}
+```
+
+Same shape and same operators as `depends_on` (`"eq"`, `"neq"`, `"in"`, `"not_in"`, default `"eq"`).
+Combine with `validation.min` on a `"list"` field for a minimum item count rather than just
+presence — `rds`'s `subnet_ids` needs at least 2 (AWS rejects a DB subnet group built from fewer):
+
+```json
+{
+  "id": "subnet_ids",
+  "type": "list",
+  "required": false,
+  "required_if": { "field": "create_db_subnet_group", "value": true },
+  "validation": { "min": 2 }
 }
 ```
 
@@ -789,6 +823,7 @@ the environment's own subscription, taken from its verified target — never fro
 | `network.applicationSecurityGroups` | Application security groups | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location` | NSG rule `source_asg_ids`, `destination_asg_ids` |
 | `network.routeTables` | Route tables | `resource_group`, `location` (both optional) | `name`, `id`, `resourceGroup`, `location`, `routes` (count) | Subnet `route_table_id` |
 | `network.publicIPAddresses` | Public IP addresses | `resource_group`, `location`, `available_only` (all optional) | `name`, `id`, `resourceGroup`, `location`, `ipAddress`, `allocation`, `sku`, `inUse` | Network Interface `public_ip_address_id`, Load Balancer / Application Gateway frontend IP |
+| `network.networkInterfaces` | Network interfaces | `resource_group`, `location`, `available_only` (all optional) | `name`, `id`, `resourceGroup`, `location`, `privateIpAddress`, `subnet`, `inUse`, `attachedTo` | Virtual Machine `network_interface_ids` |
 | `privatedns.privateZones` | Private DNS zones (global — no location filter) | `resource_group`, `suffix` (both optional) | `name`, `id`, `resourceGroup`, `recordSets`, `linkedNetworks` | MySQL / PostgreSQL Flexible Server `private_dns_zone_id` |
 
 **Compute & storage**
@@ -831,6 +866,9 @@ are then sorted by resource group, then name, because names repeat across groups
   address for a *new* NIC, load balancer or gateway should pass `"available_only": { "static": "true" }`, or the
   dropdown offers addresses that are already attached and the apply fails on the conflict. `ipAddress`
   is empty for an unattached *dynamic* address; that is normal.
+- **`network.networkInterfaces`** — a NIC attaches to one VM at a time. A field choosing NICs for
+  a *new* VM should pass `"available_only": { "static": "true" }`; `attachedTo` names the VM an
+  attached one belongs to. Submit `id` — `network_interface_ids` takes full ids.
 - **`privatedns.privateZones`** — use `suffix` so only zones the service accepts are offered:
   `"suffix": { "static": ".postgres.database.azure.com" }` for PostgreSQL Flexible Server,
   `.mysql.database.azure.com` for MySQL Flexible Server.

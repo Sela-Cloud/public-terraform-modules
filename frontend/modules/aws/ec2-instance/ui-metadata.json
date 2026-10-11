@@ -13,9 +13,18 @@
       "id": "region",
       "label": "AWS Region",
       "description": "The AWS region where resources will be provisioned.",
-      "type": "text",
+      "type": "select",
       "required": true,
-      "placeholder": "us-east-1"
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
     }
   ],
   "resource": {
@@ -91,6 +100,27 @@
         "description": "VPC subnet, security groups, and IP address allocation.",
         "fields": [
           {
+            "id": "vpc_id",
+            "label": "VPC",
+            "description": "VPC the instance's subnet belongs to. Narrows the Subnet list below to this VPC.",
+            "type": "select",
+            "required": false,
+            "placeholder": "vpc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": { "from_field": "region" }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
             "id": "subnet_id",
             "label": "Subnet",
             "description": "VPC Subnet where the instance primary interface will reside.",
@@ -99,12 +129,13 @@
             "data_source": {
               "resource": "ec2.subnets",
               "params": {
-                "region": { "from_field": "region" }
+                "region": { "from_field": "region" },
+                "vpc_id": { "from_field": "vpc_id" }
               },
               "display": {
                 "value_key": "id",
                 "label_key": "name",
-                "description_key": "availabilityZone"
+                "description_key": "cidr"
               },
               "allow_custom": true,
               "cache_ttl": 300
