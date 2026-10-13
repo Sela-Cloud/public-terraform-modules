@@ -73,10 +73,10 @@ module "subnet" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | name | Name to be used on all resources as identifier, applied as the 'Name' tag. | `string` | `"subnet-default"` | no |
-| vpc_id | The VPC ID where the subnet will be created. | `string` | `""` | no |
+| vpc_id | The VPC ID where the subnet will be created. | `string` | `null` | no |
 | cidr_block | The IPv4 CIDR block for the subnet. | `string` | `"10.0.1.0/24"` | no |
-| availability_zone | AZ for the subnet. | `string` | `null` | no |
-| availability_zone_id | AZ ID of the subnet. | `string` | `null` | no |
+| availability_zone | AZ for the subnet. Set only one of availability_zone/availability_zone_id. | `string` | `null` | no |
+| availability_zone_id | AZ ID of the subnet. Set only one of availability_zone/availability_zone_id. | `string` | `null` | no |
 | map_public_ip_on_launch | Specify true to indicate that instances launched into the subnet should be assigned a public IP address. | `bool` | `false` | no |
 | assign_ipv6_address_on_creation | Specify true to indicate that network interfaces created in the specified subnet should be assigned an IPv6 address. | `bool` | `false` | no |
 | ipv6_cidr_block | The IPv6 network range for the subnet (/64 prefix length). | `string` | `null` | no |

@@ -59,25 +59,58 @@
             "id": "ami",
             "label": "AMI ID",
             "description": "Amazon Machine Image ID. Leave empty to automatically use latest Amazon Linux 2023.",
-            "type": "text",
+            "type": "select",
             "required": false,
-            "placeholder": "ami-0c55b159cbfafe1f0"
+            "nullable": true,
+            "placeholder": "ami-0c55b159cbfafe1f0",
+            "data_source": {
+              "resource": "ec2.images",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "key_name",
             "label": "Key Pair Name",
-            "description": "Name of the EC2 Key Pair for SSH/RDP access.",
-            "type": "text",
+            "description": "Name of an existing EC2 Key Pair for SSH/RDP access. Ignored when Create Key Pair is enabled below.",
+            "type": "select",
             "required": false,
-            "placeholder": "my-keypair"
+            "nullable": true,
+            "placeholder": "my-keypair",
+            "depends_on": { "field": "create_key_pair", "value": false },
+            "data_source": {
+              "resource": "ec2.key_pairs",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "availability_zone",
             "label": "Availability Zone",
-            "description": "Specific AZ to launch the instance into (e.g. us-east-1a). Optional.",
+            "description": "Specific AZ to launch the instance into. Optional.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "placeholder": "us-east-1a",
+            "data_source": {
+              "resource": "ec2.availability_zones",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "placement_group",
+            "label": "Placement Group",
+            "description": "Name of the placement group to start the instance in.",
             "type": "text",
             "required": false,
-            "placeholder": "us-east-1a"
+            "nullable": true
           },
           {
             "id": "tenancy",
@@ -91,6 +124,31 @@
               { "value": "dedicated", "label": "Dedicated Instance" },
               { "value": "host", "label": "Dedicated Host" }
             ]
+          },
+          {
+            "id": "host_id",
+            "label": "Dedicated Host ID",
+            "description": "ID of a dedicated host the instance will be assigned to. Only applies when Tenancy is Dedicated Host.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "tenancy", "value": "host" }
+          },
+          {
+            "id": "cpu_core_count",
+            "label": "CPU Core Count",
+            "description": "Sets the number of CPU cores for the instance. Leave empty for the instance type's default.",
+            "type": "number",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "threads_per_core",
+            "label": "Threads per Core",
+            "description": "Sets the number of threads per CPU core (e.g. 1 to disable Hyper-Threading).",
+            "type": "number",
+            "required": false,
+            "nullable": true
           }
         ]
       },
@@ -147,7 +205,17 @@
             "description": "List of VPC Security Group IDs to associate with the instance.",
             "type": "list",
             "required": false,
-            "default": []
+            "default": [],
+            "data_source": {
+              "resource": "ec2.security_groups",
+              "params": {
+                "region": { "from_field": "region" },
+                "vpc_id": { "from_field": "vpc_id" }
+              },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "associate_public_ip_address",
@@ -242,8 +310,16 @@
                 "id": "kms_key_id",
                 "label": "KMS Key ID / ARN",
                 "description": "Custom KMS key for encryption. Leave blank for default AWS managed key.",
-                "type": "text",
-                "required": false
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "kms.keys",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
               }
             ]
           },
@@ -290,6 +366,45 @@
                 "default": true
               },
               {
+                "id": "kms_key_id",
+                "label": "KMS Key ID / ARN",
+                "description": "Custom KMS key for encryption. Leave blank for default AWS managed key.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "kms.keys",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "iops",
+                "label": "IOPS",
+                "description": "Provisioned IOPS. Only applies to io1, io2, and gp3 volumes.",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "throughput",
+                "label": "Throughput (MB/s)",
+                "description": "Throughput for gp3 volumes.",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "snapshot_id",
+                "label": "Source Snapshot ID",
+                "description": "Create this volume from an existing EBS snapshot.",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
                 "id": "delete_on_termination",
                 "description": "Delete this volume when the instance is terminated.",
                 "label": "Delete on Termination",
@@ -309,9 +424,17 @@
             "id": "iam_instance_profile",
             "label": "IAM Instance Profile",
             "description": "IAM Instance Profile name or ARN to grant AWS API permissions to the VM.",
-            "type": "text",
+            "type": "select",
             "required": false,
-            "placeholder": "EC2SSMInstanceProfile"
+            "nullable": true,
+            "placeholder": "EC2SSMInstanceProfile",
+            "data_source": {
+              "resource": "iam.instance_profiles",
+              "params": {},
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "metadata_options",
@@ -418,6 +541,295 @@
             "type": "boolean",
             "required": false,
             "default": false
+          }
+        ]
+      },
+      {
+        "id": "ssh_key_management",
+        "label": "SSH Key Pair",
+        "description": "Optionally create a dedicated Key Pair instead of referencing an existing one.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "create_key_pair",
+            "label": "Create Key Pair",
+            "description": "Create a new AWS Key Pair for SSH access instead of using Key Pair Name above.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "key_pair_name",
+            "label": "New Key Pair Name",
+            "description": "Name for the created Key Pair. Defaults to '<instance name>-key' if left empty.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_key_pair", "value": true }
+          },
+          {
+            "id": "public_key",
+            "label": "Public Key Material",
+            "description": "Public key to import into the created key pair. Leave empty with Auto-Generate Key below to have one generated automatically.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_key_pair", "value": true }
+          },
+          {
+            "id": "generate_ssh_key",
+            "label": "Auto-Generate Key",
+            "description": "Automatically generate a private key when no Public Key Material is provided.",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": { "field": "create_key_pair", "value": true }
+          },
+          {
+            "id": "ssh_user",
+            "label": "SSH User",
+            "description": "Default SSH user for the instance (e.g. 'ec2-user' for Amazon Linux, 'ubuntu' for Ubuntu).",
+            "type": "text",
+            "required": false,
+            "default": "ec2-user",
+            "depends_on": { "field": "create_key_pair", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "dedicated_security_group",
+        "label": "Dedicated Security Group",
+        "description": "Optionally create a security group with inbound SSH allowed, in addition to any Security Group IDs above.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "create_security_group",
+            "label": "Create Security Group",
+            "description": "Create a dedicated security group with inbound SSH (port 22) and outbound access allowed.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "security_group_name",
+            "label": "Security Group Name",
+            "description": "Name of the dedicated security group. Defaults to '<instance name>-sg' if left empty.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_security_group", "value": true }
+          },
+          {
+            "id": "security_group_description",
+            "label": "Security Group Description",
+            "type": "text",
+            "required": false,
+            "default": "Security group for EC2 instance with SSH access",
+            "depends_on": { "field": "create_security_group", "value": true }
+          },
+          {
+            "id": "ssh_cidr_blocks",
+            "label": "SSH-Allowed CIDR Blocks",
+            "description": "IPv4 CIDR blocks permitted to connect via SSH on port 22.",
+            "type": "list",
+            "required": false,
+            "default": ["0.0.0.0/0"],
+            "depends_on": { "field": "create_security_group", "value": true }
+          },
+          {
+            "id": "security_group_tags",
+            "label": "Security Group Tags",
+            "type": "map",
+            "required": false,
+            "default": {},
+            "depends_on": { "field": "create_security_group", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced",
+        "description": "Spot market options, Nitro Enclave, private DNS, capacity reservations, and instance store volumes.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "instance_market_options",
+            "label": "Market Options",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "market_type",
+                "label": "Market Type",
+                "type": "select",
+                "default": "spot",
+                "options": [{ "value": "spot", "label": "Spot" }]
+              },
+              {
+                "id": "spot_options",
+                "label": "Spot Options",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "max_price",
+                    "label": "Max Price (per hour, USD)",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "placeholder": "0.05"
+                  },
+                  {
+                    "id": "spot_instance_type",
+                    "label": "Spot Request Type",
+                    "type": "select",
+                    "default": "one-time",
+                    "options": [
+                      { "value": "one-time", "label": "One-time" },
+                      { "value": "persistent", "label": "Persistent" }
+                    ]
+                  },
+                  {
+                    "id": "instance_interruption_behavior",
+                    "label": "Interruption Behavior",
+                    "type": "select",
+                    "default": "terminate",
+                    "options": [
+                      { "value": "terminate", "label": "Terminate" },
+                      { "value": "stop", "label": "Stop" },
+                      { "value": "hibernate", "label": "Hibernate" }
+                    ]
+                  },
+                  {
+                    "id": "valid_until",
+                    "label": "Valid Until (RFC3339)",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "placeholder": "2026-12-31T23:59:59Z"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "enable_enclave",
+            "label": "Enable Nitro Enclave",
+            "type": "boolean",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "private_dns_name_options",
+            "label": "Private DNS Name Options",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "hostname_type",
+                "label": "Hostname Type",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "options": [
+                  { "value": "ip-name", "label": "IP Name" },
+                  { "value": "resource-name", "label": "Resource Name" }
+                ]
+              },
+              {
+                "id": "enable_resource_name_dns_a_record",
+                "label": "Enable Resource-Name A Record",
+                "type": "boolean",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "enable_resource_name_dns_aaaa_record",
+                "label": "Enable Resource-Name AAAA Record",
+                "type": "boolean",
+                "required": false,
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "id": "capacity_reservation_specification",
+            "label": "Capacity Reservation",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "capacity_reservation_preference",
+                "label": "Preference",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "options": [
+                  { "value": "open", "label": "Open" },
+                  { "value": "none", "label": "None" }
+                ]
+              },
+              {
+                "id": "capacity_reservation_target",
+                "label": "Target",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "capacity_reservation_id",
+                    "label": "Capacity Reservation ID",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "capacity_reservation_resource_group_arn",
+                    "label": "Resource Group ARN",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ephemeral_block_device",
+            "label": "Instance Store Volumes",
+            "description": "Customize ephemeral (instance store) volumes exposed by the instance type.",
+            "type": "repeatable",
+            "required": false,
+            "fields": [
+              {
+                "id": "device_name",
+                "label": "Device Name",
+                "type": "text",
+                "required": true,
+                "placeholder": "/dev/sdb"
+              },
+              {
+                "id": "virtual_name",
+                "label": "Virtual Name",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "ephemeral0"
+              },
+              {
+                "id": "no_device",
+                "label": "Suppress Device",
+                "description": "Suppress a device mapping inherited from the AMI.",
+                "type": "boolean",
+                "required": false,
+                "nullable": true
+              }
+            ]
           }
         ]
       },

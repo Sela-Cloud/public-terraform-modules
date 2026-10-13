@@ -13,10 +13,18 @@
       "id": "region",
       "label": "AWS Region",
       "description": "The AWS region where resources will be provisioned.",
-      "type": "text",
+      "type": "select",
       "required": true,
       "default": "us-east-1",
-      "placeholder": "us-east-1"
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
     }
   ],
   "resource": {
@@ -108,7 +116,7 @@
             "id": "kms_key",
             "label": "KMS Key ARN",
             "description": "The ARN of the custom KMS key for encryption. Leave empty to use the default AWS managed key (aws/ecr).",
-            "type": "text",
+            "type": "select",
             "required": false,
             "default": null,
             "nullable": true,
@@ -117,6 +125,13 @@
               "field": "encryption_type",
               "value": "KMS",
               "operator": "eq"
+            },
+            "data_source": {
+              "resource": "kms.keys",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
             }
           }
         ]

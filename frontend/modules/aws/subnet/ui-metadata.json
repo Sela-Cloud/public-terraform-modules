@@ -92,10 +92,18 @@
           {
             "id": "availability_zone",
             "label": "Availability Zone",
-            "description": "Availability zone for the subnet (e.g. us-east-1a).",
-            "type": "text",
+            "description": "Availability zone for the subnet. Set only one of Availability Zone or Availability Zone ID (below, under Advanced Settings).",
+            "type": "select",
             "required": false,
-            "placeholder": "us-east-1a"
+            "nullable": true,
+            "placeholder": "us-east-1a",
+            "data_source": {
+              "resource": "ec2.availability_zones",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           }
         ]
       },
@@ -195,10 +203,18 @@
           {
             "id": "availability_zone_id",
             "label": "Availability Zone ID",
-            "description": "AZ ID of the subnet (e.g., use1-az1).",
-            "type": "text",
+            "description": "AZ ID of the subnet. Set only one of Availability Zone ID or Availability Zone (above).",
+            "type": "select",
             "required": false,
-            "placeholder": "use1-az1"
+            "nullable": true,
+            "placeholder": "use1-az1",
+            "data_source": {
+              "resource": "ec2.availability_zones",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "zoneId", "label_key": "zoneId", "description_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "enable_lni_at_device_index",

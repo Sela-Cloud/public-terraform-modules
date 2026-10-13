@@ -170,6 +170,10 @@ resource "aws_cloudfront_distribution" "this" {
       error_message = "acm_certificate_arn is required when use_default_certificate is false."
     }
     precondition {
+      condition     = var.acm_certificate_arn == null || split(":", var.acm_certificate_arn)[3] == "us-east-1"
+      error_message = "acm_certificate_arn must be a certificate in us-east-1 -- CloudFront only accepts certificates from that region, regardless of this distribution's own region."
+    }
+    precondition {
       condition     = var.geo_restriction_type == "none" || length(var.geo_restriction_locations) > 0
       error_message = "geo_restriction_locations is required when geo_restriction_type is not 'none'."
     }

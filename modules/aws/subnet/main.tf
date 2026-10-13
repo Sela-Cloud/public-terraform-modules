@@ -29,5 +29,9 @@ resource "aws_subnet" "this" {
       condition     = var.vpc_id != null && var.vpc_id != ""
       error_message = "vpc_id is required."
     }
+    precondition {
+      condition     = var.availability_zone == null || var.availability_zone_id == null
+      error_message = "Set only one of availability_zone or availability_zone_id, not both."
+    }
   }
 }

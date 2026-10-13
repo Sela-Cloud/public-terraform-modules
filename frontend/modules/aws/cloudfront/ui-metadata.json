@@ -13,10 +13,18 @@
       "id": "region",
       "label": "AWS Region",
       "description": "CloudFront is a global service; this only affects the provider used to create it.",
-      "type": "text",
+      "type": "select",
       "required": true,
       "default": "us-east-1",
-      "placeholder": "us-east-1"
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
     }
   ],
   "resource": {
@@ -121,10 +129,17 @@
               {
                 "id": "domain_name",
                 "label": "Origin Domain",
-                "description": "The bucket's REST endpoint (bucket-name.s3.amazonaws.com), or the custom origin's domain name.",
-                "type": "text",
+                "description": "For an S3 origin, pick a bucket (its REST endpoint is used) or type one directly. For a custom origin, type its domain name.",
+                "type": "select",
                 "required": true,
-                "placeholder": "my-bucket.s3.amazonaws.com"
+                "placeholder": "my-bucket.s3.amazonaws.com",
+                "data_source": {
+                  "resource": "s3.buckets",
+                  "params": {},
+                  "display": { "value_key": "domain", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
               },
               {
                 "id": "origin_path",
@@ -314,13 +329,14 @@
           {
             "id": "cache_policy_id",
             "label": "Cache Policy",
-            "description": "Defaults to AWS's managed 'CachingOptimized' policy.",
+            "description": "Defaults to AWS's managed 'CachingOptimized' policy. Other common managed IDs: CachingDisabled = 4135ea2d-6df8-44a3-9df3-4b5a84be39ad. Or paste a custom cache policy's ID.",
             "type": "text",
             "default": "658327ea-f89d-4fab-a63d-7e88639e58f6"
           },
           {
             "id": "origin_request_policy_id",
             "label": "Origin Request Policy",
+            "description": "AWS managed 'AllViewer' = 216adef6-5c7f-47e4-b989-5492eafa07d3. Or paste a custom origin request policy's ID.",
             "type": "text",
             "required": false,
             "nullable": true
@@ -328,6 +344,7 @@
           {
             "id": "response_headers_policy_id",
             "label": "Response Headers Policy",
+            "description": "AWS managed 'SimpleCORS' = 60669652-455b-4ae9-85a4-c4c02393f86c. Or paste a custom response headers policy's ID.",
             "type": "text",
             "required": false,
             "nullable": true
@@ -407,13 +424,14 @@
               {
                 "id": "cache_policy_id",
                 "label": "Cache Policy",
-                "description": "Defaults to AWS's managed 'CachingOptimized' policy.",
+                "description": "Defaults to AWS's managed 'CachingOptimized' policy. Other common managed IDs: CachingDisabled = 4135ea2d-6df8-44a3-9df3-4b5a84be39ad. Or paste a custom cache policy's ID.",
                 "type": "text",
                 "default": "658327ea-f89d-4fab-a63d-7e88639e58f6"
               },
               {
                 "id": "origin_request_policy_id",
                 "label": "Origin Request Policy",
+                "description": "AWS managed 'AllViewer' = 216adef6-5c7f-47e4-b989-5492eafa07d3. Or paste a custom origin request policy's ID.",
                 "type": "text",
                 "required": false,
                 "nullable": true
@@ -421,6 +439,7 @@
               {
                 "id": "response_headers_policy_id",
                 "label": "Response Headers Policy",
+                "description": "AWS managed 'SimpleCORS' = 60669652-455b-4ae9-85a4-c4c02393f86c. Or paste a custom response headers policy's ID.",
                 "type": "text",
                 "required": false,
                 "nullable": true
@@ -457,10 +476,17 @@
           {
             "id": "acm_certificate_arn",
             "label": "ACM Certificate",
-            "description": "Must be a certificate in us-east-1.",
-            "type": "text",
+            "description": "Must be a certificate in us-east-1 — CloudFront only accepts certificates from that region, regardless of the region selected above.",
+            "type": "select",
             "required": false,
-            "depends_on": { "field": "use_default_certificate", "value": false }
+            "depends_on": { "field": "use_default_certificate", "value": false },
+            "data_source": {
+              "resource": "acm.certificates",
+              "params": { "region": { "static": "us-east-1" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "ssl_support_method",
@@ -530,10 +556,17 @@
           {
             "id": "logging_bucket",
             "label": "S3 Bucket for Logs",
-            "type": "text",
+            "type": "select",
             "required": false,
             "placeholder": "my-logs-bucket.s3.amazonaws.com",
-            "depends_on": { "field": "enable_logging", "value": true }
+            "depends_on": { "field": "enable_logging", "value": true },
+            "data_source": {
+              "resource": "s3.buckets",
+              "params": {},
+              "display": { "value_key": "domain", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "logging_prefix",

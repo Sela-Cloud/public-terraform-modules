@@ -13,10 +13,18 @@
       "id": "region",
       "label": "AWS Region",
       "description": "The AWS region where resources will be provisioned.",
-      "type": "text",
+      "type": "select",
       "required": true,
       "default": "us-east-1",
-      "placeholder": "us-east-1"
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
     }
   ],
   "resource": {
@@ -39,6 +47,14 @@
             "placeholder": "my-database"
           },
           {
+            "id": "identifier_prefix",
+            "label": "DB Identifier Prefix",
+            "description": "Creates a unique identifier beginning with this prefix instead of using DB Identifier above, which takes precedence when set.",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
             "id": "engine",
             "label": "Database Engine",
             "description": "Database engine to deploy (e.g., mysql or postgres).",
@@ -49,6 +65,10 @@
               {
                 "label": "MySQL",
                 "value": "mysql"
+              },
+              {
+                "label": "MariaDB",
+                "value": "mariadb"
               },
               {
                 "label": "PostgreSQL",
@@ -82,6 +102,22 @@
             "placeholder": "appdb"
           },
           {
+            "id": "character_set_name",
+            "label": "Character Set",
+            "description": "Character set to use on DB creation, for engines that support it.",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "license_model",
+            "label": "License Model",
+            "description": "Leave empty for the engine default (general-public-license for MySQL/MariaDB, postgresql-license for PostgreSQL).",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
             "id": "username",
             "label": "Master Username",
             "description": "Master username (defaults to admin for MySQL, postgres for PostgreSQL).",
@@ -98,11 +134,28 @@
             "default": true
           },
           {
+            "id": "master_user_secret_kms_key_id",
+            "label": "Secrets Manager KMS Key",
+            "description": "Custom KMS key for the managed master-password secret. Leave empty for the default key.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "manage_master_user_password", "value": true },
+            "data_source": {
+              "resource": "kms.keys",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
             "id": "password",
             "label": "Master Password",
-            "description": "Master user password (leave empty if managing in Secrets Manager).",
+            "description": "Master user password. Required unless managing in Secrets Manager, restoring from a snapshot, or creating a read replica.",
             "type": "text",
-            "required": false
+            "required": false,
+            "depends_on": { "field": "manage_master_user_password", "value": false }
           },
           {
             "id": "port",
@@ -153,8 +206,42 @@
               {
                 "label": "Provisioned IOPS SSD (io1)",
                 "value": "io1"
+              },
+              {
+                "label": "Provisioned IOPS SSD (io2)",
+                "value": "io2"
+              },
+              {
+                "label": "Magnetic (standard)",
+                "value": "standard"
               }
             ]
+          },
+          {
+            "id": "iops",
+            "label": "Provisioned IOPS",
+            "description": "Only applies to gp3, io1, and io2 storage types.",
+            "type": "number",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "storage_type", "operator": "in", "value": ["gp3", "io1", "io2"] }
+          },
+          {
+            "id": "storage_throughput",
+            "label": "Storage Throughput (MB/s)",
+            "description": "Only applies to gp3 storage.",
+            "type": "number",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "storage_type", "value": "gp3" }
+          },
+          {
+            "id": "dedicated_log_volume",
+            "label": "Dedicated Log Volume",
+            "description": "Use a dedicated log volume (DLV) for the DB instance.",
+            "type": "boolean",
+            "required": false,
+            "default": false
           },
           {
             "id": "storage_encrypted",
@@ -168,8 +255,17 @@
             "id": "kms_key_id",
             "label": "KMS Key ARN",
             "description": "Custom KMS key ARN for storage encryption (leave empty for AWS default).",
-            "type": "text",
-            "required": false
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "storage_encrypted", "value": true },
+            "data_source": {
+              "resource": "kms.keys",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           }
         ]
       },
@@ -211,12 +307,60 @@
             }
           },
           {
+            "id": "vpc_security_group_ids",
+            "label": "Existing Security Group IDs",
+            "description": "Existing security groups to attach, in addition to any dedicated one created above.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.security_groups",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
             "id": "create_db_subnet_group",
             "label": "Create DB Subnet Group",
             "description": "Whether to automatically create a dedicated DB subnet group. When on, Subnet IDs (above) is required.",
             "type": "boolean",
             "required": false,
             "default": true
+          },
+          {
+            "id": "db_subnet_group_name",
+            "label": "DB Subnet Group Name",
+            "description": "Name of the DB subnet group to create or reference. Defaults to '<identifier>-subnet-group' if left empty.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_subnet_group", "value": true }
+          },
+          {
+            "id": "db_subnet_group_use_name_prefix",
+            "label": "Use Name as Prefix",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": { "field": "create_db_subnet_group", "value": true }
+          },
+          {
+            "id": "db_subnet_group_description",
+            "label": "DB Subnet Group Description",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_subnet_group", "value": true }
+          },
+          {
+            "id": "db_subnet_group_tags",
+            "label": "DB Subnet Group Tags",
+            "type": "map",
+            "required": false,
+            "default": {},
+            "depends_on": { "field": "create_db_subnet_group", "value": true }
           },
           {
             "id": "create_security_group",
@@ -227,18 +371,68 @@
             "default": true
           },
           {
+            "id": "security_group_name",
+            "label": "Security Group Name",
+            "description": "Name of the dedicated security group. Defaults to '<identifier>-sg' if left empty.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_security_group", "value": true }
+          },
+          {
+            "id": "security_group_use_name_prefix",
+            "label": "Use Name as Prefix",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": { "field": "create_security_group", "value": true }
+          },
+          {
+            "id": "security_group_description",
+            "label": "Security Group Description",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_security_group", "value": true }
+          },
+          {
             "id": "allowed_cidr_blocks",
             "label": "Allowed CIDR Blocks",
             "description": "IPv4 CIDR blocks permitted to connect to the database port.",
             "type": "list",
-            "required": false
+            "required": false,
+            "depends_on": { "field": "create_security_group", "value": true }
+          },
+          {
+            "id": "allowed_ipv6_cidr_blocks",
+            "label": "Allowed IPv6 CIDR Blocks",
+            "description": "IPv6 CIDR blocks permitted to connect to the database port.",
+            "type": "list",
+            "required": false,
+            "depends_on": { "field": "create_security_group", "value": true }
           },
           {
             "id": "allowed_security_group_ids",
             "label": "Allowed Security Group IDs",
             "description": "Source security groups permitted to connect to the database port.",
             "type": "list",
-            "required": false
+            "required": false,
+            "depends_on": { "field": "create_security_group", "value": true },
+            "data_source": {
+              "resource": "ec2.security_groups",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "security_group_tags",
+            "label": "Security Group Tags",
+            "type": "map",
+            "required": false,
+            "default": {},
+            "depends_on": { "field": "create_security_group", "value": true }
           },
           {
             "id": "multi_az",
@@ -249,12 +443,49 @@
             "default": false
           },
           {
+            "id": "availability_zone",
+            "label": "Availability Zone",
+            "description": "Specific AZ to place a single-AZ instance in. Ignored when Multi-AZ is enabled.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "multi_az", "value": false },
+            "data_source": {
+              "resource": "ec2.availability_zones",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "name", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
             "id": "publicly_accessible",
             "label": "Publicly Accessible",
             "description": "Whether the database is accessible from the public internet.",
             "type": "boolean",
             "required": false,
             "default": false
+          },
+          {
+            "id": "network_type",
+            "label": "Network Type",
+            "description": "IPv4-only, or dual-stack IPv4/IPv6.",
+            "type": "select",
+            "required": false,
+            "default": "IPV4",
+            "options": [
+              { "value": "IPV4", "label": "IPv4" },
+              { "value": "DUAL", "label": "Dual-stack (IPv4 + IPv6)" }
+            ]
+          },
+          {
+            "id": "ca_cert_identifier",
+            "label": "CA Certificate Identifier",
+            "description": "The identifier of the CA certificate for the DB instance, e.g. rds-ca-rsa2048-g1.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "rds-ca-rsa2048-g1"
           }
         ]
       },
@@ -296,6 +527,29 @@
             "default": true
           },
           {
+            "id": "final_snapshot_identifier",
+            "label": "Final Snapshot Identifier",
+            "description": "Defaults to '<identifier>-final-snapshot' if left empty.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "skip_final_snapshot", "value": false }
+          },
+          {
+            "id": "copy_tags_to_snapshot",
+            "label": "Copy Tags to Snapshot",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "delete_automated_backups",
+            "label": "Delete Automated Backups on Deletion",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
             "id": "deletion_protection",
             "label": "Deletion Protection",
             "description": "Protect the database from accidental deletion.",
@@ -310,6 +564,37 @@
             "type": "boolean",
             "required": false,
             "default": true
+          },
+          {
+            "id": "allow_major_version_upgrade",
+            "label": "Allow Major Version Upgrade",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "apply_immediately",
+            "label": "Apply Changes Immediately",
+            "description": "Apply modifications right away instead of during the next maintenance window.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "snapshot_identifier",
+            "label": "Restore from Snapshot",
+            "description": "Create this database from an existing DB snapshot identifier or ARN.",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "replicate_source_db",
+            "label": "Read Replica Source",
+            "description": "Makes this a read replica of the given source database identifier or ARN.",
+            "type": "text",
+            "required": false,
+            "nullable": true
           }
         ]
       },
@@ -335,9 +620,77 @@
             "default": false
           },
           {
+            "id": "monitoring_role_arn",
+            "label": "Existing Monitoring Role ARN",
+            "description": "Use an existing IAM role for Enhanced Monitoring instead of creating one.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_monitoring_role", "value": false },
+            "data_source": {
+              "resource": "iam.roles",
+              "params": {},
+              "display": { "value_key": "arn", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "monitoring_role_name",
+            "label": "Monitoring Role Name",
+            "description": "Defaults to '<identifier>-rds-monitoring-role' if left empty.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_monitoring_role", "value": true }
+          },
+          {
+            "id": "monitoring_role_tags",
+            "label": "Monitoring Role Tags",
+            "type": "map",
+            "required": false,
+            "default": {},
+            "depends_on": { "field": "create_monitoring_role", "value": true }
+          },
+          {
             "id": "performance_insights_enabled",
             "label": "Performance Insights Enabled",
             "description": "Collect detailed database query execution metrics.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "performance_insights_kms_key_id",
+            "label": "Performance Insights KMS Key",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "performance_insights_enabled", "value": true },
+            "data_source": {
+              "resource": "kms.keys",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "performance_insights_retention_period",
+            "label": "Performance Insights Retention (Days)",
+            "type": "select",
+            "required": false,
+            "default": 7,
+            "depends_on": { "field": "performance_insights_enabled", "value": true },
+            "options": [
+              { "value": "7", "label": "7 days (free tier)" },
+              { "value": "731", "label": "731 days (2 years, long-term)" }
+            ]
+          },
+          {
+            "id": "iam_database_authentication_enabled",
+            "label": "IAM Database Authentication",
+            "description": "Allow authenticating to the database using IAM credentials instead of passwords.",
             "type": "boolean",
             "required": false,
             "default": false
@@ -348,6 +701,478 @@
             "description": "Log types to publish to CloudWatch.",
             "type": "list",
             "required": false
+          }
+        ]
+      },
+      {
+        "id": "parameter_group",
+        "label": "DB Parameter Group",
+        "description": "Engine configuration parameters applied to the database.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "create_db_parameter_group",
+            "label": "Create DB Parameter Group",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "parameter_group_name",
+            "label": "Parameter Group Name",
+            "description": "Name to create or reference. Defaults based on identifier and engine family if left empty.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_parameter_group", "value": true }
+          },
+          {
+            "id": "parameter_group_use_name_prefix",
+            "label": "Use Name as Prefix",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": { "field": "create_db_parameter_group", "value": true }
+          },
+          {
+            "id": "family",
+            "label": "Parameter Group Family",
+            "description": "E.g. mysql8.0, mariadb10.11, postgres16. Defaults based on engine/engine version if left empty.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "postgres16",
+            "depends_on": { "field": "create_db_parameter_group", "value": true }
+          },
+          {
+            "id": "parameter_group_description",
+            "label": "Parameter Group Description",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_parameter_group", "value": true }
+          },
+          {
+            "id": "parameters",
+            "label": "Parameters",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "create_db_parameter_group", "value": true },
+            "fields": [
+              {
+                "id": "name",
+                "label": "Parameter Name",
+                "type": "text",
+                "required": true,
+                "placeholder": "max_connections"
+              },
+              {
+                "id": "value",
+                "label": "Value",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "apply_method",
+                "label": "Apply Method",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "options": [
+                  { "value": "immediate", "label": "Immediate" },
+                  { "value": "pending-reboot", "label": "Pending Reboot" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "parameter_group_tags",
+            "label": "Parameter Group Tags",
+            "type": "map",
+            "required": false,
+            "default": {},
+            "depends_on": { "field": "create_db_parameter_group", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "option_group",
+        "label": "DB Option Group",
+        "description": "Engine-specific options (e.g. Oracle OEM, SQL Server TDE). Not supported by every engine.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "create_db_option_group",
+            "label": "Create DB Option Group",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "option_group_name",
+            "label": "Option Group Name",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_option_group", "value": true }
+          },
+          {
+            "id": "option_group_use_name_prefix",
+            "label": "Use Name as Prefix",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": { "field": "create_db_option_group", "value": true }
+          },
+          {
+            "id": "major_engine_version",
+            "label": "Major Engine Version",
+            "description": "E.g. 8.0 or 16.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_option_group", "value": true }
+          },
+          {
+            "id": "option_group_description",
+            "label": "Option Group Description",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_option_group", "value": true }
+          },
+          {
+            "id": "options",
+            "label": "Options (raw JSON)",
+            "description": "List of option blocks, in the shape the aws_db_option_group resource's 'option' blocks take.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "nullable": true,
+            "placeholder": "[\n  {\n    \"option_name\": \"TDE\"\n  }\n]",
+            "depends_on": { "field": "create_db_option_group", "value": true }
+          },
+          {
+            "id": "option_group_tags",
+            "label": "Option Group Tags",
+            "type": "map",
+            "required": false,
+            "default": {},
+            "depends_on": { "field": "create_db_option_group", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "event_subscription",
+        "label": "Event Subscription",
+        "description": "Notify an SNS topic of RDS events for this instance.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "create_db_event_subscription",
+            "label": "Create Event Subscription",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "db_event_subscription_name",
+            "label": "Subscription Name",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_event_subscription", "value": true }
+          },
+          {
+            "id": "db_event_subscription_use_name_prefix",
+            "label": "Use Name as Prefix",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": { "field": "create_db_event_subscription", "value": true }
+          },
+          {
+            "id": "sns_topic_arn",
+            "label": "SNS Topic",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_event_subscription", "value": true },
+            "data_source": {
+              "resource": "sns.topics",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "event_categories",
+            "label": "Event Categories",
+            "description": "Leave empty to subscribe to every category.",
+            "type": "list",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_db_event_subscription", "value": true }
+          },
+          {
+            "id": "event_subscription_enabled",
+            "label": "Subscription Enabled",
+            "type": "boolean",
+            "required": false,
+            "default": true,
+            "depends_on": { "field": "create_db_event_subscription", "value": true }
+          },
+          {
+            "id": "db_event_subscription_tags",
+            "label": "Event Subscription Tags",
+            "type": "map",
+            "required": false,
+            "default": {},
+            "depends_on": { "field": "create_db_event_subscription", "value": true }
+          }
+        ]
+      },
+      {
+        "id": "directory_service",
+        "label": "Directory Service (Active Directory)",
+        "description": "Join the database to a Directory Service Active Directory domain.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "domain",
+            "label": "Directory ID",
+            "description": "The ID of the Directory Service Active Directory domain to join.",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "domain_iam_role_name",
+            "label": "Directory Service IAM Role Name",
+            "description": "IAM role used when making API calls to the Directory Service.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "domain", "operator": "neq", "value": null }
+          },
+          {
+            "id": "domain_auth_secret_arn",
+            "label": "Domain Join Credentials Secret ARN",
+            "description": "Secrets Manager secret ARN with the credentials for the user joining the domain.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "domain", "operator": "neq", "value": null }
+          },
+          {
+            "id": "domain_dns_ips",
+            "label": "Domain DNS IPs",
+            "description": "IP addresses of the primary and secondary Active Directory domain controllers.",
+            "type": "list",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "domain", "operator": "neq", "value": null }
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced",
+        "description": "Blue/Green deployments, point-in-time restore, S3 import, cross-service IAM roles, and RDS Custom.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "custom_iam_instance_profile",
+            "label": "RDS Custom Instance Profile",
+            "description": "Instance profile for the underlying EC2 instance of an RDS Custom DB instance.",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "blue_green_update",
+            "label": "Blue/Green Deployment",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "enabled",
+                "label": "Use Blue/Green Deployments for Updates",
+                "type": "boolean",
+                "required": false,
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "id": "restore_to_point_in_time",
+            "label": "Point-in-Time Restore",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "source_db_instance_identifier",
+                "label": "Source DB Instance Identifier",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "source_db_instance_automated_backups_arn",
+                "label": "Source Automated Backups ARN",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "source_dbi_resource_id",
+                "label": "Source DBI Resource ID",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "use_latest_restorable_time",
+                "label": "Use Latest Restorable Time",
+                "type": "boolean",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "restore_time",
+                "label": "Restore Time (RFC3339)",
+                "description": "Ignored when Use Latest Restorable Time is set.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "use_latest_restorable_time", "value": false }
+              }
+            ]
+          },
+          {
+            "id": "s3_import",
+            "label": "Import from S3",
+            "description": "Restore a per-engine backup stored in S3 into a new database.",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "bucket_name",
+                "label": "S3 Bucket",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "s3.buckets",
+                  "params": {},
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "bucket_prefix",
+                "label": "S3 Key Prefix",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "ingestion_role",
+                "label": "Ingestion IAM Role",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {},
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "source_engine",
+                "label": "Source Engine",
+                "type": "text",
+                "required": true,
+                "placeholder": "mysql"
+              },
+              {
+                "id": "source_engine_version",
+                "label": "Source Engine Version",
+                "type": "text",
+                "required": true,
+                "placeholder": "8.0"
+              }
+            ]
+          },
+          {
+            "id": "role_associations",
+            "label": "IAM Role Associations",
+            "description": "IAM roles for engine features such as S3 import/export.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "key",
+                "label": "Key",
+                "description": "Terraform-only identifier for this association, not sent to AWS.",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "feature_name",
+                "label": "Feature Name",
+                "description": "E.g. S3_INTEGRATION. Valid values are engine-specific.",
+                "type": "text",
+                "required": true,
+                "placeholder": "S3_INTEGRATION"
+              },
+              {
+                "id": "role_arn",
+                "label": "IAM Role",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {},
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          },
+          {
+            "id": "timeouts",
+            "label": "Operation Timeouts",
+            "type": "object",
+            "required": false,
+            "fields": [
+              {
+                "id": "create",
+                "label": "Create Timeout",
+                "type": "text",
+                "default": "60m"
+              },
+              {
+                "id": "update",
+                "label": "Update Timeout",
+                "type": "text",
+                "default": "60m"
+              },
+              {
+                "id": "delete",
+                "label": "Delete Timeout",
+                "type": "text",
+                "default": "60m"
+              }
+            ]
           }
         ]
       },

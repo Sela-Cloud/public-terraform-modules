@@ -75,8 +75,16 @@
                 "id": "vpc_region",
                 "label": "VPC Region",
                 "description": "Leave blank if the VPC is in the same region set above.",
-                "type": "text",
-                "required": false
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.regions",
+                  "params": {},
+                  "display": { "value_key": "name", "label_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
               }
             ]
           }

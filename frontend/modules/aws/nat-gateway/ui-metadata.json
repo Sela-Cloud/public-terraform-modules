@@ -190,7 +190,14 @@
             "description": "List of secondary Elastic IP allocation IDs to associate with the NAT Gateway (zonal only).",
             "type": "list",
             "required": false,
-            "default": []
+            "default": [],
+            "data_source": {
+              "resource": "ec2.eips",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "public_ip" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "secondary_private_ip_addresses",
@@ -233,23 +240,46 @@
                 "description": "List of Elastic IP allocation IDs to be used for handling outbound NAT traffic in this specific Availability Zone.",
                 "type": "list",
                 "required": true,
-                "default": []
+                "default": [],
+                "data_source": {
+                  "resource": "ec2.eips",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "public_ip" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
               },
               {
                 "id": "availability_zone",
                 "label": "Availability Zone",
                 "description": "Availability Zone (e.g. us-east-1a) where this specific NAT gateway configuration will be active.",
-                "type": "text",
+                "type": "select",
                 "required": false,
-                "placeholder": "us-east-1a"
+                "nullable": true,
+                "placeholder": "us-east-1a",
+                "data_source": {
+                  "resource": "ec2.availability_zones",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "name", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
               },
               {
                 "id": "availability_zone_id",
                 "label": "Availability Zone ID",
                 "description": "Availability Zone ID (e.g. use1-az1) where this specific NAT gateway configuration will be active.",
-                "type": "text",
+                "type": "select",
                 "required": false,
-                "placeholder": "use1-az1"
+                "nullable": true,
+                "placeholder": "use1-az1",
+                "data_source": {
+                  "resource": "ec2.availability_zones",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "zoneId", "label_key": "zoneId", "description_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
               }
             ]
           }

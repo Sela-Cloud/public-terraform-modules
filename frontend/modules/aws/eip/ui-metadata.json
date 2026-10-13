@@ -79,17 +79,33 @@
             "id": "instance",
             "label": "EC2 Instance ID",
             "description": "EC2 instance ID to associate with the Elastic IP (e.g., i-0123456789abcdef0). Conflicts with Network Interface ID.",
-            "type": "text",
+            "type": "select",
             "required": false,
-            "placeholder": "i-0123456789abcdef0"
+            "nullable": true,
+            "placeholder": "i-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.instances",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "privateIp" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "network_interface",
             "label": "Network Interface ID",
             "description": "Elastic Network Interface (ENI) ID to associate with (e.g., eni-0123456789abcdef0). Conflicts with Instance ID.",
-            "type": "text",
+            "type": "select",
             "required": false,
-            "placeholder": "eni-0123456789abcdef0"
+            "nullable": true,
+            "placeholder": "eni-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.network_interfaces",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "associate_with_private_ip",
