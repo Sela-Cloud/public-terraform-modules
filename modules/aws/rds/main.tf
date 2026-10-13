@@ -382,6 +382,10 @@ resource "aws_db_instance" "this" {
       condition     = !var.create_db_subnet_group || length(var.subnet_ids) >= 2
       error_message = "subnet_ids must include at least 2 subnets (in different AZs) when create_db_subnet_group is true."
     }
+    precondition {
+      condition     = length(distinct([for r in var.role_associations : r.key])) == length(var.role_associations)
+      error_message = "Each role_associations entry needs a unique key."
+    }
   }
 }
 
@@ -390,7 +394,7 @@ resource "aws_db_instance" "this" {
 ################################################################################
 
 resource "aws_db_instance_role_association" "this" {
-  for_each = var.role_associations
+  for_each = { for r in var.role_associations : r.key => r }
 
   db_instance_identifier = aws_db_instance.this.identifier
   feature_name           = each.value.feature_name

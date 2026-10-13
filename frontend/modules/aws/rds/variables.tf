@@ -112,10 +112,11 @@ variable "rds" {
       source_engine         = string
       source_engine_version = string
     }), null)
-    role_associations = optional(map(object({
+    role_associations = optional(list(object({
+      key          = string
       feature_name = string
       role_arn     = string
-    })), {})
+    })), [])
     create_db_event_subscription          = optional(bool, false)
     db_event_subscription_name            = optional(string, null)
     db_event_subscription_use_name_prefix = optional(bool, false)

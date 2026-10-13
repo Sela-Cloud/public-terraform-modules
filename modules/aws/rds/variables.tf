@@ -580,12 +580,13 @@ variable "s3_import" {
 ################################################################################
 
 variable "role_associations" {
-  description = "Map of IAM roles to associate with the DB instance (e.g. S3 import/export)."
-  type = map(object({
+  description = "IAM roles to associate with the DB instance (e.g. S3 import/export). Each needs a unique key (Terraform-only, not sent to AWS)."
+  type = list(object({
+    key          = string
     feature_name = string
     role_arn     = string
   }))
-  default = {}
+  default = []
 }
 
 variable "create_db_event_subscription" {
