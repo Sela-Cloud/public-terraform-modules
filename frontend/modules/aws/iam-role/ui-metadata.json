@@ -158,6 +158,26 @@
               {
                 "value": "events.amazonaws.com",
                 "label": "EventBridge"
+              },
+              {
+                "value": "sns.amazonaws.com",
+                "label": "SNS"
+              },
+              {
+                "value": "secretsmanager.amazonaws.com",
+                "label": "Secrets Manager"
+              },
+              {
+                "value": "codebuild.amazonaws.com",
+                "label": "CodeBuild"
+              },
+              {
+                "value": "glue.amazonaws.com",
+                "label": "Glue"
+              },
+              {
+                "value": "firehose.amazonaws.com",
+                "label": "Kinesis Data Firehose"
               }
             ]
           },
@@ -252,9 +272,17 @@
             "id": "permissions_boundary",
             "label": "Permissions Boundary ARN",
             "description": "ARN of the managed policy that sets the permissions boundary for the role.",
-            "type": "text",
+            "type": "select",
             "required": false,
-            "placeholder": "arn:aws:iam::123456789012:policy/DeveloperBoundary"
+            "nullable": true,
+            "placeholder": "arn:aws:iam::123456789012:policy/DeveloperBoundary",
+            "data_source": {
+              "resource": "iam.policies",
+              "params": { "scope": { "static": "local" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "arn" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           }
         ]
       },
