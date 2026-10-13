@@ -13,10 +13,18 @@
       "id": "region",
       "label": "AWS Region",
       "description": "The AWS region where resources will be provisioned.",
-      "type": "text",
+      "type": "select",
       "required": true,
       "default": "us-east-1",
-      "placeholder": "us-east-1"
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
     }
   ],
   "resource": {
@@ -99,8 +107,10 @@
           {
             "id": "alias_zone_id",
             "label": "Alias Target Hosted Zone ID",
+            "description": "The alias target's own hosted zone ID, not this record's zone. Fixed per AWS service (and, for most services, per region). CloudFront distributions always use Z2FDTNDATAQYW2; for an ALB, NLB, S3 website endpoint, or Global Accelerator, look up the exact ID for your region in AWS's 'Values for alias records' reference.",
             "type": "text",
             "required": false,
+            "placeholder": "Z2FDTNDATAQYW2",
             "depends_on": { "field": "is_alias", "value": true }
           },
           {
@@ -197,24 +207,94 @@
           {
             "id": "geolocation_continent",
             "label": "Continent",
-            "type": "text",
+            "type": "select",
             "required": false,
-            "depends_on": { "field": "routing_policy_type", "value": "GEOLOCATION" }
+            "nullable": true,
+            "depends_on": { "field": "routing_policy_type", "value": "GEOLOCATION" },
+            "options": [
+              { "value": "AF", "label": "Africa" },
+              { "value": "AN", "label": "Antarctica" },
+              { "value": "AS", "label": "Asia" },
+              { "value": "EU", "label": "Europe" },
+              { "value": "OC", "label": "Oceania" },
+              { "value": "NA", "label": "North America" },
+              { "value": "SA", "label": "South America" }
+            ]
           },
           {
             "id": "geolocation_country",
             "label": "Country",
+            "description": "Two-letter ISO 3166-1 country code, e.g. US, GB, IN.",
             "type": "text",
             "required": false,
-            "depends_on": { "field": "routing_policy_type", "value": "GEOLOCATION" }
+            "placeholder": "US",
+            "depends_on": { "field": "routing_policy_type", "value": "GEOLOCATION" },
+            "validation": {
+              "pattern": "^[A-Z]{2}$",
+              "pattern_error": "Use a two-letter uppercase ISO 3166-1 country code, e.g. US."
+            }
           },
           {
             "id": "geolocation_subdivision",
             "label": "US State",
             "description": "Requires Country to be US.",
-            "type": "text",
+            "type": "select",
             "required": false,
-            "depends_on": { "field": "routing_policy_type", "value": "GEOLOCATION" }
+            "nullable": true,
+            "depends_on": { "field": "geolocation_country", "value": "US" },
+            "options": [
+              { "value": "AL", "label": "Alabama" },
+              { "value": "AK", "label": "Alaska" },
+              { "value": "AZ", "label": "Arizona" },
+              { "value": "AR", "label": "Arkansas" },
+              { "value": "CA", "label": "California" },
+              { "value": "CO", "label": "Colorado" },
+              { "value": "CT", "label": "Connecticut" },
+              { "value": "DE", "label": "Delaware" },
+              { "value": "DC", "label": "District of Columbia" },
+              { "value": "FL", "label": "Florida" },
+              { "value": "GA", "label": "Georgia" },
+              { "value": "HI", "label": "Hawaii" },
+              { "value": "ID", "label": "Idaho" },
+              { "value": "IL", "label": "Illinois" },
+              { "value": "IN", "label": "Indiana" },
+              { "value": "IA", "label": "Iowa" },
+              { "value": "KS", "label": "Kansas" },
+              { "value": "KY", "label": "Kentucky" },
+              { "value": "LA", "label": "Louisiana" },
+              { "value": "ME", "label": "Maine" },
+              { "value": "MD", "label": "Maryland" },
+              { "value": "MA", "label": "Massachusetts" },
+              { "value": "MI", "label": "Michigan" },
+              { "value": "MN", "label": "Minnesota" },
+              { "value": "MS", "label": "Mississippi" },
+              { "value": "MO", "label": "Missouri" },
+              { "value": "MT", "label": "Montana" },
+              { "value": "NE", "label": "Nebraska" },
+              { "value": "NV", "label": "Nevada" },
+              { "value": "NH", "label": "New Hampshire" },
+              { "value": "NJ", "label": "New Jersey" },
+              { "value": "NM", "label": "New Mexico" },
+              { "value": "NY", "label": "New York" },
+              { "value": "NC", "label": "North Carolina" },
+              { "value": "ND", "label": "North Dakota" },
+              { "value": "OH", "label": "Ohio" },
+              { "value": "OK", "label": "Oklahoma" },
+              { "value": "OR", "label": "Oregon" },
+              { "value": "PA", "label": "Pennsylvania" },
+              { "value": "RI", "label": "Rhode Island" },
+              { "value": "SC", "label": "South Carolina" },
+              { "value": "SD", "label": "South Dakota" },
+              { "value": "TN", "label": "Tennessee" },
+              { "value": "TX", "label": "Texas" },
+              { "value": "UT", "label": "Utah" },
+              { "value": "VT", "label": "Vermont" },
+              { "value": "VA", "label": "Virginia" },
+              { "value": "WA", "label": "Washington" },
+              { "value": "WV", "label": "West Virginia" },
+              { "value": "WI", "label": "Wisconsin" },
+              { "value": "WY", "label": "Wyoming" }
+            ]
           },
           {
             "id": "geoproximity_aws_region",
