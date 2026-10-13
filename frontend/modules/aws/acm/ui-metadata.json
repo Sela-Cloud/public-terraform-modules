@@ -128,7 +128,7 @@
             "id": "zone_id",
             "label": "Route 53 Hosted Zone ID",
             "description": "Route 53 Hosted Zone ID to create validation records in (e.g., Z1234567890ABCDEF).",
-            "type": "text",
+            "type": "select",
             "required": false,
             "default": null,
             "nullable": true,
@@ -137,6 +137,13 @@
               "field": "create_route53_records",
               "value": true,
               "operator": "eq"
+            },
+            "data_source": {
+              "resource": "route53.zones",
+              "params": {},
+              "display": { "value_key": "id", "label_key": "name", "description_key": "private_zone" },
+              "allow_custom": true,
+              "cache_ttl": 300
             }
           },
           {
