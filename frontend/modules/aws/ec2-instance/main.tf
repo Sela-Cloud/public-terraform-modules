@@ -41,4 +41,19 @@ module "ec2_instance" {
   metadata_options                     = each.value.metadata_options
   tags                                 = each.value.tags
   volume_tags                          = each.value.volume_tags
+  create_key_pair                      = each.value.create_key_pair
+  key_pair_name                        = each.value.key_pair_name
+  public_key                           = each.value.public_key
+  generate_ssh_key                     = each.value.generate_ssh_key
+  ssh_user                             = each.value.ssh_user
+  create_security_group                = each.value.create_security_group
+  security_group_name                  = each.value.security_group_name
+  security_group_description           = each.value.security_group_description
+  ssh_cidr_blocks                      = each.value.ssh_cidr_blocks
+  security_group_tags                  = each.value.security_group_tags
+  instance_market_options              = each.value.instance_market_options
+  enable_enclave                       = each.value.enable_enclave
+  private_dns_name_options             = each.value.private_dns_name_options
+  capacity_reservation_specification   = each.value.capacity_reservation_specification
+  ephemeral_block_device               = each.value.ephemeral_block_device
 }

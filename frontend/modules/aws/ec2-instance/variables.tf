@@ -77,8 +77,45 @@ variable "ec2_instance" {
       http_protocol_ipv6          = "disabled"
       instance_metadata_tags      = "disabled"
     })
-    tags        = optional(map(string), {})
-    volume_tags = optional(map(string), {})
+    tags                       = optional(map(string), {})
+    volume_tags                = optional(map(string), {})
+    create_key_pair            = optional(bool, false)
+    key_pair_name              = optional(string, null)
+    public_key                 = optional(string, null)
+    generate_ssh_key           = optional(bool, false)
+    ssh_user                   = optional(string, "ec2-user")
+    create_security_group      = optional(bool, false)
+    security_group_name        = optional(string, null)
+    security_group_description = optional(string, "Security group for EC2 instance with SSH access")
+    ssh_cidr_blocks            = optional(list(string), ["0.0.0.0/0"])
+    security_group_tags        = optional(map(string), {})
+    instance_market_options = optional(object({
+      market_type = optional(string, "spot")
+      spot_options = optional(object({
+        max_price                      = optional(string, null)
+        spot_instance_type             = optional(string, "one-time")
+        instance_interruption_behavior = optional(string, "terminate")
+        valid_until                    = optional(string, null)
+      }), null)
+    }), null)
+    enable_enclave = optional(bool, null)
+    private_dns_name_options = optional(object({
+      hostname_type                        = optional(string, null)
+      enable_resource_name_dns_a_record    = optional(bool, null)
+      enable_resource_name_dns_aaaa_record = optional(bool, null)
+    }), null)
+    capacity_reservation_specification = optional(object({
+      capacity_reservation_preference = optional(string, null)
+      capacity_reservation_target = optional(object({
+        capacity_reservation_id                 = optional(string, null)
+        capacity_reservation_resource_group_arn = optional(string, null)
+      }), null)
+    }), null)
+    ephemeral_block_device = optional(list(object({
+      device_name  = string
+      virtual_name = optional(string, null)
+      no_device    = optional(bool, null)
+    })), [])
   }))
   default = {}
 }
