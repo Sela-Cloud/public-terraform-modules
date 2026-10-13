@@ -77,9 +77,17 @@
             "id": "permissions_boundary",
             "label": "Permissions Boundary ARN",
             "description": "The ARN of the managed policy that sets the permissions boundary for the user.",
-            "type": "text",
+            "type": "select",
             "required": false,
-            "placeholder": "arn:aws:iam::123456789012:policy/DeveloperBoundary"
+            "nullable": true,
+            "placeholder": "arn:aws:iam::123456789012:policy/DeveloperBoundary",
+            "data_source": {
+              "resource": "iam.policies",
+              "params": { "scope": { "static": "local" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "arn" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           }
         ]
       },
