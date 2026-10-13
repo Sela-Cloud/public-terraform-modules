@@ -135,13 +135,19 @@ module "rds_postgres" {
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| identifier | The name of the RDS instance | `string` | n/a | yes |
+| identifier | The name of the RDS instance. Set at most one of identifier/identifier_prefix | `string` | n/a | yes |
+| identifier_prefix | Creates a unique identifier beginning with this prefix. Takes precedence over identifier | `string` | `null` | no |
 | engine | The database engine (`mysql`, `postgres`, `mariadb`) | `string` | `"mysql"` | no |
 | engine_version | Database engine version | `string` | `null` | no |
 | instance_class | RDS instance type | `string` | `"db.t4g.micro"` | no |
+| license_model | License model. Defaults to the engine's own default | `string` | `null` | no |
+| character_set_name | Character set to use on creation, for engines that support it | `string` | `null` | no |
 | allocated_storage | Allocated storage in GB | `number` | `20` | no |
 | max_allocated_storage | Upper limit for storage autoscaling in GB | `number` | `100` | no |
-| storage_type | Storage type (`gp3`, `gp2`, `io1`, `io2`) | `string` | `"gp3"` | no |
+| storage_type | Storage type (`gp3`, `gp2`, `io1`, `io2`, `standard`) | `string` | `"gp3"` | no |
+| iops | Provisioned IOPS. Only applies to gp3/io1/io2 | `number` | `null` | no |
+| storage_throughput | Storage throughput in MB/s. Only applies to gp3 | `number` | `null` | no |
+| dedicated_log_volume | Use a dedicated log volume (DLV) | `bool` | `false` | no |
 | storage_encrypted | Whether storage encryption is enabled | `bool` | `true` | no |
 | kms_key_id | KMS Key ARN for storage encryption | `string` | `null` | no |
 | db_name | Name of the database to create | `string` | `null` | no |
@@ -151,16 +157,51 @@ module "rds_postgres" {
 | master_user_secret_kms_key_id | KMS Key for Secrets Manager master user secret | `string` | `null` | no |
 | port | Port for DB connections (3306 for MySQL, 5432 for Postgres) | `number` | `null` | no |
 | multi_az | Whether instance is Multi-AZ | `bool` | `false` | no |
+| availability_zone | AZ to place a single-AZ instance in. Ignored when multi_az is true | `string` | `null` | no |
 | publicly_accessible | Whether instance is publicly accessible | `bool` | `false` | no |
+| network_type | `IPV4` or `DUAL` (dual-stack) | `string` | `"IPV4"` | no |
+| ca_cert_identifier | CA certificate identifier, e.g. `rds-ca-rsa2048-g1` | `string` | `null` | no |
 | vpc_id | VPC ID for dedicated security group | `string` | `null` | no |
-| subnet_ids | VPC Subnet IDs for DB subnet group | `list(string)` | `[]` | no |
-| allowed_cidr_blocks | Ingress CIDR blocks for DB port | `list(string)` | `[]` | no |
+| vpc_security_group_ids | Existing security group IDs to attach | `list(string)` | `[]` | no |
+| create_db_subnet_group | Whether to create a dedicated DB subnet group | `bool` | `true` | no |
+| db_subnet_group_name / db_subnet_group_use_name_prefix / db_subnet_group_description / db_subnet_group_tags | DB subnet group naming and tags | various | `null`/`false`/`null`/`{}` | no |
+| subnet_ids | VPC Subnet IDs for DB subnet group (at least 2, in different AZs) | `list(string)` | `[]` | no |
+| create_security_group | Whether to create a dedicated security group | `bool` | `true` | no |
+| security_group_name / security_group_use_name_prefix / security_group_description / security_group_tags | Dedicated security group naming and tags | various | `null`/`false`/`null`/`{}` | no |
+| allowed_cidr_blocks | Ingress IPv4 CIDR blocks for DB port | `list(string)` | `[]` | no |
+| allowed_ipv6_cidr_blocks | Ingress IPv6 CIDR blocks for DB port | `list(string)` | `[]` | no |
 | allowed_security_group_ids | Ingress Security Group IDs for DB port | `list(string)` | `[]` | no |
 | backup_retention_period | Retention period in days (0-35) | `number` | `7` | no |
+| backup_window / maintenance_window | Daily backup / weekly maintenance windows (UTC) | `string` | see variables.tf | no |
+| copy_tags_to_snapshot | Copy instance tags to snapshots | `bool` | `true` | no |
 | skip_final_snapshot | Skip snapshot before deletion | `bool` | `true` | no |
+| final_snapshot_identifier | Final snapshot name. Defaults to `<identifier>-final-snapshot` | `string` | `null` | no |
+| delete_automated_backups | Remove automated backups when the instance is deleted | `bool` | `true` | no |
 | deletion_protection | Protect from accidental deletion | `bool` | `false` | no |
+| auto_minor_version_upgrade | Apply minor engine updates automatically | `bool` | `true` | no |
+| allow_major_version_upgrade | Allow major engine version upgrades | `bool` | `false` | no |
+| apply_immediately | Apply modifications immediately instead of at the next maintenance window | `bool` | `false` | no |
+| snapshot_identifier | Restore from this DB snapshot identifier/ARN | `string` | `null` | no |
+| replicate_source_db | Source DB identifier/ARN to create a read replica of | `string` | `null` | no |
 | monitoring_interval | Enhanced monitoring interval in seconds | `number` | `0` | no |
 | create_monitoring_role | Automatically create IAM role for monitoring | `bool` | `false` | no |
+| monitoring_role_arn | Existing IAM role ARN for monitoring (when not auto-creating) | `string` | `null` | no |
+| monitoring_role_name / monitoring_role_tags | Created monitoring role naming and tags | various | `null`/`{}` | no |
+| performance_insights_enabled | Enable Performance Insights | `bool` | `false` | no |
+| performance_insights_kms_key_id | KMS key for Performance Insights data | `string` | `null` | no |
+| performance_insights_retention_period | 7 or 731 days | `number` | `7` | no |
+| iam_database_authentication_enabled | Allow IAM-credential database authentication | `bool` | `false` | no |
+| enabled_cloudwatch_logs_exports | Log types to export to CloudWatch | `list(string)` | `[]` | no |
+| create_db_parameter_group / parameter_group_name / parameter_group_use_name_prefix / family / parameter_group_description / parameters / parameter_group_tags | DB parameter group creation and custom parameters | various | see variables.tf | no |
+| create_db_option_group / option_group_name / option_group_use_name_prefix / major_engine_version / option_group_description / options / option_group_tags | DB option group creation (engine-specific options, e.g. Oracle TDE) | various | see variables.tf | no |
+| domain / domain_iam_role_name / domain_auth_secret_arn / domain_dns_ips | Join a Directory Service Active Directory domain | various | `null` | no |
+| custom_iam_instance_profile | Instance profile for an RDS Custom DB instance | `string` | `null` | no |
+| blue_green_update | `{enabled}` to use Blue/Green deployments for updates | `object` | `null` | no |
+| restore_to_point_in_time | Point-in-time restore source and target time | `object` | `null` | no |
+| s3_import | Restore a per-engine backup stored in S3 | `object` | `null` | no |
+| role_associations | IAM roles for engine features (e.g. S3 import/export). Each needs a unique `key` (Terraform-only) | `list(object)` | `[]` | no |
+| create_db_event_subscription / db_event_subscription_name / db_event_subscription_use_name_prefix / sns_topic_arn / event_categories / event_subscription_enabled / db_event_subscription_tags | RDS event notifications to an SNS topic | various | see variables.tf | no |
+| timeouts | `{create, update, delete}` operation timeouts | `object` | `{60m, 60m, 60m}` | no |
 | tags | Resource tags | `map(string)` | `{}` | no |
 
 ---
