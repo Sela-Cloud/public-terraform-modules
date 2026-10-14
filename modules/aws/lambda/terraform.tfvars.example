@@ -1,0 +1,38 @@
+function_name = "my-lambda-service"
+description   = "Serverless microservice built with AWS Lambda"
+runtime       = "nodejs20.x"
+handler       = "index.handler"
+architectures = ["arm64"]
+memory_size   = 256
+timeout       = 15
+
+# Environment Variables
+environment_variables = {
+  NODE_ENV  = "production"
+  LOG_LEVEL = "info"
+}
+
+# Dedicated CloudWatch Log Group retention
+create_log_group      = true
+log_retention_in_days = 30
+
+# Dedicated IAM execution role with AWSLambdaBasicExecutionRole
+create_role = true
+
+# Function URL for direct HTTP invocation without API Gateway
+create_function_url     = true
+function_url_auth_type  = "NONE"
+function_url_invoke_mode = "BUFFERED"
+function_url_cors = {
+  allow_credentials = false
+  allow_headers     = ["content-type", "authorization"]
+  allow_methods     = ["GET", "POST"]
+  allow_origins     = ["*"]
+  max_age           = 300
+}
+
+# Tags
+tags = {
+  Environment = "production"
+  ManagedBy   = "Terraform"
+}

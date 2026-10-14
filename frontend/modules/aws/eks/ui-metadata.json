@@ -1,0 +1,565 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "eks",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS EKS Cluster",
+    "icon": "kubernetes",
+    "description": "Provision an Amazon EKS cluster with managed node groups, access entries, addons, and pod identity associations",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": { "value_key": "name", "label_key": "description", "description_key": "name" }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "eks",
+    "key_field": "name",
+    "key_label": "Cluster Name",
+    "key_description": "Unique name for the EKS cluster.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Cluster Name",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-cluster",
+            "validation": { "min": 1, "max": 100, "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_]{0,99}$", "pattern_error": "1-100 characters, start with alphanumeric, letters/numbers/hyphens/underscores only." }
+          },
+          {
+            "id": "kubernetes_version",
+            "label": "Kubernetes Version",
+            "type": "select",
+            "required": false,
+            "default": "1.31",
+            "options": [
+              { "value": "1.31", "label": "1.31" },
+              { "value": "1.30", "label": "1.30" },
+              { "value": "1.29", "label": "1.29" },
+              { "value": "1.28", "label": "1.28" }
+            ]
+          },
+          {
+            "id": "authentication_mode",
+            "label": "Authentication Mode",
+            "type": "select",
+            "required": false,
+            "default": "API_AND_CONFIG_MAP",
+            "options": [
+              { "value": "API", "label": "API only" },
+              { "value": "API_AND_CONFIG_MAP", "label": "API and aws-auth ConfigMap" },
+              { "value": "CONFIG_MAP", "label": "aws-auth ConfigMap only" }
+            ]
+          },
+          { "id": "bootstrap_cluster_creator_admin_permissions", "label": "Grant Cluster Creator Admin Access", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "enabled_cluster_log_types",
+            "label": "Control Plane Log Types",
+            "type": "list",
+            "required": false,
+            "default": ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+          }
+        ]
+      },
+      {
+        "id": "network",
+        "label": "Networking",
+        "fields": [
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "description": "If left empty, the module falls back to the default VPC.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "cidr" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnet_ids",
+            "label": "Subnets",
+            "description": "At least two subnets across different Availability Zones. If left empty, subnets are auto-discovered from the VPC.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "control_plane_subnet_ids",
+            "label": "Control Plane Subnets",
+            "description": "Dedicated subnets for the control plane's own ENIs. Defaults to Subnets above if left empty.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "endpoint_private_access", "label": "Enable Private API Endpoint", "type": "boolean", "required": false, "default": true },
+          { "id": "endpoint_public_access", "label": "Enable Public API Endpoint", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "public_access_cidrs",
+            "label": "Public Endpoint Allowed CIDRs",
+            "type": "list",
+            "required": false,
+            "default": ["0.0.0.0/0"],
+            "depends_on": { "field": "endpoint_public_access", "value": true }
+          },
+          { "id": "create_cluster_security_group", "label": "Create Dedicated Cluster Security Group", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "security_group_ids",
+            "label": "Additional Security Groups",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.security_groups",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "kubernetes_network_config",
+            "label": "Kubernetes Network Config",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              { "id": "service_ipv4_cidr", "label": "Service IPv4 CIDR", "type": "text", "required": false, "nullable": true, "placeholder": "172.20.0.0/16" },
+              { "id": "ip_family", "label": "IP Family", "type": "select", "required": false, "default": "ipv4", "options": [
+                { "value": "ipv4", "label": "IPv4" }, { "value": "ipv6", "label": "IPv6" }
+              ] }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cluster_iam",
+        "label": "Cluster IAM Role",
+        "fields": [
+          { "id": "create_iam_role", "label": "Create Dedicated Cluster Role", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "iam_role_arn",
+            "label": "Existing Cluster Role",
+            "description": "Required when Create Dedicated Cluster Role is off.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_iam_role", "value": false },
+            "data_source": {
+              "resource": "iam.roles",
+              "params": {},
+              "display": { "value_key": "arn", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced",
+        "fields": [
+          {
+            "id": "upgrade_policy_support_type",
+            "label": "Upgrade Policy Support Type",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "options": [
+              { "value": "STANDARD", "label": "Standard" },
+              { "value": "EXTENDED", "label": "Extended" }
+            ]
+          },
+          { "id": "enable_zonal_shift", "label": "Enable Zonal Shift", "type": "boolean", "required": false, "default": false },
+          { "id": "bootstrap_self_managed_addons", "label": "Install Default Self-Managed Addons (kube-proxy, CoreDNS, VPC CNI)", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "kms_key_arn",
+            "label": "Secrets Encryption KMS Key",
+            "description": "Enables envelope encryption of Kubernetes secrets.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "kms.keys",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "arn", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "create_oidc_provider", "label": "Create OIDC Provider (IRSA)", "type": "boolean", "required": false, "default": true }
+        ]
+      },
+      {
+        "id": "node_groups_section",
+        "label": "Node Groups",
+        "description": "Managed EC2 compute for the cluster. Without at least one node group, the cluster has no capacity to schedule workloads onto.",
+        "fields": [
+          { "id": "create_node_iam_role", "label": "Create Default Node Group Role", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "node_iam_role_arn",
+            "label": "Existing Node Group Role",
+            "description": "Required when Create Default Node Group Role is off and a node group doesn't set its own Node Role ARN.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_node_iam_role", "value": false },
+            "data_source": {
+              "resource": "iam.roles",
+              "params": {},
+              "display": { "value_key": "arn", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "node_groups",
+            "label": "Node Group",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "default" },
+              { "id": "node_group_name", "label": "Name", "description": "Defaults to '<cluster name>-<key>'.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "subnet_ids",
+                "label": "Subnets",
+                "description": "Defaults to the cluster's own subnets above.",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.subnets",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "instance_types", "label": "Instance Types", "type": "list", "required": false, "default": ["t3.medium"] },
+              { "id": "capacity_type", "label": "Capacity Type", "type": "select", "required": false, "default": "ON_DEMAND", "options": [
+                { "value": "ON_DEMAND", "label": "On-Demand" }, { "value": "SPOT", "label": "Spot" }
+              ] },
+              { "id": "disk_size", "label": "Disk Size (GB)", "type": "number", "required": false, "default": 20 },
+              { "id": "ami_type", "label": "AMI Type", "type": "select", "required": false, "default": "AL2023_x86_64_STANDARD", "options": [
+                { "value": "AL2023_x86_64_STANDARD", "label": "Amazon Linux 2023 (x86_64)" },
+                { "value": "AL2023_ARM_64_STANDARD", "label": "Amazon Linux 2023 (ARM64)" },
+                { "value": "AL2_x86_64", "label": "Amazon Linux 2 (x86_64)" },
+                { "value": "AL2_x86_64_GPU", "label": "Amazon Linux 2 GPU (x86_64)" },
+                { "value": "AL2_ARM_64", "label": "Amazon Linux 2 (ARM64)" },
+                { "value": "BOTTLEROCKET_x86_64", "label": "Bottlerocket (x86_64)" },
+                { "value": "BOTTLEROCKET_ARM_64", "label": "Bottlerocket (ARM64)" },
+                { "value": "BOTTLEROCKET_x86_64_NVIDIA", "label": "Bottlerocket NVIDIA (x86_64)" },
+                { "value": "BOTTLEROCKET_ARM_64_NVIDIA", "label": "Bottlerocket NVIDIA (ARM64)" },
+                { "value": "WINDOWS_CORE_2019_x86_64", "label": "Windows Core 2019 (x86_64)" },
+                { "value": "WINDOWS_FULL_2019_x86_64", "label": "Windows Full 2019 (x86_64)" },
+                { "value": "WINDOWS_CORE_2022_x86_64", "label": "Windows Core 2022 (x86_64)" },
+                { "value": "WINDOWS_FULL_2022_x86_64", "label": "Windows Full 2022 (x86_64)" },
+                { "value": "CUSTOM", "label": "Custom (via Launch Template)" }
+              ] },
+              {
+                "id": "node_role_arn",
+                "label": "Node IAM Role Override",
+                "description": "Overrides the default node group role above, for this node group only.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {},
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "force_update_version", "label": "Force Update Version", "type": "boolean", "required": false, "default": false },
+              {
+                "id": "scaling_config",
+                "label": "Scaling Configuration",
+                "type": "object",
+                "required": false,
+                "fields": [
+                  { "id": "desired_size", "label": "Desired Size", "type": "number", "required": false, "default": 2 },
+                  { "id": "max_size", "label": "Max Size", "type": "number", "required": false, "default": 5 },
+                  { "id": "min_size", "label": "Min Size", "type": "number", "required": false, "default": 1 }
+                ]
+              },
+              {
+                "id": "update_config",
+                "label": "Update Configuration",
+                "type": "object",
+                "required": false,
+                "fields": [
+                  { "id": "max_unavailable", "label": "Max Unavailable (Count)", "type": "number", "required": false, "default": 1 },
+                  { "id": "max_unavailable_percentage", "label": "Max Unavailable (Percentage)", "description": "Mutually exclusive with Max Unavailable (Count).", "type": "number", "required": false, "nullable": true }
+                ]
+              },
+              { "id": "labels", "label": "Kubernetes Labels", "type": "map", "required": false, "default": {} },
+              {
+                "id": "taints",
+                "label": "Taint",
+                "type": "repeatable",
+                "required": false,
+                "default": [],
+                "fields": [
+                  { "id": "key", "label": "Key", "type": "text", "required": true },
+                  { "id": "value", "label": "Value", "type": "text", "required": false, "nullable": true },
+                  { "id": "effect", "label": "Effect", "type": "select", "required": true, "options": [
+                    { "value": "NO_SCHEDULE", "label": "NoSchedule" }, { "value": "NO_EXECUTE", "label": "NoExecute" }, { "value": "PREFER_NO_SCHEDULE", "label": "PreferNoSchedule" }
+                  ] }
+                ]
+              },
+              {
+                "id": "launch_template",
+                "label": "Launch Template",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "id",
+                    "label": "Launch Template",
+                    "type": "select",
+                    "required": false,
+                    "nullable": true,
+                    "data_source": {
+                      "resource": "ec2.launch_templates",
+                      "params": { "region": { "from_field": "region" } },
+                      "display": { "value_key": "id", "label_key": "name" },
+                      "allow_custom": true,
+                      "cache_ttl": 300
+                    }
+                  },
+                  { "id": "version", "label": "Version", "type": "text", "required": false, "default": "$Latest" }
+                ]
+              },
+              {
+                "id": "remote_access",
+                "label": "Remote Access (SSH)",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "ec2_ssh_key",
+                    "label": "SSH Key Pair",
+                    "type": "select",
+                    "required": false,
+                    "nullable": true,
+                    "data_source": {
+                      "resource": "ec2.key_pairs",
+                      "params": { "region": { "from_field": "region" } },
+                      "display": { "value_key": "id", "label_key": "name" },
+                      "allow_custom": true,
+                      "cache_ttl": 300
+                    }
+                  },
+                  {
+                    "id": "source_security_group_ids",
+                    "label": "Allowed Source Security Groups",
+                    "type": "list",
+                    "required": false,
+                    "nullable": true,
+                    "data_source": {
+                      "resource": "ec2.security_groups",
+                      "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                      "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                      "allow_custom": true,
+                      "cache_ttl": 300
+                    }
+                  }
+                ]
+              },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "access_entries_section",
+        "label": "Access Entries",
+        "description": "Grant IAM roles or users direct access to the Kubernetes API via EKS Access Entries.",
+        "fields": [
+          {
+            "id": "access_entries",
+            "label": "Access Entry",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "admin" },
+              {
+                "id": "principal_arn",
+                "label": "IAM Principal",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {},
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "type", "label": "Type", "type": "select", "required": false, "default": "STANDARD", "options": [
+                { "value": "STANDARD", "label": "Standard" },
+                { "value": "EC2_LINUX", "label": "EC2 Linux (self-managed nodes)" },
+                { "value": "EC2_WINDOWS", "label": "EC2 Windows (self-managed nodes)" },
+                { "value": "FARGATE_LINUX", "label": "Fargate Linux" }
+              ] },
+              { "id": "user_name", "label": "Username Override", "description": "Only applies to STANDARD type entries.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "type", "value": "STANDARD" } },
+              { "id": "kubernetes_groups", "label": "Kubernetes Groups", "type": "list", "required": false, "default": [] },
+              {
+                "id": "policy_associations",
+                "label": "Policy Association",
+                "type": "repeatable",
+                "required": false,
+                "default": [],
+                "fields": [
+                  { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true },
+                  { "id": "policy_arn", "label": "AWS Managed Access Policy ARN", "description": "No lookup is wired here -- these are fixed AWS-managed policy ARNs, e.g. arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy.", "type": "text", "required": true, "placeholder": "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy" },
+                  {
+                    "id": "access_scope",
+                    "label": "Access Scope",
+                    "type": "object",
+                    "required": true,
+                    "fields": [
+                      { "id": "type", "label": "Scope", "type": "select", "required": true, "options": [
+                        { "value": "cluster", "label": "Entire cluster" }, { "value": "namespace", "label": "Specific namespaces" }
+                      ] },
+                      { "id": "namespaces", "label": "Namespaces", "type": "list", "required": false, "default": [], "depends_on": { "field": "type", "value": "namespace" } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cluster_addons_section",
+        "label": "Cluster Addons",
+        "fields": [
+          {
+            "id": "cluster_addons",
+            "label": "Addon",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "vpc-cni" },
+              { "id": "addon_name", "label": "Addon", "type": "select", "required": true, "options": [
+                { "value": "vpc-cni", "label": "Amazon VPC CNI" },
+                { "value": "coredns", "label": "CoreDNS" },
+                { "value": "kube-proxy", "label": "kube-proxy" },
+                { "value": "aws-ebs-csi-driver", "label": "Amazon EBS CSI Driver" },
+                { "value": "aws-efs-csi-driver", "label": "Amazon EFS CSI Driver" },
+                { "value": "eks-pod-identity-agent", "label": "EKS Pod Identity Agent" },
+                { "value": "adot", "label": "AWS Distro for OpenTelemetry" },
+                { "value": "aws-guardduty-agent", "label": "Amazon GuardDuty Agent" },
+                { "value": "amazon-cloudwatch-observability", "label": "Amazon CloudWatch Observability" },
+                { "value": "snapshot-controller", "label": "CSI Snapshot Controller" }
+              ] },
+              { "id": "addon_version", "label": "Version", "description": "Leave empty for the latest compatible version.", "type": "text", "required": false, "nullable": true },
+              { "id": "resolve_conflicts_on_create", "label": "On Create Conflict", "type": "select", "required": false, "default": "OVERWRITE", "options": [
+                { "value": "OVERWRITE", "label": "Overwrite" }, { "value": "NONE", "label": "None (fail)" }
+              ] },
+              { "id": "resolve_conflicts_on_update", "label": "On Update Conflict", "type": "select", "required": false, "default": "OVERWRITE", "options": [
+                { "value": "OVERWRITE", "label": "Overwrite" }, { "value": "NONE", "label": "None (fail)" }, { "value": "PRESERVE", "label": "Preserve" }
+              ] },
+              {
+                "id": "service_account_role_arn",
+                "label": "IRSA Role",
+                "description": "IAM role for the addon's service account (e.g. required by the EBS/EFS CSI drivers).",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {},
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "configuration_values", "label": "Configuration Values (JSON)", "type": "text", "multiline": true, "required": false, "nullable": true },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pod_identity_section",
+        "label": "Pod Identity Associations",
+        "description": "Bind IAM roles directly to Kubernetes service accounts (modern alternative to IRSA).",
+        "fields": [
+          {
+            "id": "pod_identity_associations",
+            "label": "Pod Identity Association",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "app1" },
+              { "id": "namespace", "label": "Kubernetes Namespace", "type": "text", "required": true },
+              { "id": "service_account", "label": "Kubernetes Service Account", "type": "text", "required": true },
+              {
+                "id": "role_arn",
+                "label": "IAM Role",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {},
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          { "id": "tags", "label": "Resource Tags", "type": "map", "required": false, "default": {} }
+        ]
+      }
+    ]
+  }
+}

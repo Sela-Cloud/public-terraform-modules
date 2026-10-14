@@ -1,0 +1,534 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "s3",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS S3 Bucket",
+    "icon": "storage",
+    "description": "Provision an Amazon S3 bucket (with one seed object) with security, encryption, lifecycle, and hosting options",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "s3",
+    "key_field": "bucket_name",
+    "key_label": "Bucket Name",
+    "key_description": "Globally unique name for the S3 bucket.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Bucket name, seed object, and versioning.",
+        "fields": [
+          {
+            "id": "bucket_name",
+            "label": "Bucket Name",
+            "description": "Globally unique name for the S3 bucket.",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-unique-example-bucket",
+            "validation": {
+              "min": 3,
+              "max": 63,
+              "pattern": "^[a-z0-9.-]+$",
+              "pattern_error": "Bucket names must be lowercase and may only contain letters, numbers, dots, and hyphens."
+            }
+          },
+          {
+            "id": "object_key",
+            "label": "Object Key",
+            "description": "Key of the seed object this module always creates. Include a prefix such as uploads/hello.txt for a folder-like path.",
+            "type": "text",
+            "required": true,
+            "placeholder": "uploads/hello.txt"
+          },
+          {
+            "id": "object_content",
+            "label": "Object Content",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "object_content_type",
+            "label": "Object Content Type",
+            "type": "text",
+            "required": false,
+            "default": "text/plain"
+          },
+          {
+            "id": "versioning_enabled",
+            "label": "Enable Versioning",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "force_destroy",
+            "label": "Force Destroy",
+            "description": "Allow Terraform to delete all objects when destroying the bucket.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "access_control",
+        "label": "Access Control",
+        "description": "Public access blocking, object ownership, ACLs, and grants.",
+        "fields": [
+          {
+            "id": "block_public_acls",
+            "label": "Block Public ACLs",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "block_public_policy",
+            "label": "Block Public Bucket Policies",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "ignore_public_acls",
+            "label": "Ignore Public ACLs",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "restrict_public_buckets",
+            "label": "Restrict Public Bucket Policies",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "object_ownership",
+            "label": "Object Ownership",
+            "type": "select",
+            "required": false,
+            "default": "BucketOwnerEnforced",
+            "options": [
+              { "value": "BucketOwnerEnforced", "label": "Bucket owner enforced (ACLs disabled)" },
+              { "value": "BucketOwnerPreferred", "label": "Bucket owner preferred" },
+              { "value": "ObjectWriter", "label": "Object writer" }
+            ]
+          },
+          {
+            "id": "acl",
+            "label": "Canned ACL",
+            "description": "Cannot be used when Object Ownership is 'Bucket owner enforced', and is mutually exclusive with ACL Grants below -- set one or the other, not both.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "object_ownership", "operator": "neq", "value": "BucketOwnerEnforced" },
+            "options": [
+              { "value": "private", "label": "private" },
+              { "value": "public-read", "label": "public-read" },
+              { "value": "public-read-write", "label": "public-read-write" },
+              { "value": "authenticated-read", "label": "authenticated-read" },
+              { "value": "aws-exec-read", "label": "aws-exec-read" },
+              { "value": "bucket-owner-read", "label": "bucket-owner-read" },
+              { "value": "bucket-owner-full-control", "label": "bucket-owner-full-control" }
+            ]
+          },
+          {
+            "id": "owner_id",
+            "label": "Owner Canonical User ID",
+            "description": "Required when Grants below is set.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "object_ownership", "operator": "neq", "value": "BucketOwnerEnforced" }
+          },
+          {
+            "id": "grants",
+            "label": "ACL Grants",
+            "description": "Explicit ACL grants. Cannot be used when Object Ownership is 'Bucket owner enforced', and is mutually exclusive with Canned ACL above -- set one or the other, not both.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "object_ownership", "operator": "neq", "value": "BucketOwnerEnforced" },
+            "fields": [
+              {
+                "id": "grantee",
+                "label": "Grantee",
+                "type": "object",
+                "required": true,
+                "fields": [
+                  {
+                    "id": "type",
+                    "label": "Grantee Type",
+                    "type": "select",
+                    "required": true,
+                    "default": "CanonicalUser",
+                    "options": [
+                      { "value": "CanonicalUser", "label": "Canonical User" },
+                      { "value": "Group", "label": "Group (predefined URI)" },
+                      { "value": "AmazonCustomerByEmail", "label": "Amazon Customer by Email" }
+                    ]
+                  },
+                  {
+                    "id": "id",
+                    "label": "Grantee Canonical User ID",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "depends_on": { "field": "type", "value": "CanonicalUser" }
+                  },
+                  {
+                    "id": "uri",
+                    "label": "Grantee Group URI",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "placeholder": "http://acs.amazonaws.com/groups/global/AllUsers",
+                    "depends_on": { "field": "type", "value": "Group" }
+                  },
+                  {
+                    "id": "email_address",
+                    "label": "Grantee Email Address",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "depends_on": { "field": "type", "value": "AmazonCustomerByEmail" }
+                  }
+                ]
+              },
+              {
+                "id": "permission",
+                "label": "Permission",
+                "type": "select",
+                "required": true,
+                "default": "READ",
+                "options": [
+                  { "value": "READ", "label": "READ" },
+                  { "value": "WRITE", "label": "WRITE" },
+                  { "value": "READ_ACP", "label": "READ_ACP" },
+                  { "value": "WRITE_ACP", "label": "WRITE_ACP" },
+                  { "value": "FULL_CONTROL", "label": "FULL_CONTROL" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "encryption",
+        "label": "Encryption",
+        "description": "Server-side encryption for the bucket and its objects.",
+        "fields": [
+          {
+            "id": "kms_master_key_id",
+            "label": "KMS Key",
+            "description": "If left empty, SSE-S3 (AES256) is used instead of SSE-KMS.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "kms.keys",
+              "params": {
+                "region": { "from_field": "region" }
+              },
+              "display": {
+                "value_key": "arn",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "bucket_key_enabled",
+            "label": "Use S3 Bucket Key for SSE-KMS",
+            "type": "boolean",
+            "required": false,
+            "default": true,
+            "depends_on": { "field": "kms_master_key_id", "operator": "neq", "value": "" }
+          }
+        ]
+      },
+      {
+        "id": "logging_acceleration",
+        "label": "Logging & Acceleration",
+        "fields": [
+          {
+            "id": "logging_target_bucket",
+            "label": "Access Log Target Bucket",
+            "description": "Another bucket to store this bucket's server access logs in. Leave empty to disable access logging.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "s3.buckets",
+              "params": {
+                "region": { "from_field": "region" }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "logging_target_prefix",
+            "label": "Access Log Prefix",
+            "type": "text",
+            "required": false,
+            "default": "log/",
+            "depends_on": { "field": "logging_target_bucket", "operator": "neq", "value": "" }
+          },
+          {
+            "id": "acceleration_status",
+            "label": "Transfer Acceleration",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "options": [
+              { "value": "Enabled", "label": "Enabled" },
+              { "value": "Suspended", "label": "Suspended" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "object_lock",
+        "label": "Object Lock",
+        "description": "Write-Once-Read-Many (WORM) compliance. Must be enabled at bucket creation and requires versioning.",
+        "fields": [
+          {
+            "id": "object_lock_enabled",
+            "label": "Enable Object Lock",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "object_lock_mode",
+            "label": "Default Retention Mode",
+            "type": "select",
+            "required": false,
+            "default": "GOVERNANCE",
+            "depends_on": { "field": "object_lock_enabled", "value": true },
+            "options": [
+              { "value": "GOVERNANCE", "label": "Governance" },
+              { "value": "COMPLIANCE", "label": "Compliance" }
+            ]
+          },
+          {
+            "id": "object_lock_days",
+            "label": "Default Retention (Days)",
+            "type": "number",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "object_lock_enabled", "value": true },
+            "validation": { "min": 1 }
+          },
+          {
+            "id": "object_lock_years",
+            "label": "Default Retention (Years)",
+            "type": "number",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "object_lock_enabled", "value": true },
+            "validation": { "min": 1 }
+          }
+        ]
+      },
+      {
+        "id": "cors",
+        "label": "CORS",
+        "fields": [
+          {
+            "id": "cors_rules",
+            "label": "CORS Rule",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "id", "label": "Rule ID", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "allowed_headers",
+                "label": "Allowed Headers",
+                "type": "list",
+                "required": false,
+                "default": ["*"]
+              },
+              {
+                "id": "allowed_methods",
+                "label": "Allowed Methods",
+                "type": "list",
+                "required": true,
+                "placeholder": "GET, PUT, POST"
+              },
+              {
+                "id": "allowed_origins",
+                "label": "Allowed Origins",
+                "type": "list",
+                "required": true,
+                "placeholder": "https://example.com"
+              },
+              {
+                "id": "expose_headers",
+                "label": "Exposed Headers",
+                "type": "list",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "max_age_seconds",
+                "label": "Max Age (Seconds)",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "website",
+        "label": "Static Website Hosting",
+        "fields": [
+          {
+            "id": "website_enabled",
+            "label": "Enable Static Website Hosting",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "website_index_document",
+            "label": "Index Document",
+            "type": "text",
+            "required": false,
+            "default": "index.html",
+            "depends_on": { "field": "website_enabled", "value": true }
+          },
+          {
+            "id": "website_error_document",
+            "label": "Error Document",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "website_enabled", "value": true }
+          },
+          {
+            "id": "website_redirect_all_requests_to",
+            "label": "Redirect All Requests To",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "website_enabled", "value": true },
+            "fields": [
+              { "id": "host_name", "label": "Host Name", "type": "text", "required": true, "placeholder": "www.example.com" },
+              {
+                "id": "protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "options": [
+                  { "value": "http", "label": "http" },
+                  { "value": "https", "label": "https" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lifecycle",
+        "label": "Lifecycle",
+        "description": "Review carefully -- these settings can result in permanent object deletion.",
+        "fields": [
+          {
+            "id": "lifecycle_enabled",
+            "label": "Enable Lifecycle Rule",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "lifecycle_expiration_days",
+            "label": "Expire Current Objects After (Days)",
+            "type": "number",
+            "required": false,
+            "default": 365,
+            "depends_on": { "field": "lifecycle_enabled", "value": true },
+            "validation": { "min": 1 }
+          },
+          {
+            "id": "noncurrent_version_expiration_days",
+            "label": "Expire Noncurrent Versions After (Days)",
+            "type": "number",
+            "required": false,
+            "default": 30,
+            "depends_on": { "field": "lifecycle_enabled", "value": true },
+            "validation": { "min": 1 }
+          }
+        ]
+      },
+      {
+        "id": "policy",
+        "label": "Bucket Policy",
+        "fields": [
+          {
+            "id": "bucket_policy",
+            "label": "Bucket Policy (JSON)",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "nullable": true,
+            "placeholder": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": []\n}"
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Bucket Tags",
+            "type": "map",
+            "required": false,
+            "default": {}
+          },
+          {
+            "id": "object_tags",
+            "label": "Object Tags",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

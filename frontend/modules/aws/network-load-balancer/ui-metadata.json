@@ -1,0 +1,495 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "network-load-balancer",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Network Load Balancer",
+    "icon": "load-balancer",
+    "description": "Provision a Network Load Balancer with target groups and listeners for high-performance TCP/UDP/TLS traffic",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": { "value_key": "name", "label_key": "description", "description_key": "name" }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "network_load_balancer",
+    "key_field": "name",
+    "key_label": "Name",
+    "key_description": "Unique name for the NLB. Up to 32 characters.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Name",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-nlb",
+            "validation": { "min": 1, "max": 32, "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9-]{0,30}[a-zA-Z0-9])?$", "pattern_error": "1-32 characters, alphanumeric and hyphens, cannot start or end with a hyphen." }
+          },
+          {
+            "id": "name_prefix",
+            "label": "Name Prefix",
+            "description": "Alternative to Name: lets AWS generate a unique name from this prefix. Mutually exclusive with Name -- set one or the other, not both.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "validation": { "max": 6 }
+          },
+          { "id": "internal", "label": "Internal (Private)", "type": "boolean", "required": false, "default": false },
+          {
+            "id": "ip_address_type",
+            "label": "IP Address Type",
+            "type": "select",
+            "required": false,
+            "default": "ipv4",
+            "options": [
+              { "value": "ipv4", "label": "IPv4" },
+              { "value": "dualstack", "label": "Dual-stack" }
+            ]
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "cidr" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Subnets",
+        "fields": [
+          {
+            "id": "subnets",
+            "label": "Subnets",
+            "description": "At least two subnets across different Availability Zones. Mutually exclusive with Subnet Mapping below.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnet_mapping",
+            "label": "Subnet Mapping",
+            "description": "Attach subnets with specific Elastic IP allocations or private IPs. Mutually exclusive with Subnets above.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "subnet_id",
+                "label": "Subnet",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "ec2.subnets",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "allocation_id",
+                "label": "EIP Allocation",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.eips",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "publicIp" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "private_ipv4_address", "label": "Private IPv4 Address", "type": "text", "required": false, "nullable": true },
+              { "id": "ipv6_address", "label": "IPv6 Address", "type": "text", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "security_group",
+        "label": "Security Group",
+        "description": "NLBs only support security groups for TCP/TLS listeners (not raw UDP).",
+        "fields": [
+          {
+            "id": "security_groups",
+            "label": "Existing Security Groups",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.security_groups",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "create_security_group", "label": "Create Dedicated Security Group", "type": "boolean", "required": false, "default": false },
+          { "id": "security_group_name", "label": "Security Group Name", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "create_security_group", "value": true } },
+          { "id": "security_group_description", "label": "Security Group Description", "type": "text", "required": false, "default": "Security group for Network Load Balancer", "depends_on": { "field": "create_security_group", "value": true } },
+          {
+            "id": "security_group_ingress_rules",
+            "label": "Security Group Ingress Rules",
+            "type": "repeatable",
+            "required": false,
+            "default": [
+              { "description": "Allow TCP inbound traffic", "from_port": 80, "to_port": 80, "ip_protocol": "tcp", "cidr_ipv4": "0.0.0.0/0" },
+              { "description": "Allow TLS inbound traffic", "from_port": 443, "to_port": 443, "ip_protocol": "tcp", "cidr_ipv4": "0.0.0.0/0" }
+            ],
+            "depends_on": { "field": "create_security_group", "value": true },
+            "fields": [
+              { "id": "description", "label": "Description", "type": "text", "required": false, "nullable": true },
+              { "id": "ip_protocol", "label": "Protocol", "type": "select", "required": true, "default": "tcp", "options": [
+                { "value": "tcp", "label": "TCP" }, { "value": "udp", "label": "UDP" }, { "value": "icmp", "label": "ICMP" }, { "value": "-1", "label": "All protocols" }
+              ] },
+              { "id": "from_port", "label": "From port", "type": "number", "required": false, "nullable": true, "validation": { "min": -1, "max": 65535 } },
+              { "id": "to_port", "label": "To port", "type": "number", "required": false, "nullable": true, "validation": { "min": -1, "max": 65535 } },
+              { "id": "cidr_ipv4", "label": "IPv4 CIDR", "type": "text", "required": false, "nullable": true, "description": "Give exactly one source: an IPv4 CIDR, an IPv6 CIDR, or a security group." },
+              { "id": "cidr_ipv6", "label": "IPv6 CIDR", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "referenced_security_group_id",
+                "label": "Source security group",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.security_groups",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          },
+          {
+            "id": "security_group_egress_rules",
+            "label": "Security Group Egress Rules",
+            "type": "repeatable",
+            "required": false,
+            "default": [
+              { "description": "Allow all outbound traffic", "ip_protocol": "-1", "cidr_ipv4": "0.0.0.0/0" }
+            ],
+            "depends_on": { "field": "create_security_group", "value": true },
+            "fields": [
+              { "id": "description", "label": "Description", "type": "text", "required": false, "nullable": true },
+              { "id": "ip_protocol", "label": "Protocol", "type": "select", "required": true, "default": "-1", "options": [
+                { "value": "tcp", "label": "TCP" }, { "value": "udp", "label": "UDP" }, { "value": "icmp", "label": "ICMP" }, { "value": "-1", "label": "All protocols" }
+              ] },
+              { "id": "from_port", "label": "From port", "type": "number", "required": false, "nullable": true, "validation": { "min": -1, "max": 65535 } },
+              { "id": "to_port", "label": "To port", "type": "number", "required": false, "nullable": true, "validation": { "min": -1, "max": 65535 } },
+              { "id": "cidr_ipv4", "label": "IPv4 CIDR", "type": "text", "required": false, "default": "0.0.0.0/0", "description": "Give exactly one source: an IPv4 CIDR, an IPv6 CIDR, or a security group." },
+              { "id": "cidr_ipv6", "label": "IPv6 CIDR", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "referenced_security_group_id",
+                "label": "Source security group",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.security_groups",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "attributes",
+        "label": "Load Balancer Attributes",
+        "fields": [
+          { "id": "enable_deletion_protection", "label": "Enable Deletion Protection", "type": "boolean", "required": false, "default": false },
+          { "id": "enable_cross_zone_load_balancing", "label": "Enable Cross-Zone Load Balancing", "type": "boolean", "required": false, "default": false },
+          { "id": "client_keep_alive", "label": "Client Keep-Alive (Seconds)", "type": "number", "required": false, "default": 3600, "validation": { "min": 60, "max": 604800 } },
+          {
+            "id": "dns_record_client_routing_policy",
+            "label": "DNS Record Client Routing Policy",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "options": [
+              { "value": "any_availability_zone", "label": "Any Availability Zone" },
+              { "value": "availability_zone_affinity", "label": "Availability Zone affinity" },
+              { "value": "partial_availability_zone_affinity", "label": "Partial Availability Zone affinity" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "logging",
+        "label": "Logging",
+        "fields": [
+          {
+            "id": "access_logs",
+            "label": "Access Logs",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "bucket",
+                "label": "S3 Bucket",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "s3.buckets",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "prefix", "label": "Prefix", "type": "text", "required": false, "nullable": true },
+              { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "target_groups_section",
+        "label": "Target Groups",
+        "fields": [
+          {
+            "id": "target_groups",
+            "label": "Target Group",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, referenced by Listeners below as Target Group Key.", "type": "text", "required": true, "placeholder": "tcp-tg" },
+              { "id": "name", "label": "Name", "description": "Defaults to '<NLB name>-<key>'.", "type": "text", "required": false, "nullable": true },
+              { "id": "name_prefix", "label": "Name Prefix", "description": "Mutually exclusive with Name.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "target_type",
+                "label": "Target Type",
+                "type": "select",
+                "required": false,
+                "default": "instance",
+                "options": [
+                  { "value": "instance", "label": "EC2 Instance" },
+                  { "value": "ip", "label": "IP Address" },
+                  { "value": "lambda", "label": "Lambda Function" },
+                  { "value": "alb", "label": "Application Load Balancer" }
+                ]
+              },
+              { "id": "port", "label": "Port", "type": "number", "required": false, "default": 80, "depends_on": { "field": "target_type", "operator": "neq", "value": "lambda" } },
+              { "id": "protocol", "label": "Protocol", "type": "select", "required": false, "default": "TCP", "depends_on": { "field": "target_type", "operator": "neq", "value": "lambda" }, "options": [
+                { "value": "TCP", "label": "TCP" }, { "value": "UDP", "label": "UDP" }, { "value": "TCP_UDP", "label": "TCP_UDP" }, { "value": "TLS", "label": "TLS" }
+              ] },
+              {
+                "id": "vpc_id",
+                "label": "VPC",
+                "description": "Defaults to the NLB's own VPC above. Not applicable to Lambda targets.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "target_type", "operator": "neq", "value": "lambda" },
+                "data_source": {
+                  "resource": "ec2.vpcs",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "cidr" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "deregistration_delay", "label": "Deregistration Delay (Seconds)", "type": "number", "required": false, "default": 300 },
+              { "id": "preserve_client_ip", "label": "Preserve Client IP", "type": "boolean", "required": false, "default": true },
+              { "id": "proxy_protocol_v2", "label": "Enable Proxy Protocol v2", "type": "boolean", "required": false, "default": false },
+              { "id": "connection_termination", "label": "Terminate Connections on Deregistration", "type": "boolean", "required": false, "default": false },
+              {
+                "id": "health_check",
+                "label": "Health Check",
+                "type": "object",
+                "required": false,
+                "fields": [
+                  { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": true },
+                  { "id": "protocol", "label": "Protocol", "type": "select", "required": false, "default": "TCP", "options": [
+                    { "value": "TCP", "label": "TCP" }, { "value": "HTTP", "label": "HTTP" }, { "value": "HTTPS", "label": "HTTPS" }
+                  ] },
+                  { "id": "port", "label": "Port", "type": "text", "required": false, "default": "traffic-port" },
+                  { "id": "path", "label": "Path", "description": "Only applies to HTTP/HTTPS health checks.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "protocol", "operator": "neq", "value": "TCP" } },
+                  { "id": "interval", "label": "Interval (Seconds)", "type": "number", "required": false, "default": 10 },
+                  { "id": "timeout", "label": "Timeout (Seconds)", "type": "number", "required": false, "default": 10 },
+                  { "id": "healthy_threshold", "label": "Healthy Threshold", "type": "number", "required": false, "default": 3 },
+                  { "id": "unhealthy_threshold", "label": "Unhealthy Threshold", "type": "number", "required": false, "default": 3 },
+                  { "id": "matcher", "label": "Success Codes", "description": "Only applies to HTTP/HTTPS health checks.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "protocol", "operator": "neq", "value": "TCP" } }
+                ]
+              },
+              {
+                "id": "stickiness",
+                "label": "Stickiness",
+                "type": "object",
+                "required": false,
+                "fields": [
+                  { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": false },
+                  { "id": "type", "label": "Type", "type": "select", "required": false, "default": "source_ip", "options": [
+                    { "value": "source_ip", "label": "Source IP" }
+                  ] }
+                ]
+              },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          },
+          {
+            "id": "target_group_attachments",
+            "label": "Target Group Attachment",
+            "description": "Statically register targets. Omit for target groups fed dynamically by an Auto Scaling Group instead.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "tcp-instance-1" },
+              { "id": "target_group_key", "label": "Target Group Key", "description": "Must match a Key from Target Groups above.", "type": "text", "required": true },
+              { "id": "target_id", "label": "Target ID", "description": "An instance ID, IP address, or Lambda function ARN, depending on the target group's type.", "type": "text", "required": true },
+              { "id": "port", "label": "Port", "type": "number", "required": false, "nullable": true },
+              {
+                "id": "availability_zone",
+                "label": "Availability Zone Override",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.availability_zones",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "name", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "listeners_section",
+        "label": "Listeners",
+        "description": "A listener checks for connection requests and forwards them to a target group. Without at least one listener, the NLB carries no traffic.",
+        "fields": [
+          {
+            "id": "listeners",
+            "label": "Listener",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, referenced by Extra Certificates below as Listener Key.", "type": "text", "required": true, "placeholder": "tls" },
+              { "id": "port", "label": "Port", "type": "number", "required": true, "placeholder": "443" },
+              { "id": "protocol", "label": "Protocol", "type": "select", "required": false, "default": "TCP", "options": [
+                { "value": "TCP", "label": "TCP" }, { "value": "UDP", "label": "UDP" }, { "value": "TCP_UDP", "label": "TCP_UDP" }, { "value": "TLS", "label": "TLS" }
+              ] },
+              { "id": "ssl_policy", "label": "SSL Policy", "description": "Defaults to a modern TLS 1.2+ policy. Only applies to TLS.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "protocol", "value": "TLS" } },
+              {
+                "id": "certificate_arn",
+                "label": "Default Certificate",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "protocol", "value": "TLS" },
+                "data_source": {
+                  "resource": "acm.certificates",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "alpn_policy", "label": "ALPN Policy", "type": "text", "required": false, "nullable": true },
+              { "id": "target_group_key", "label": "Target Group Key", "description": "Must match a Key from Target Groups above. Used when Weighted Forward below is empty.", "type": "text", "required": false, "nullable": true },
+              { "id": "target_group_arn", "label": "Existing Target Group ARN", "description": "Alternative to Target Group Key, for a target group created outside this form.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "forward",
+                "label": "Weighted Forward",
+                "description": "Split traffic across multiple target groups by weight, instead of a single Target Group Key above.",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "target_groups",
+                    "label": "Weighted Target Group",
+                    "type": "repeatable",
+                    "required": true,
+                    "fields": [
+                      { "id": "target_group_key", "label": "Target Group Key", "type": "text", "required": false, "nullable": true },
+                      { "id": "target_group_arn", "label": "Existing Target Group ARN", "type": "text", "required": false, "nullable": true },
+                      { "id": "weight", "label": "Weight", "type": "number", "required": false, "default": 1 }
+                    ]
+                  }
+                ]
+              },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          },
+          {
+            "id": "extra_certificates",
+            "label": "Extra Certificate (SNI)",
+            "description": "Additional certificates for multi-domain TLS listeners.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true },
+              { "id": "listener_key", "label": "Listener Key", "description": "Must match a Key from Listeners above.", "type": "text", "required": true },
+              {
+                "id": "certificate_arn",
+                "label": "Certificate",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "acm.certificates",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          { "id": "tags", "label": "Resource Tags", "type": "map", "required": false, "default": {} }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+region = "us-east-1"
+
+route_table = {
+  "prod-public-rt" = {
+    name    = "prod-public-rt"
+    vpc_id  = "vpc-0123456789abcdef0"
+    subnets = ["subnet-0123456789abcdef0", "subnet-0123456789abcdef1"]
+
+    routes = [
+      {
+        key                     = "default_ipv4"
+        destination_cidr_block = "0.0.0.0/0"
+        gateway_id              = "igw-0123456789abcdef0"
+      }
+    ]
+
+    tags = {
+      Tier      = "public"
+      ManagedBy = "Terraform"
+    }
+  }
+
+  "prod-private-rt" = {
+    name    = "prod-private-rt"
+    vpc_id  = "vpc-0123456789abcdef0"
+    subnets = ["subnet-0123456789abcdef2", "subnet-0123456789abcdef3"]
+
+    routes = [
+      {
+        key                     = "default_nat"
+        destination_cidr_block = "0.0.0.0/0"
+        nat_gateway_id          = "nat-0123456789abcdef0"
+      }
+    ]
+
+    tags = {
+      Tier      = "private"
+      ManagedBy = "Terraform"
+    }
+  }
+}

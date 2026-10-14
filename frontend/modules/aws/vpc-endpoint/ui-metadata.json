@@ -1,0 +1,410 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "vpc-endpoint",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS VPC Endpoints",
+    "icon": "endpoint",
+    "description": "Provision Amazon VPC Gateway and Interface (PrivateLink) Endpoints for secure private access to AWS services",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "vpc_endpoint",
+    "key_field": "name",
+    "key_label": "Endpoint Group Name",
+    "key_description": "Unique identifier for the VPC Endpoints deployment group.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "VPC placement and security configuration.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Endpoint Group Name",
+            "description": "Unique identifier for this VPC Endpoints deployment group. Not sent to AWS directly -- individual endpoints are named from the VPC ID and their own key.",
+            "type": "text",
+            "required": true,
+            "placeholder": "prod-vpc-endpoints",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Name must only contain alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "description": "The VPC in which to create the VPC Endpoints.",
+            "type": "select",
+            "required": true,
+            "placeholder": "vpc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "create_security_group",
+            "label": "Create Dedicated Security Group",
+            "description": "Automatically provision a dedicated Security Group for Interface endpoints allowing inbound HTTPS (443).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "security_group_name",
+            "label": "Security Group Name",
+            "description": "Custom name for the dedicated security group (defaults to vpc-endpoints-sg).",
+            "type": "text",
+            "required": false,
+            "placeholder": "vpc-endpoints-sg",
+            "depends_on": { "field": "create_security_group", "value": true }
+          },
+          {
+            "id": "security_group_description",
+            "label": "Security Group Description",
+            "type": "text",
+            "required": false,
+            "default": "Security group for VPC Interface Endpoints",
+            "depends_on": { "field": "create_security_group", "value": true }
+          },
+          {
+            "id": "security_group_ingress_rules",
+            "label": "Security Group Ingress Rules",
+            "type": "repeatable",
+            "required": false,
+            "default": [
+              {
+                "description": "Allow HTTPS inbound from within VPC",
+                "from_port": 443,
+                "to_port": 443,
+                "ip_protocol": "tcp",
+                "cidr_ipv4": "0.0.0.0/0"
+              }
+            ],
+            "depends_on": { "field": "create_security_group", "value": true },
+            "fields": [
+              { "id": "description", "label": "Description", "type": "text", "required": false },
+              {
+                "id": "ip_protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": true,
+                "default": "tcp",
+                "options": [
+                  { "value": "tcp", "label": "TCP" },
+                  { "value": "udp", "label": "UDP" },
+                  { "value": "icmp", "label": "ICMP" },
+                  { "value": "-1", "label": "All protocols" }
+                ]
+              },
+              { "id": "from_port", "label": "From port", "type": "number", "required": false, "validation": { "min": -1, "max": 65535 } },
+              { "id": "to_port", "label": "To port", "type": "number", "required": false, "validation": { "min": -1, "max": 65535 } },
+              { "id": "cidr_ipv4", "label": "IPv4 CIDR", "type": "text", "required": false, "placeholder": "10.0.0.0/16", "description": "Give exactly one source: an IPv4 CIDR, an IPv6 CIDR, or a security group." },
+              { "id": "cidr_ipv6", "label": "IPv6 CIDR", "type": "text", "required": false },
+              {
+                "id": "referenced_security_group_id",
+                "label": "Source security group",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.security_groups",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          },
+          {
+            "id": "security_group_egress_rules",
+            "label": "Security Group Egress Rules",
+            "type": "repeatable",
+            "required": false,
+            "default": [
+              {
+                "description": "Allow all outbound traffic",
+                "ip_protocol": "-1",
+                "cidr_ipv4": "0.0.0.0/0"
+              }
+            ],
+            "depends_on": { "field": "create_security_group", "value": true },
+            "fields": [
+              { "id": "description", "label": "Description", "type": "text", "required": false },
+              {
+                "id": "ip_protocol",
+                "label": "Protocol",
+                "type": "select",
+                "required": true,
+                "default": "-1",
+                "options": [
+                  { "value": "tcp", "label": "TCP" },
+                  { "value": "udp", "label": "UDP" },
+                  { "value": "icmp", "label": "ICMP" },
+                  { "value": "-1", "label": "All protocols" }
+                ]
+              },
+              { "id": "from_port", "label": "From port", "type": "number", "required": false, "validation": { "min": -1, "max": 65535 } },
+              { "id": "to_port", "label": "To port", "type": "number", "required": false, "validation": { "min": -1, "max": 65535 } },
+              { "id": "cidr_ipv4", "label": "IPv4 CIDR", "type": "text", "required": false, "default": "0.0.0.0/0", "description": "Give exactly one source: an IPv4 CIDR, an IPv6 CIDR, or a security group." },
+              { "id": "cidr_ipv6", "label": "IPv6 CIDR", "type": "text", "required": false },
+              {
+                "id": "referenced_security_group_id",
+                "label": "Source security group",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.security_groups",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "network",
+        "label": "Networking & Subnets",
+        "description": "Subnets for Interface endpoints and route tables for Gateway endpoints.",
+        "fields": [
+          {
+            "id": "subnet_ids",
+            "label": "Subnets (Interface Endpoints)",
+            "description": "Subnets across Availability Zones where Interface endpoint ENIs will be deployed.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "availabilityZone"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "route_table_ids",
+            "label": "Route Table IDs (Gateway Endpoints)",
+            "description": "Route tables to associate with Gateway endpoints (e.g. S3, DynamoDB).",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.route_tables",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "endpoints",
+        "label": "Endpoints",
+        "description": "The VPC Endpoints to create. Each needs a unique key.",
+        "fields": [
+          {
+            "id": "endpoints",
+            "label": "Endpoint",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "key",
+                "label": "Key",
+                "description": "Terraform-only identifier for this endpoint, not sent to AWS. Also used in its generated Name tag.",
+                "type": "text",
+                "required": true,
+                "placeholder": "s3-gateway"
+              },
+              {
+                "id": "service_name",
+                "label": "AWS Service",
+                "description": "The full AWS PrivateLink service name for this endpoint.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "placeholder": "com.amazonaws.us-east-1.s3",
+                "data_source": {
+                  "resource": "ec2.vpc_endpoint_services",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "serviceType" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "service_type",
+                "label": "Endpoint Type",
+                "type": "select",
+                "required": false,
+                "default": "Interface",
+                "options": [
+                  { "value": "Interface", "label": "Interface (PrivateLink ENI)" },
+                  { "value": "Gateway", "label": "Gateway (S3, DynamoDB)" },
+                  { "value": "GatewayLoadBalancer", "label": "Gateway Load Balancer" }
+                ]
+              },
+              {
+                "id": "subnet_ids",
+                "label": "Subnets",
+                "description": "Overrides the group's default subnets above, for this endpoint only. Only applies to Interface and Gateway Load Balancer endpoints.",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "service_type", "operator": "neq", "value": "Gateway" },
+                "data_source": {
+                  "resource": "ec2.subnets",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "route_table_ids",
+                "label": "Route Tables",
+                "description": "Overrides the group's default route tables above, for this endpoint only. Only applies to Gateway endpoints.",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "service_type", "value": "Gateway" },
+                "data_source": {
+                  "resource": "ec2.route_tables",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "security_group_ids",
+                "label": "Security Groups",
+                "description": "Overrides the group's default security groups above, for this endpoint only. Only applies to Interface endpoints.",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "service_type", "value": "Interface" },
+                "data_source": {
+                  "resource": "ec2.security_groups",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "private_dns_enabled",
+                "label": "Enable Private DNS",
+                "description": "Only applies to Interface endpoints.",
+                "type": "boolean",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "service_type", "value": "Interface" }
+              },
+              {
+                "id": "auto_accept",
+                "label": "Auto-Accept Connection",
+                "type": "boolean",
+                "required": false,
+                "default": true
+              },
+              {
+                "id": "ip_address_type",
+                "label": "IP Address Type",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "options": [
+                  { "value": "ipv4", "label": "IPv4" },
+                  { "value": "dualstack", "label": "Dual-stack" },
+                  { "value": "ipv6", "label": "IPv6" }
+                ]
+              },
+              {
+                "id": "policy",
+                "label": "Endpoint Policy (JSON)",
+                "description": "Resource policy controlling access through this endpoint. Leave empty to allow full access.",
+                "type": "text",
+                "multiline": true,
+                "required": false,
+                "nullable": true,
+                "placeholder": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": []\n}"
+              },
+              {
+                "id": "tags",
+                "label": "Tags",
+                "type": "map",
+                "required": false,
+                "default": {}
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "User-defined key-value tags to assign to the VPC Endpoints.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value map of resource tags.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}

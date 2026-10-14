@@ -1,0 +1,106 @@
+################################################################################
+# AWS DataSync Example Configuration
+################################################################################
+
+tags = {
+  Environment = "production"
+  Project     = "data-migration"
+  ManagedBy   = "Terraform"
+}
+
+# ------------------------------------------------------------------------------
+# DataSync Agent (On-Premises or VPC)
+# ------------------------------------------------------------------------------
+agents = {
+  "on-prem-agent-01" = {
+    name           = "on-prem-agent-01"
+    activation_key = "AAAAA-BBBBB-CCCCC-DDDDD-EEEEE"
+    ip_address     = "10.0.1.50"
+  }
+}
+
+# ------------------------------------------------------------------------------
+# S3 Locations
+# ------------------------------------------------------------------------------
+s3_locations = {
+  "source_s3" = {
+    name             = "source-s3-location"
+    s3_bucket_arn    = "arn:aws:s3:::my-source-bucket"
+    subdirectory     = "/data"
+    s3_storage_class = "STANDARD"
+    s3_config = {
+      bucket_access_role_arn = "arn:aws:iam::123456789012:role/datasync-s3-access-role"
+    }
+  }
+
+  "dest_s3" = {
+    name             = "dest-s3-location"
+    s3_bucket_arn    = "arn:aws:s3:::my-destination-bucket"
+    subdirectory     = "/backup"
+    s3_storage_class = "STANDARD_IA"
+    s3_config = {
+      bucket_access_role_arn = "arn:aws:iam::123456789012:role/datasync-s3-access-role"
+    }
+  }
+}
+
+# ------------------------------------------------------------------------------
+# EFS Location
+# ------------------------------------------------------------------------------
+efs_locations = {
+  "source_efs" = {
+    name                = "source-efs-location"
+    efs_file_system_arn = "arn:aws:elasticfilesystem:us-east-1:123456789012:file-system/fs-12345678"
+    subdirectory        = "/"
+    ec2_config = {
+      security_group_arns = ["arn:aws:ec2:us-east-1:123456789012:security-group/sg-12345678"]
+      subnet_arn          = "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-12345678"
+    }
+  }
+}
+
+# ------------------------------------------------------------------------------
+# NFS Location (connecting via agent)
+# ------------------------------------------------------------------------------
+nfs_locations = {
+  "on_prem_nfs" = {
+    name            = "on-prem-nfs-location"
+    server_hostname = "nfs.internal.example.com"
+    subdirectory    = "/exports/data"
+    on_prem_config = {
+      agent_keys = ["on-prem-agent-01"]
+    }
+    mount_options = {
+      version = "AUTOMATIC"
+    }
+  }
+}
+
+# ------------------------------------------------------------------------------
+# DataSync Tasks
+# ------------------------------------------------------------------------------
+tasks = {
+  "s3-to-s3-sync" = {
+    name                     = "s3-to-s3-sync-task"
+    source_location_key      = "source_s3"
+    destination_location_key = "dest_s3"
+    cloudwatch_log_group_arn = "arn:aws:logs:us-east-1:123456789012:log-group:/aws/datasync:*"
+
+    schedule = {
+      schedule_expression = "rate(1 hour)"
+    }
+
+    options = {
+      verify_mode            = "POINT_IN_TIME_CONSISTENT"
+      posix_permissions      = "PRESERVE"
+      preserve_deleted_files = "REMOVE"
+      bytes_per_second       = -1
+      log_level              = "BASIC"
+    }
+
+    includes = {
+      filter_type = "SIMPLE_PATTERN"
+      value       = "/data/*"
+    }
+  }
+}
