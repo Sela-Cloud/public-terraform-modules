@@ -54,18 +54,29 @@
           {
             "id": "cluster",
             "label": "Cluster",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "placeholder": "orders-prod",
-            "description": "Name or ARN of the cluster, such as one from the ECS Cluster module."
+            "data_source": {
+              "resource": "ecs.clusters",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "task_definition",
             "label": "Task definition",
-            "type": "text",
+            "type": "select",
             "required": true,
-            "placeholder": "orders-api",
-            "description": "A family (runs its latest revision), family:revision, or the full ARN from the ECS Task Definition module."
+            "description": "Pick a family to run its latest ACTIVE revision, or type a family:revision or full ARN.",
+            "data_source": {
+              "resource": "ecs.task_definition_families",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "desired_count",
@@ -178,7 +189,13 @@
             "id": "security_group_ids",
             "label": "Security group IDs",
             "type": "list",
-            "placeholder": "sg-0123456789abcdef0"
+            "data_source": {
+              "resource": "ec2.security_groups",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "assign_public_ip",
@@ -203,9 +220,15 @@
               {
                 "id": "target_group_arn",
                 "label": "Target group ARN",
-                "type": "text",
+                "type": "select",
                 "required": true,
-                "placeholder": "arn:aws:elasticloadbalancing:REGION:ACCOUNT:targetgroup/NAME/ID"
+                "data_source": {
+                  "resource": "elbv2.target_groups",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "protocol" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
               },
               {
                 "id": "container_name",
