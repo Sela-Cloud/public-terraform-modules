@@ -1,0 +1,9 @@
+name   = "prod-igw"
+vpc_id = "vpc-0123456789abcdef0"
+
+create_egress_only_gateway = false
+
+tags = {
+  Environment = "production"
+  ManagedBy   = "Terraform"
+}

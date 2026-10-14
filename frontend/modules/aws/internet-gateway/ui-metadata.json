@@ -1,0 +1,78 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "internet-gateway",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Internet Gateway",
+    "icon": "gateway",
+    "description": "Provision an Internet Gateway attached to a VPC, with an optional Egress-Only Internet Gateway for IPv6 outbound-only traffic",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": { "value_key": "name", "label_key": "description", "description_key": "name" }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "internet_gateway",
+    "key_field": "name",
+    "key_label": "Name",
+    "key_description": "Unique name for the Internet Gateway, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Name",
+            "type": "text",
+            "required": true,
+            "placeholder": "prod-igw",
+            "validation": { "min": 1, "max": 255, "pattern": "^[a-zA-Z0-9-_]+$", "pattern_error": "Name must contain only alphanumeric characters, dashes, and underscores." }
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "description": "Leave empty to create a detached gateway.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "cidr" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "create_egress_only_gateway",
+            "label": "Also Create Egress-Only Internet Gateway",
+            "description": "An IPv6 outbound-only gateway for the same VPC. Requires a VPC to be selected above.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          { "id": "tags", "label": "Resource Tags", "type": "map", "required": false, "default": {} }
+        ]
+      }
+    ]
+  }
+}
