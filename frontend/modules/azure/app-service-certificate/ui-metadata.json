@@ -1,0 +1,161 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "app-service-certificate",
+  "version": "1.0.0",
+  "display": {
+    "label": "App Service Certificate",
+    "icon": "azure-app-service",
+    "description": "Custom and self-managed SSL/TLS certificate for Azure App Service custom domains, apex domains, and wildcards",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "app_service_certificate",
+    "key_field": "name",
+    "key_label": "Certificate Name",
+    "key_description": "The unique name of the Azure App Service Certificate. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Certificate name, resource group, and location.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Certificate Name",
+            "description": "Specifies the name of the App Service Certificate.",
+            "type": "text",
+            "required": true,
+            "placeholder": "cert-custom-domain",
+            "locked_after_create": true
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group",
+            "description": "The name of the Resource Group in which to create the certificate.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "location"
+              },
+              "allow_custom": true
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the App Service Certificate should exist.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "certificate_source",
+        "label": "Certificate Source & Credentials",
+        "description": "Import the certificate from Azure Key Vault or provide a base64 PFX blob.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "key_vault_secret_id",
+            "label": "Key Vault Secret ID",
+            "description": "The ID or URI of the Key Vault Secret containing the certificate. Mutually exclusive with PFX Blob.",
+            "type": "text",
+            "required": false,
+            "placeholder": "https://<vault-name>.vault.azure.net/secrets/<cert-name>/<version>"
+          },
+          {
+            "id": "key_vault_id",
+            "label": "Key Vault ID",
+            "description": "The Azure Resource ID of the Key Vault containing the certificate.",
+            "type": "text",
+            "required": false,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.KeyVault/vaults/myvault"
+          },
+          {
+            "id": "pfx_blob",
+            "label": "PFX Blob (Base64)",
+            "description": "The base64-encoded contents of the PKCS#12 (.pfx) certificate file. Mutually exclusive with Key Vault Secret ID.",
+            "type": "text",
+            "required": false,
+            "placeholder": "MIIK... (base64 string)"
+          },
+          {
+            "id": "password",
+            "label": "PFX Password",
+            "description": "The password to access the certificate's private key within the PFX blob.",
+            "type": "text",
+            "required": false,
+            "placeholder": "Password for .pfx file"
+          }
+        ]
+      },
+      {
+        "id": "associations",
+        "label": "Plan Associations",
+        "description": "Optional App Service Plan association.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "app_service_plan_id",
+            "label": "App Service Plan ID",
+            "description": "The ID of the App Service Plan assigned to the certificate.",
+            "type": "text",
+            "required": false,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.Web/serverFarms/myplan"
+          }
+        ]
+      },
+      {
+        "id": "tags_section",
+        "label": "Tags",
+        "description": "Resource tags for organization, governance, and billing.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to tag the Certificate for organization and billing.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
