@@ -1,7 +1,6 @@
 variable "name" {
   description = "Base name to be used on all Image Builder resources."
   type        = string
-  default     = "eib-default"
 }
 
 variable "description" {

@@ -1,7 +1,6 @@
 variable "name" {
   description = "Friendly name of the policy. If omitted, Terraform will assign a random, unique name. Conflicts with name_prefix."
   type        = string
-  default     = "iam-policy-default"
 
   validation {
     condition     = var.name == null || can(regex("^[a-zA-Z0-9+=,.@_-]{1,128}$", var.name))

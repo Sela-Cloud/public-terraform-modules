@@ -1,13 +1,12 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "us-east-1"
 }
 
 variable "network_acl" {
   description = "Map of AWS Network ACL configurations to deploy, keyed by network ACL name."
   type = map(object({
-    name       = optional(string, "network-acl-default")
+    name       = string
     vpc_id     = string
     subnet_ids = optional(list(string), [])
     ingress = optional(list(object({

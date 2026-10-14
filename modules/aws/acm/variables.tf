@@ -1,13 +1,11 @@
 variable "name" {
   description = "Name identifier applied as the 'Name' tag."
   type        = string
-  default     = "acm-certificate-default"
 }
 
 variable "domain_name" {
   description = "A domain name for which the certificate should be issued."
   type        = string
-  default     = "example.com"
 }
 
 variable "validation_method" {

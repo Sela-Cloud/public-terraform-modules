@@ -1,13 +1,12 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "us-east-1"
 }
 
 variable "nat_gateway" {
   description = "Map of AWS NAT Gateway configurations to deploy, keyed by NAT gateway name."
   type = map(object({
-    name                               = optional(string, "nat-gateway-default")
+    name                               = string
     availability_mode                  = optional(string, "zonal")
     connectivity_type                  = optional(string, "public")
     subnet_id                          = optional(string, null)
@@ -24,20 +23,5 @@ variable "nat_gateway" {
     })), [])
     tags = optional(map(string), {})
   }))
-  default = {
-    "nat-gateway-default" = {
-      name                               = "nat-gateway-default"
-      availability_mode                  = "zonal"
-      connectivity_type                  = "public"
-      subnet_id                          = null
-      allocation_id                      = null
-      vpc_id                             = null
-      private_ip                         = null
-      secondary_allocation_ids           = []
-      secondary_private_ip_addresses     = []
-      secondary_private_ip_address_count = null
-      availability_zone_address          = []
-      tags                               = {}
-    }
-  }
+  default = {}
 }

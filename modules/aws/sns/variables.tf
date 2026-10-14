@@ -1,7 +1,6 @@
 variable "name" {
   description = "The name of the SNS topic. For FIFO topics, the name must end with '.fifo'."
   type        = string
-  default     = "sns-default"
 }
 
 variable "name_prefix" {

@@ -1,7 +1,6 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "us-east-1"
 }
 
 variable "lt" {
@@ -78,37 +77,5 @@ variable "lt" {
       }), null)
     }), null)
   }))
-  default = {
-    "lt-default" = {
-      name                                 = null
-      name_prefix                          = null
-      description                          = null
-      image_id                             = null
-      instance_type                        = "t3.micro"
-      key_name                             = null
-      user_data                            = null
-      ebs_optimized                        = null
-      vpc_security_group_ids               = null
-      update_default_version               = true
-      iam_instance_profile_name            = null
-      iam_instance_profile_arn             = null
-      enable_monitoring                    = null
-      enable_metadata_options              = true
-      http_endpoint                        = "enabled"
-      http_tokens                          = "required"
-      http_put_response_hop_limit          = 1
-      instance_metadata_tags               = null
-      block_device_mappings                = []
-      network_interfaces                   = []
-      tag_specifications                   = []
-      tags                                 = {}
-      disable_api_termination              = null
-      disable_api_stop                     = null
-      instance_initiated_shutdown_behavior = null
-      placement                            = null
-      cpu_options                          = null
-      credit_specification                 = null
-      instance_market_options              = null
-    }
-  }
+  default = {}
 }

@@ -1,7 +1,6 @@
 variable "name" {
   description = "The name of the Local Network Gateway. Changing this forces a new resource to be created."
   type        = string
-  default     = "lng-default"
 
   validation {
     condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9_.-]*[a-zA-Z0-9_])?$", var.name)) && length(var.name) >= 1 && length(var.name) <= 80
@@ -12,7 +11,6 @@ variable "name" {
 variable "resource_group_name" {
   description = "The name of the Resource Group in which to create the Local Network Gateway. Changing this forces a new resource to be created."
   type        = string
-  default     = "rg-default"
 }
 
 variable "location" {

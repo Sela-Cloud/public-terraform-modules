@@ -1,7 +1,6 @@
 variable "name" {
   description = "Name to be used on all resources as identifier, applied as the 'Name' tag."
   type        = string
-  default     = "nat-gateway-default"
 }
 
 variable "availability_mode" {

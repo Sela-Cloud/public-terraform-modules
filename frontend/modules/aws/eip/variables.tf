@@ -1,13 +1,12 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "us-east-1"
 }
 
 variable "eip" {
   description = "Map of AWS Elastic IP configurations to deploy, keyed by Elastic IP name."
   type = map(object({
-    name                      = optional(string, "eip-default")
+    name                      = string
     domain                    = optional(string, "vpc")
     instance                  = optional(string, null)
     network_interface         = optional(string, null)
@@ -32,20 +31,5 @@ variable "eip" {
     error_message = "Each Elastic IP configuration can specify either 'instance' or 'network_interface', not both."
   }
 
-  default = {
-    "eip-default" = {
-      name                      = "eip-default"
-      domain                    = "vpc"
-      instance                  = null
-      network_interface         = null
-      associate_with_private_ip = null
-      public_ipv4_pool          = null
-      network_border_group      = null
-      customer_owned_ipv4_pool  = null
-      ipam_pool_id              = null
-      address                   = null
-      timeouts                  = {}
-      tags                      = {}
-    }
-  }
+  default = {}
 }

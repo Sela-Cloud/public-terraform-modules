@@ -1,7 +1,6 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "us-east-1"
 }
 
 variable "eib" {
@@ -45,29 +44,5 @@ variable "eib" {
       launch_permission_account_ids = optional(list(string), [])
     })), [])
   }))
-  default = {
-    "eib-default" = {
-      name                          = "eib-default"
-      description                   = null
-      parent_image                  = "amazon-linux-2-x86/x.x.x"
-      recipe_version                = "1.0.0"
-      components                    = []
-      instance_types                = ["t3.medium"]
-      instance_profile_name         = null
-      subnet_id                     = null
-      security_group_ids            = []
-      key_pair                      = null
-      terminate_instance_on_failure = true
-      sns_topic_arn                 = null
-      schedule_expression           = null
-      pipeline_status               = "ENABLED"
-      tags                          = {}
-      block_device_mappings         = []
-      http_tokens                   = null
-      http_put_response_hop_limit   = null
-      logging_s3_bucket_name        = null
-      logging_s3_key_prefix         = null
-      distributions                 = []
-    }
-  }
+  default = {}
 }

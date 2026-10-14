@@ -1,7 +1,6 @@
 variable "name" {
   description = "The group's name. Must consist of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-."
   type        = string
-  default     = "iam-group-default"
 
   validation {
     condition     = can(regex("^[a-zA-Z0-9+=,.@_-]{1,128}$", var.name))

@@ -1,7 +1,6 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "us-east-1"
 }
 
 variable "sns" {
@@ -24,18 +23,5 @@ variable "sns" {
     })), [])
     tags = optional(map(string), {})
   }))
-  default = {
-    "sns-default" = {
-      name                        = null
-      name_prefix                 = null
-      display_name                = null
-      kms_master_key_id           = null
-      fifo_topic                  = false
-      content_based_deduplication = false
-      delivery_policy             = null
-      policy                      = null
-      subscriptions               = []
-      tags                        = {}
-    }
-  }
+  default = {}
 }

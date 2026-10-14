@@ -1,9 +1,9 @@
 variable "private_endpoint" {
   description = "Map of Azure Private Endpoint configurations to create."
   type = map(object({
-    name                          = optional(string, "pe-default")
-    resource_group_name           = optional(string, "rg-default")
-    location                      = optional(string, "eastus")
+    name                          = string
+    resource_group_name           = string
+    location                      = string
     subnet_id                     = string
     custom_network_interface_name = optional(string, null)
     private_service_connection = optional(object({

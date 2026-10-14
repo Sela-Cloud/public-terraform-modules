@@ -5,7 +5,6 @@
 variable "name" {
   description = "Name of the repository."
   type        = string
-  default     = "ecr-default"
 }
 
 variable "image_tag_mutability" {

@@ -1,9 +1,9 @@
 variable "application_security_group" {
   description = "Map of Azure Application Security Group configurations to create."
   type = map(object({
-    name                  = optional(string, "asg-default")
-    resource_group_name   = optional(string, "rg-default")
-    location              = optional(string, "eastus")
+    name                  = string
+    resource_group_name   = string
+    location              = string
     tags                  = optional(map(string), {})
     network_interface_ids = optional(list(string), [])
     timeouts = optional(object({

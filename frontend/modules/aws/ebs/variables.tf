@@ -1,7 +1,6 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "us-east-1"
 }
 
 variable "ebs" {
@@ -20,20 +19,5 @@ variable "ebs" {
     final_snapshot       = optional(bool, false)
     tags                 = optional(map(string), {})
   }))
-  default = {
-    "ebs-default" = {
-      name                 = null
-      availability_zone    = "us-east-1a"
-      size                 = 20
-      type                 = "gp3"
-      iops                 = null
-      throughput           = null
-      encrypted            = true
-      kms_key_id           = null
-      snapshot_id          = null
-      multi_attach_enabled = false
-      final_snapshot       = false
-      tags                 = {}
-    }
-  }
+  default = {}
 }

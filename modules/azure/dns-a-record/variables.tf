@@ -12,7 +12,6 @@ variable "name" {
 variable "resource_group_name" {
   description = "The name of the Resource Group in which to create the DNS A Record. Changing this forces a new resource to be created."
   type        = string
-  default     = "rg-default"
 
   validation {
     condition     = length(var.resource_group_name) >= 1 && length(var.resource_group_name) <= 90 && can(regex("^[-\\w\\._\\(\\)]+[^\\.]$", var.resource_group_name))
@@ -23,7 +22,6 @@ variable "resource_group_name" {
 variable "zone_name" {
   description = "The name of the DNS Zone in which to create the DNS A Record. Changing this forces a new resource to be created."
   type        = string
-  default     = "example.com"
 
   validation {
     condition     = can(regex("^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}$", var.zone_name)) && length(var.zone_name) >= 1 && length(var.zone_name) <= 253

@@ -1,7 +1,6 @@
 variable "name" {
   description = "The name of the SQS queue. For FIFO queues, the name must end with '.fifo'."
   type        = string
-  default     = "sqs-default"
 }
 
 variable "name_prefix" {

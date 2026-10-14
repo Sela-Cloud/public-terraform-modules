@@ -1,13 +1,12 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned."
   type        = string
-  default     = "us-east-1"
 }
 
 variable "ecr" {
   description = "Map of AWS ECR repository configurations to deploy, keyed by repository name."
   type = map(object({
-    name                 = optional(string, "ecr-default")
+    name                 = string
     image_tag_mutability = optional(string, "MUTABLE")
     force_delete         = optional(bool, false)
     scan_on_push         = optional(bool, true)
@@ -17,17 +16,5 @@ variable "ecr" {
     lifecycle_policy     = optional(string, null)
     repository_policy    = optional(string, null)
   }))
-  default = {
-    "ecr-default" = {
-      name                 = "ecr-default"
-      image_tag_mutability = "MUTABLE"
-      force_delete         = false
-      scan_on_push         = true
-      encryption_type      = "AES256"
-      kms_key              = null
-      tags                 = {}
-      lifecycle_policy     = null
-      repository_policy    = null
-    }
-  }
+  default = {}
 }

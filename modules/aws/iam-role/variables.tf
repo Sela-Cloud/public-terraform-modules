@@ -1,7 +1,6 @@
 variable "name" {
   description = "Friendly name of the role. If omitted, Terraform will assign a random, unique name."
   type        = string
-  default     = "iam-role-default"
 }
 
 variable "name_prefix" {

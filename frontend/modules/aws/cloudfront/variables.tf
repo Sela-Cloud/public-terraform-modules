@@ -1,7 +1,6 @@
 variable "region" {
   description = "The AWS region where resources will be provisioned. CloudFront itself is global; this only affects the provider used to create it."
   type        = string
-  default     = "us-east-1"
 }
 
 variable "cloudfront" {
