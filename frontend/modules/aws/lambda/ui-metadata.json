@@ -1,0 +1,595 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "lambda",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Lambda Function",
+    "icon": "function",
+    "description": "Provision an AWS Lambda function with its execution role, logging, networking, and triggers",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": { "value_key": "name", "label_key": "description", "description_key": "name" }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "lambda",
+    "key_field": "function_name",
+    "key_label": "Function Name",
+    "key_description": "Unique name for the Lambda Function.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "fields": [
+          { "id": "function_name", "label": "Function Name", "type": "text", "required": true, "placeholder": "my-lambda-service" },
+          { "id": "description", "label": "Description", "type": "text", "required": false, "nullable": true },
+          {
+            "id": "package_type",
+            "label": "Package Type",
+            "type": "select",
+            "required": false,
+            "default": "Zip",
+            "options": [
+              { "value": "Zip", "label": "Zip archive" },
+              { "value": "Image", "label": "Container image" }
+            ]
+          },
+          {
+            "id": "runtime",
+            "label": "Runtime",
+            "description": "Only applies to Zip packages.",
+            "type": "text",
+            "required": false,
+            "default": "nodejs20.x",
+            "depends_on": { "field": "package_type", "value": "Zip" },
+            "placeholder": "nodejs20.x, python3.12, java21, provided.al2023"
+          },
+          {
+            "id": "handler",
+            "label": "Handler",
+            "description": "Only applies to Zip packages.",
+            "type": "text",
+            "required": false,
+            "default": "index.handler",
+            "depends_on": { "field": "package_type", "value": "Zip" }
+          },
+          {
+            "id": "architectures",
+            "label": "Architecture",
+            "type": "list",
+            "required": false,
+            "default": ["x86_64"]
+          },
+          { "id": "memory_size", "label": "Memory (MB)", "type": "number", "required": false, "default": 128, "validation": { "min": 128, "max": 10240 } },
+          { "id": "timeout", "label": "Timeout (Seconds)", "type": "number", "required": false, "default": 3, "validation": { "min": 1, "max": 900 } },
+          { "id": "reserved_concurrent_executions", "label": "Reserved Concurrent Executions", "description": "0 disables execution, -1 removes limits, empty uses the account's unreserved pool.", "type": "number", "required": false, "nullable": true },
+          { "id": "publish", "label": "Publish a New Version on Change", "type": "boolean", "required": false, "default": false }
+        ]
+      },
+      {
+        "id": "packaging",
+        "label": "Deployment Package",
+        "fields": [
+          {
+            "id": "create_placeholder_package",
+            "label": "Create Placeholder Package",
+            "description": "When no Filename, S3 Bucket, or Image URI is given below, deploy a tiny working 'Hello from AWS Lambda!' handler instead of failing. Only applies to Zip packages.",
+            "type": "boolean",
+            "required": false,
+            "default": true,
+            "depends_on": { "field": "package_type", "value": "Zip" }
+          },
+          { "id": "filename", "label": "Local Package Path", "description": "Path to a .zip deployment package. Only applies to Zip packages.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "package_type", "value": "Zip" } },
+          { "id": "source_code_hash", "label": "Source Code Hash", "description": "Base64-encoded SHA256 of the package, used to trigger updates.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "package_type", "value": "Zip" } },
+          {
+            "id": "s3_bucket",
+            "label": "S3 Bucket",
+            "description": "Bucket containing the deployment package, as an alternative to Local Package Path. Only applies to Zip packages.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "package_type", "value": "Zip" },
+            "data_source": {
+              "resource": "s3.buckets",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "s3_key", "label": "S3 Key", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "package_type", "value": "Zip" } },
+          { "id": "s3_object_version", "label": "S3 Object Version", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "package_type", "value": "Zip" } },
+          {
+            "id": "image_uri",
+            "label": "Container Image URI",
+            "description": "Pick a repository, then add :tag or @digest. Only applies to Image packages.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "package_type", "value": "Image" },
+            "data_source": {
+              "resource": "ecr.repositories",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "uri", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "layers", "label": "Existing Layer ARNs", "description": "Up to 5 existing Lambda Layer Version ARNs to attach.", "type": "list", "required": false, "default": [] },
+          { "id": "code_signing_config_arn", "label": "Existing Code Signing Config ARN", "description": "Leave empty unless using a code signing configuration created outside this form.", "type": "text", "required": false, "nullable": true }
+        ]
+      },
+      {
+        "id": "runtime_environment",
+        "label": "Environment, Networking & Encryption",
+        "fields": [
+          { "id": "environment_variables", "label": "Environment Variables", "type": "map", "required": false, "default": {} },
+          {
+            "id": "vpc_subnet_ids",
+            "label": "VPC Subnets",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "vpc_security_group_ids",
+            "label": "VPC Security Groups",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.security_groups",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "ipv6_allowed_for_dual_stack", "label": "Allow IPv6 for Dual-Stack VPC", "type": "boolean", "required": false, "default": false },
+          {
+            "id": "dead_letter_target_arn",
+            "label": "Dead Letter Target",
+            "description": "SNS topic or SQS queue notified when an async invocation fails. SQS queues aren't created by this catalog yet, so type the ARN directly for those.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "sns.topics",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "tracing_mode",
+            "label": "X-Ray Tracing",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "options": [
+              { "value": "PassThrough", "label": "Pass-through" },
+              { "value": "Active", "label": "Active" }
+            ]
+          },
+          { "id": "ephemeral_storage_size", "label": "/tmp Storage (MB)", "type": "number", "required": false, "default": 512, "validation": { "min": 512, "max": 10240 } },
+          {
+            "id": "kms_key_arn",
+            "label": "Environment Variables KMS Key",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "kms.keys",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "arn", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "snap_start", "label": "Enable SnapStart", "description": "Only effective on Java runtimes.", "type": "boolean", "required": false, "default": false },
+          {
+            "id": "file_system_config",
+            "label": "EFS File System Mount",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              { "id": "arn", "label": "EFS Access Point ARN", "type": "text", "required": true, "placeholder": "arn:aws:elasticfilesystem:us-east-1:123456789012:access-point/fsap-0123456789abcdef0" },
+              { "id": "local_mount_path", "label": "Local Mount Path", "type": "text", "required": true, "placeholder": "/mnt/efs" }
+            ]
+          },
+          {
+            "id": "image_config",
+            "label": "Container Image Overrides",
+            "description": "Only applies to Image packages.",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "package_type", "value": "Image" },
+            "fields": [
+              { "id": "command", "label": "Command (CMD)", "type": "list", "required": false, "nullable": true },
+              { "id": "entry_point", "label": "Entry Point", "type": "list", "required": false, "nullable": true },
+              { "id": "working_directory", "label": "Working Directory", "type": "text", "required": false, "nullable": true }
+            ]
+          },
+          {
+            "id": "logging_config",
+            "label": "Advanced Logging Configuration",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "log_format",
+                "label": "Log Format",
+                "type": "select",
+                "required": false,
+                "default": "Text",
+                "options": [
+                  { "value": "Text", "label": "Text" },
+                  { "value": "JSON", "label": "JSON" }
+                ]
+              },
+              { "id": "application_log_level", "label": "Application Log Level", "type": "select", "required": false, "nullable": true, "depends_on": { "field": "log_format", "value": "JSON" }, "options": [
+                { "value": "TRACE", "label": "TRACE" }, { "value": "DEBUG", "label": "DEBUG" }, { "value": "INFO", "label": "INFO" }, { "value": "WARN", "label": "WARN" }, { "value": "ERROR", "label": "ERROR" }, { "value": "FATAL", "label": "FATAL" }
+              ] },
+              { "id": "system_log_level", "label": "System Log Level", "type": "select", "required": false, "nullable": true, "depends_on": { "field": "log_format", "value": "JSON" }, "options": [
+                { "value": "DEBUG", "label": "DEBUG" }, { "value": "INFO", "label": "INFO" }, { "value": "WARN", "label": "WARN" }
+              ] },
+              { "id": "log_group", "label": "Custom Log Group Name", "type": "text", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "iam_role",
+        "label": "Execution Role",
+        "fields": [
+          { "id": "create_role", "label": "Create Dedicated Execution Role", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "lambda_role_arn",
+            "label": "Existing Execution Role",
+            "description": "Required when Create Dedicated Execution Role is off.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_role", "value": false },
+            "data_source": {
+              "resource": "iam.roles",
+              "params": {},
+              "display": { "value_key": "arn", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "role_name", "label": "Role Name", "description": "Defaults to '<function name>-role'.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "create_role", "value": true } },
+          { "id": "role_description", "label": "Role Description", "type": "text", "required": false, "default": "Execution role for AWS Lambda function", "depends_on": { "field": "create_role", "value": true } },
+          {
+            "id": "permissions_boundary",
+            "label": "Permissions Boundary Policy",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_role", "value": true },
+            "data_source": {
+              "resource": "iam.policies",
+              "params": {},
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "role_policy_arns",
+            "label": "Additional Managed Policies",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "create_role", "value": true },
+            "data_source": {
+              "resource": "iam.policies",
+              "params": {},
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "custom_policy_statements",
+            "label": "Inline Policy Statements (JSON)",
+            "description": "A JSON list of IAM policy statement objects, embedded directly into the execution role.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_role", "value": true },
+            "placeholder": "[\n  {\n    \"Effect\": \"Allow\",\n    \"Action\": [\"s3:GetObject\"],\n    \"Resource\": \"*\"\n  }\n]"
+          },
+          { "id": "role_tags", "label": "Role Tags", "type": "map", "required": false, "default": {}, "depends_on": { "field": "create_role", "value": true } }
+        ]
+      },
+      {
+        "id": "logging",
+        "label": "Logging",
+        "fields": [
+          { "id": "create_log_group", "label": "Create Dedicated Log Group", "type": "boolean", "required": false, "default": true },
+          { "id": "log_retention_in_days", "label": "Log Retention (Days)", "description": "0 means never expire.", "type": "number", "required": false, "default": 14, "depends_on": { "field": "create_log_group", "value": true } },
+          {
+            "id": "log_group_kms_key_id",
+            "label": "Log Group KMS Key",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_log_group", "value": true },
+            "data_source": {
+              "resource": "kms.keys",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "log_group_class",
+            "label": "Log Group Class",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_log_group", "value": true },
+            "options": [
+              { "value": "STANDARD", "label": "Standard" },
+              { "value": "INFREQUENT_ACCESS", "label": "Infrequent Access" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "function_url",
+        "label": "Function URL",
+        "fields": [
+          { "id": "create_function_url", "label": "Create Function URL", "type": "boolean", "required": false, "default": false },
+          { "id": "function_url_auth_type", "label": "Authorization Type", "type": "select", "required": false, "default": "NONE", "depends_on": { "field": "create_function_url", "value": true }, "options": [
+            { "value": "NONE", "label": "None (public)" }, { "value": "AWS_IAM", "label": "AWS IAM" }
+          ] },
+          { "id": "function_url_invoke_mode", "label": "Invoke Mode", "type": "select", "required": false, "default": "BUFFERED", "depends_on": { "field": "create_function_url", "value": true }, "options": [
+            { "value": "BUFFERED", "label": "Buffered" }, { "value": "RESPONSE_STREAM", "label": "Response streaming" }
+          ] },
+          { "id": "function_url_qualifier", "label": "Alias / Version", "description": "Omit to associate with $LATEST.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "create_function_url", "value": true } },
+          {
+            "id": "function_url_cors",
+            "label": "CORS",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "create_function_url", "value": true },
+            "fields": [
+              { "id": "allow_credentials", "label": "Allow Credentials", "type": "boolean", "required": false, "nullable": true },
+              { "id": "allow_headers", "label": "Allow Headers", "type": "list", "required": false, "nullable": true },
+              { "id": "allow_methods", "label": "Allow Methods", "type": "list", "required": false, "nullable": true },
+              { "id": "allow_origins", "label": "Allow Origins", "type": "list", "required": false, "nullable": true },
+              { "id": "expose_headers", "label": "Expose Headers", "type": "list", "required": false, "nullable": true },
+              { "id": "max_age", "label": "Max Age (Seconds)", "type": "number", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "permissions",
+        "label": "Resource-Based Permissions",
+        "description": "Grant other AWS services or accounts permission to invoke this function.",
+        "fields": [
+          {
+            "id": "lambda_permissions",
+            "label": "Permission",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "allow-s3-invoke" },
+              { "id": "action", "label": "Action", "type": "text", "required": false, "default": "lambda:InvokeFunction" },
+              { "id": "principal", "label": "Principal", "type": "text", "required": true, "placeholder": "s3.amazonaws.com" },
+              { "id": "source_arn", "label": "Source ARN", "type": "text", "required": false, "nullable": true },
+              { "id": "source_account", "label": "Source Account", "type": "text", "required": false, "nullable": true },
+              { "id": "qualifier", "label": "Qualifier (Alias/Version)", "type": "text", "required": false, "nullable": true },
+              { "id": "event_source_token", "label": "Event Source Token", "type": "text", "required": false, "nullable": true },
+              { "id": "function_url_auth_type", "label": "Function URL Auth Type", "type": "select", "required": false, "nullable": true, "options": [
+                { "value": "NONE", "label": "None" }, { "value": "AWS_IAM", "label": "AWS IAM" }
+              ] },
+              { "id": "principal_org_id", "label": "Principal Organization ID", "type": "text", "required": false, "nullable": true },
+              { "id": "statement_id_prefix", "label": "Statement ID Prefix", "description": "Use instead of a fixed statement ID, for permissions created in a loop.", "type": "text", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "aliases_section",
+        "label": "Aliases",
+        "fields": [
+          {
+            "id": "aliases",
+            "label": "Alias",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Alias Name", "type": "text", "required": true, "placeholder": "live" },
+              { "id": "function_version", "label": "Function Version", "type": "text", "required": false, "default": "$LATEST" },
+              { "id": "description", "label": "Description", "type": "text", "required": false, "nullable": true },
+              { "id": "additional_version_weights", "label": "Additional Version Weights", "description": "Map of function version to traffic weight (0-1), for weighted/canary routing.", "type": "map", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "event_source_mappings_section",
+        "label": "Event Source Mappings",
+        "description": "Triggers from SQS, DynamoDB Streams, Kinesis, Kafka, or DocumentDB.",
+        "fields": [
+          {
+            "id": "event_source_mappings",
+            "label": "Event Source Mapping",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "sqs-trigger" },
+              { "id": "event_source_arn", "label": "Event Source ARN", "type": "text", "required": false, "nullable": true, "placeholder": "arn:aws:sqs:us-east-1:123456789012:my-queue" },
+              { "id": "batch_size", "label": "Batch Size", "type": "number", "required": false, "nullable": true },
+              { "id": "maximum_batching_window_in_seconds", "label": "Max Batching Window (Seconds)", "type": "number", "required": false, "nullable": true },
+              { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": true },
+              { "id": "starting_position", "label": "Starting Position", "type": "select", "required": false, "nullable": true, "options": [
+                { "value": "TRIM_HORIZON", "label": "Trim horizon" }, { "value": "LATEST", "label": "Latest" }, { "value": "AT_TIMESTAMP", "label": "At timestamp" }
+              ] },
+              { "id": "starting_position_timestamp", "label": "Starting Position Timestamp", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "starting_position", "value": "AT_TIMESTAMP" } },
+              { "id": "maximum_record_age_in_seconds", "label": "Max Record Age (Seconds)", "type": "number", "required": false, "nullable": true },
+              { "id": "maximum_retry_attempts", "label": "Max Retry Attempts", "type": "number", "required": false, "nullable": true },
+              { "id": "bisect_batch_on_function_error", "label": "Bisect Batch on Error", "type": "boolean", "required": false, "nullable": true },
+              { "id": "parallelization_factor", "label": "Parallelization Factor", "type": "number", "required": false, "nullable": true },
+              { "id": "tumbling_window_in_seconds", "label": "Tumbling Window (Seconds)", "type": "number", "required": false, "nullable": true },
+              { "id": "topics", "label": "Kafka Topics", "type": "list", "required": false, "nullable": true },
+              { "id": "queues", "label": "ActiveMQ/RabbitMQ Queues", "type": "list", "required": false, "nullable": true },
+              { "id": "function_response_types", "label": "Function Response Types", "type": "list", "required": false, "nullable": true, "placeholder": "ReportBatchItemFailures" },
+              {
+                "id": "kms_key_arn",
+                "label": "Filter Criteria KMS Key",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "kms.keys",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "filter_patterns", "label": "Filter Patterns (JSON per pattern)", "type": "list", "required": false, "nullable": true },
+              { "id": "maximum_concurrency", "label": "Max Concurrency", "type": "number", "required": false, "nullable": true },
+              { "id": "on_failure_destination_arn", "label": "On-Failure Destination ARN", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "document_db_config",
+                "label": "DocumentDB Source Config",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  { "id": "database_name", "label": "Database Name", "type": "text", "required": true },
+                  { "id": "collection_name", "label": "Collection Name", "type": "text", "required": false, "nullable": true },
+                  { "id": "full_document", "label": "Full Document", "type": "select", "required": false, "nullable": true, "options": [
+                    { "value": "UpdateLookup", "label": "UpdateLookup" }, { "value": "Default", "label": "Default" }
+                  ] }
+                ]
+              },
+              { "id": "kafka_consumer_group_id", "label": "Kafka Consumer Group ID", "type": "text", "required": false, "nullable": true },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "layers_to_create_section",
+        "label": "Layers to Create",
+        "fields": [
+          {
+            "id": "layers_to_create",
+            "label": "Layer",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Layer Name", "type": "text", "required": true, "placeholder": "my-shared-deps" },
+              { "id": "filename", "label": "Local Package Path", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "s3_bucket",
+                "label": "S3 Bucket",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "s3.buckets",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "s3_key", "label": "S3 Key", "type": "text", "required": false, "nullable": true },
+              { "id": "s3_object_version", "label": "S3 Object Version", "type": "text", "required": false, "nullable": true },
+              { "id": "compatible_runtimes", "label": "Compatible Runtimes", "type": "list", "required": false, "nullable": true },
+              { "id": "compatible_architectures", "label": "Compatible Architectures", "type": "list", "required": false, "nullable": true },
+              { "id": "description", "label": "Description", "type": "text", "required": false, "nullable": true },
+              { "id": "license_info", "label": "License Info", "type": "text", "required": false, "nullable": true },
+              { "id": "source_code_hash", "label": "Source Code Hash", "type": "text", "required": false, "nullable": true },
+              { "id": "skip_destroy", "label": "Skip Destroy", "type": "boolean", "required": false, "default": false }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "provisioned_concurrency_section",
+        "label": "Provisioned Concurrency",
+        "fields": [
+          {
+            "id": "provisioned_concurrency_config",
+            "label": "Provisioned Concurrency",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              { "id": "qualifier", "label": "Alias / Version", "type": "text", "required": true },
+              { "id": "provisioned_concurrent_executions", "label": "Provisioned Concurrent Executions", "type": "number", "required": true, "validation": { "min": 1 } },
+              { "id": "skip_destroy", "label": "Skip Destroy", "type": "boolean", "required": false, "default": false }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "code_signing_section",
+        "label": "Code Signing",
+        "fields": [
+          {
+            "id": "code_signing_config",
+            "label": "Code Signing Configuration",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              { "id": "signing_profile_version_arns", "label": "Signing Profile Version ARNs", "type": "list", "required": true },
+              { "id": "untrusted_artifact_on_deployment", "label": "Untrusted Artifact Policy", "type": "select", "required": false, "default": "Warn", "options": [
+                { "value": "Warn", "label": "Warn" }, { "value": "Enforce", "label": "Enforce" }
+              ] },
+              { "id": "description", "label": "Description", "type": "text", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          { "id": "tags", "label": "Resource Tags", "type": "map", "required": false, "default": {} }
+        ]
+      }
+    ]
+  }
+}
