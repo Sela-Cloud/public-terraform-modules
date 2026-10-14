@@ -1,0 +1,46 @@
+name           = "orders"
+billing_mode   = "PROVISIONED"
+hash_key       = "pk"
+range_key      = "sk"
+read_capacity  = 5
+write_capacity = 5
+
+attribute = [
+  { name = "pk", type = "S" },
+  { name = "sk", type = "S" },
+  { name = "gsi1pk", type = "S" },
+]
+
+global_secondary_index = [
+  {
+    key             = "by_gsi1"
+    name            = "gsi1"
+    hash_key        = "gsi1pk"
+    projection_type = "ALL"
+    read_capacity   = 5
+    write_capacity  = 5
+  }
+]
+
+ttl = {
+  enabled        = true
+  attribute_name = "expires_at"
+}
+
+point_in_time_recovery = {
+  enabled = true
+}
+
+server_side_encryption = {
+  enabled = true
+}
+
+autoscaling = [
+  { key = "table_r", dimension = "table_read", min_capacity = 5, max_capacity = 50, target_value = 70 },
+  { key = "table_w", dimension = "table_write", min_capacity = 5, max_capacity = 50, target_value = 70 },
+]
+
+tags = {
+  Environment = "production"
+  ManagedBy   = "Terraform"
+}

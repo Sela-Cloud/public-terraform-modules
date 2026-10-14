@@ -19,6 +19,7 @@ module "eks" {
   upgrade_policy_support_type                 = each.value.upgrade_policy_support_type
   enable_zonal_shift                          = each.value.enable_zonal_shift
   bootstrap_self_managed_addons               = each.value.bootstrap_self_managed_addons
+  compute_config                              = each.value.compute_config
   security_group_ids                          = each.value.security_group_ids
   create_cluster_security_group               = each.value.create_cluster_security_group
   create_iam_role                             = each.value.create_iam_role

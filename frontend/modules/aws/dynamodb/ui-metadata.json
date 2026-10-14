@@ -1,0 +1,431 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "dynamodb",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS DynamoDB",
+    "icon": "database",
+    "description": "Provision a DynamoDB table with secondary indexes, TTL, point-in-time recovery, encryption, Global Tables replicas, and auto scaling",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": { "value_key": "name", "label_key": "description", "description_key": "name" }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "dynamodb",
+    "key_field": "name",
+    "key_label": "Table Name",
+    "key_description": "Unique name for the DynamoDB table.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Table Name",
+            "type": "text",
+            "required": true,
+            "placeholder": "orders"
+          },
+          {
+            "id": "billing_mode",
+            "label": "Capacity Mode",
+            "type": "select",
+            "required": false,
+            "default": "PROVISIONED",
+            "options": [
+              { "value": "PROVISIONED", "label": "Provisioned" },
+              { "value": "PAY_PER_REQUEST", "label": "On-Demand" }
+            ]
+          },
+          {
+            "id": "hash_key",
+            "label": "Partition Key",
+            "description": "Must appear in the Attributes list below.",
+            "type": "text",
+            "required": false,
+            "default": "id"
+          },
+          {
+            "id": "range_key",
+            "label": "Sort Key",
+            "description": "Must appear in the Attributes list below, if set.",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "read_capacity",
+            "label": "Read Capacity Units",
+            "type": "number",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "billing_mode", "value": "PROVISIONED", "operator": "eq" }
+          },
+          {
+            "id": "write_capacity",
+            "label": "Write Capacity Units",
+            "type": "number",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "billing_mode", "value": "PROVISIONED", "operator": "eq" }
+          },
+          {
+            "id": "table_class",
+            "label": "Table Class",
+            "type": "select",
+            "required": false,
+            "default": "STANDARD",
+            "options": [
+              { "value": "STANDARD", "label": "Standard" },
+              { "value": "STANDARD_INFREQUENT_ACCESS", "label": "Standard - Infrequent Access" }
+            ]
+          },
+          {
+            "id": "deletion_protection_enabled",
+            "label": "Deletion Protection",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "attributes",
+        "label": "Attributes",
+        "description": "Only attributes actually used as a key (table or index) belong here -- adding unused attributes causes an infinite plan loop.",
+        "fields": [
+          {
+            "id": "attribute",
+            "label": "Attribute",
+            "type": "repeatable",
+            "required": false,
+            "default": [{ "name": "id", "type": "S" }],
+            "fields": [
+              { "id": "name", "label": "Name", "type": "text", "required": true, "placeholder": "id" },
+              {
+                "id": "type",
+                "label": "Type",
+                "type": "select",
+                "required": true,
+                "default": "S",
+                "options": [
+                  { "value": "S", "label": "String" },
+                  { "value": "N", "label": "Number" },
+                  { "value": "B", "label": "Binary" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "indexes",
+        "label": "Secondary Indexes",
+        "fields": [
+          {
+            "id": "global_secondary_index",
+            "label": "Global Secondary Index",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "by_type" },
+              { "id": "name", "label": "Index Name", "type": "text", "required": true, "placeholder": "type-index" },
+              { "id": "hash_key", "label": "Partition Key", "type": "text", "required": true },
+              { "id": "range_key", "label": "Sort Key", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "projection_type",
+                "label": "Projection Type",
+                "type": "select",
+                "required": true,
+                "default": "ALL",
+                "options": [
+                  { "value": "ALL", "label": "All Attributes" },
+                  { "value": "KEYS_ONLY", "label": "Keys Only" },
+                  { "value": "INCLUDE", "label": "Include Specific Attributes" }
+                ]
+              },
+              {
+                "id": "non_key_attributes",
+                "label": "Included Attributes",
+                "description": "Only used when Projection Type is 'Include Specific Attributes'.",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "projection_type", "value": "INCLUDE", "operator": "eq" }
+              },
+              {
+                "id": "read_capacity",
+                "label": "Read Capacity Units",
+                "description": "Required when the table's Capacity Mode is Provisioned.",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "write_capacity",
+                "label": "Write Capacity Units",
+                "description": "Required when the table's Capacity Mode is Provisioned.",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "id": "local_secondary_index",
+            "label": "Local Secondary Index",
+            "description": "Only valid when the table itself has a Sort Key, and can only be set at table creation.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "by_sk_alt" },
+              { "id": "name", "label": "Index Name", "type": "text", "required": true, "placeholder": "lsi1" },
+              { "id": "range_key", "label": "Sort Key", "type": "text", "required": true },
+              {
+                "id": "projection_type",
+                "label": "Projection Type",
+                "type": "select",
+                "required": true,
+                "default": "ALL",
+                "options": [
+                  { "value": "ALL", "label": "All Attributes" },
+                  { "value": "KEYS_ONLY", "label": "Keys Only" },
+                  { "value": "INCLUDE", "label": "Include Specific Attributes" }
+                ]
+              },
+              {
+                "id": "non_key_attributes",
+                "label": "Included Attributes",
+                "description": "Only used when Projection Type is 'Include Specific Attributes'.",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "projection_type", "value": "INCLUDE", "operator": "eq" }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "features",
+        "label": "Features",
+        "fields": [
+          {
+            "id": "ttl",
+            "label": "Time To Live",
+            "type": "object",
+            "required": false,
+            "default": {},
+            "fields": [
+              { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": false },
+              {
+                "id": "attribute_name",
+                "label": "TTL Attribute",
+                "description": "Required when Enabled is checked.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "enabled", "value": true, "operator": "eq" }
+              }
+            ]
+          },
+          {
+            "id": "point_in_time_recovery",
+            "label": "Point-in-Time Recovery",
+            "type": "object",
+            "required": false,
+            "default": {},
+            "fields": [
+              { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": false },
+              {
+                "id": "recovery_period_in_days",
+                "label": "Recovery Period (days)",
+                "type": "number",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "enabled", "value": true, "operator": "eq" }
+              }
+            ]
+          },
+          {
+            "id": "server_side_encryption",
+            "label": "Server-Side Encryption",
+            "description": "If Enabled is unchecked, AWS uses its own owned key. If checked with no KMS Key, AWS uses the default AWS-managed key. Set a KMS Key for a customer-managed key.",
+            "type": "object",
+            "required": false,
+            "default": {},
+            "fields": [
+              { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": false },
+              {
+                "id": "kms_key_arn",
+                "label": "KMS Key",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "enabled", "value": true, "operator": "eq" },
+                "data_source": {
+                  "resource": "kms.keys",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          },
+          {
+            "id": "contributor_insights_enabled",
+            "label": "Enable Contributor Insights",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "stream_enabled",
+            "label": "Enable DynamoDB Streams",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "stream_view_type",
+            "label": "Stream View Type",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "stream_enabled", "value": true, "operator": "eq" },
+            "options": [
+              { "value": "KEYS_ONLY", "label": "Keys Only" },
+              { "value": "NEW_IMAGE", "label": "New Image" },
+              { "value": "OLD_IMAGE", "label": "Old Image" },
+              { "value": "NEW_AND_OLD_IMAGES", "label": "New and Old Images" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "replicas",
+        "label": "Global Tables (Replicas)",
+        "description": "Cross-region replica tables, kept in sync automatically.",
+        "fields": [
+          {
+            "id": "replica",
+            "label": "Replica Region",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "eu" },
+              {
+                "id": "region_name",
+                "label": "Region",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "ec2.regions",
+                  "params": {},
+                  "display": { "value_key": "name", "label_key": "description", "description_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "kms_key_arn",
+                "label": "KMS Key",
+                "description": "Only needed if different from the default AWS-managed DynamoDB key.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "kms.keys",
+                  "params": {},
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "propagate_tags", "label": "Propagate Tags", "description": "Tags only propagate from the source table to the replica, one direction.", "type": "boolean", "required": false, "default": false },
+              {
+                "id": "consistency_mode",
+                "label": "Consistency Mode",
+                "type": "select",
+                "required": false,
+                "default": "EVENTUAL",
+                "options": [
+                  { "value": "EVENTUAL", "label": "Eventual" },
+                  { "value": "STRONG", "label": "Strong" }
+                ]
+              },
+              { "id": "point_in_time_recovery", "label": "Point-in-Time Recovery", "type": "boolean", "required": false, "default": false },
+              { "id": "deletion_protection_enabled", "label": "Deletion Protection", "type": "boolean", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "autoscaling_section",
+        "label": "Auto Scaling",
+        "description": "Only valid when Capacity Mode above is Provisioned.",
+        "fields": [
+          {
+            "id": "autoscaling",
+            "label": "Auto Scaling Target",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "table_read" },
+              {
+                "id": "dimension",
+                "label": "Dimension",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "table_read", "label": "Table Read Capacity" },
+                  { "value": "table_write", "label": "Table Write Capacity" },
+                  { "value": "gsi_read", "label": "GSI Read Capacity" },
+                  { "value": "gsi_write", "label": "GSI Write Capacity" }
+                ]
+              },
+              {
+                "id": "index_name",
+                "label": "Index Name",
+                "description": "Required for the GSI dimensions above -- must match a Global Secondary Index name defined above.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "dimension", "value": ["gsi_read", "gsi_write"], "operator": "in" }
+              },
+              { "id": "min_capacity", "label": "Min Capacity", "type": "number", "required": true },
+              { "id": "max_capacity", "label": "Max Capacity", "type": "number", "required": true },
+              { "id": "target_value", "label": "Target Utilization (%)", "type": "number", "required": false, "default": 70 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          { "id": "tags", "label": "Resource Tags", "type": "map", "required": false, "default": {} }
+        ]
+      }
+    ]
+  }
+}

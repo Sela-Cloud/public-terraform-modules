@@ -1,0 +1,401 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "api-gateway-http",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS API Gateway (HTTP API)",
+    "icon": "gateway",
+    "description": "Provision an API Gateway HTTP API with Lambda/HTTP-proxy routes, JWT/Lambda authorizers, a deployment stage, and an optional custom domain",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": { "value_key": "name", "label_key": "description", "description_key": "name" }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "api_gateway_http",
+    "key_field": "name",
+    "key_label": "API Name",
+    "key_description": "Unique name for the HTTP API.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "API Name",
+            "type": "text",
+            "required": true,
+            "placeholder": "orders-api"
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "disable_execute_api_endpoint",
+            "label": "Disable Default Endpoint",
+            "description": "Set this if you only want traffic through a custom domain name below.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "cors_configuration",
+            "label": "CORS",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "fields": [
+              { "id": "allow_origins", "label": "Allowed Origins", "type": "list", "required": false, "nullable": true, "placeholder": "https://example.com" },
+              { "id": "allow_methods", "label": "Allowed Methods", "type": "list", "required": false, "nullable": true },
+              { "id": "allow_headers", "label": "Allowed Headers", "type": "list", "required": false, "nullable": true },
+              { "id": "expose_headers", "label": "Exposed Headers", "type": "list", "required": false, "nullable": true },
+              { "id": "allow_credentials", "label": "Allow Credentials", "type": "boolean", "required": false, "nullable": true },
+              { "id": "max_age", "label": "Max Age (seconds)", "type": "number", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "authorizers_section",
+        "label": "Authorizers",
+        "description": "Referenced by routes below via their Key.",
+        "fields": [
+          {
+            "id": "authorizers",
+            "label": "Authorizer",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS. Referenced by routes below.", "type": "text", "required": true, "placeholder": "jwt1" },
+              { "id": "name", "label": "Name", "type": "text", "required": true, "placeholder": "cognito-jwt" },
+              {
+                "id": "authorizer_type",
+                "label": "Type",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "JWT", "label": "JWT" },
+                  { "value": "REQUEST", "label": "Lambda" }
+                ]
+              },
+              { "id": "identity_sources", "label": "Identity Sources", "type": "list", "required": false, "default": [], "placeholder": "$request.header.Authorization" },
+              {
+                "id": "jwt_issuer",
+                "label": "JWT Issuer",
+                "description": "Required for JWT authorizers.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "authorizer_type", "value": "JWT", "operator": "eq" }
+              },
+              {
+                "id": "jwt_audience",
+                "label": "JWT Audience",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "authorizer_type", "value": "JWT", "operator": "eq" }
+              },
+              {
+                "id": "authorizer_lambda_arn",
+                "label": "Authorizer Lambda",
+                "description": "Required for Lambda authorizers.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "authorizer_type", "value": "REQUEST", "operator": "eq" },
+                "data_source": {
+                  "resource": "lambda.functions",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "enable_simple_responses",
+                "label": "Enable Simple Responses",
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "depends_on": { "field": "authorizer_type", "value": "REQUEST", "operator": "eq" }
+              },
+              {
+                "id": "authorizer_result_ttl_in_seconds",
+                "label": "Result Cache TTL (seconds)",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "routes_section",
+        "label": "Routes",
+        "fields": [
+          {
+            "id": "routes",
+            "label": "Route",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "get_orders" },
+              { "id": "route_key", "label": "Route", "description": "e.g. 'GET /orders' or '$default'.", "type": "text", "required": true, "placeholder": "GET /orders" },
+              {
+                "id": "authorization_type",
+                "label": "Authorization",
+                "type": "select",
+                "required": false,
+                "default": "NONE",
+                "options": [
+                  { "value": "NONE", "label": "Open (no authorization)" },
+                  { "value": "JWT", "label": "JWT" },
+                  { "value": "AWS_IAM", "label": "AWS IAM" },
+                  { "value": "CUSTOM", "label": "Lambda Authorizer" }
+                ]
+              },
+              {
+                "id": "authorizer_key",
+                "label": "Authorizer",
+                "description": "Must match an Authorizer Key defined above.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "authorization_type", "value": "NONE", "operator": "neq" }
+              },
+              { "id": "api_key_required", "label": "Require API Key", "type": "boolean", "required": false, "default": false },
+              {
+                "id": "integration_type",
+                "label": "Integration Type",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "AWS_PROXY", "label": "Lambda Function" },
+                  { "value": "HTTP_PROXY", "label": "HTTP Backend" }
+                ]
+              },
+              {
+                "id": "lambda_function_arn",
+                "label": "Lambda Function",
+                "description": "Required when Integration Type is Lambda Function. An aws_lambda_permission granting API Gateway invoke access is created automatically.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "integration_type", "value": "AWS_PROXY", "operator": "eq" },
+                "data_source": {
+                  "resource": "lambda.functions",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "integration_uri",
+                "label": "Backend URL or Listener ARN",
+                "description": "Required when Integration Type is HTTP Backend. A fully-qualified URL for a public backend, or an ALB/NLB listener ARN for a private backend via a VPC Link.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "integration_type", "value": "HTTP_PROXY", "operator": "eq" }
+              },
+              {
+                "id": "connection_type",
+                "label": "Connection Type",
+                "type": "select",
+                "required": false,
+                "default": "INTERNET",
+                "depends_on": { "field": "integration_type", "value": "HTTP_PROXY", "operator": "eq" },
+                "options": [
+                  { "value": "INTERNET", "label": "Public Internet" },
+                  { "value": "VPC_LINK", "label": "Private, via VPC Link" }
+                ]
+              },
+              {
+                "id": "connection_id",
+                "label": "VPC Link",
+                "description": "Leave empty to use this form's own VPC Link below, if Create VPC Link is checked.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "connection_type", "value": "VPC_LINK", "operator": "eq" }
+              },
+              {
+                "id": "payload_format_version",
+                "label": "Payload Format Version",
+                "type": "select",
+                "required": false,
+                "default": "2.0",
+                "options": [
+                  { "value": "1.0", "label": "1.0" },
+                  { "value": "2.0", "label": "2.0" }
+                ]
+              },
+              { "id": "timeout_milliseconds", "label": "Integration Timeout (ms)", "type": "number", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "stage_section",
+        "label": "Deployment Stage",
+        "fields": [
+          { "id": "stage_name", "label": "Stage Name", "type": "text", "required": false, "default": "$default" },
+          {
+            "id": "auto_deploy",
+            "label": "Auto-Deploy Changes",
+            "description": "When off, an explicit deployment is created and redeployed whenever routes change.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "access_log_destination_arn",
+            "label": "Access Log Group ARN",
+            "description": "No lookup is wired here, since this catalog does not yet have a CloudWatch Logs log-group lookup -- enter the ARN directly. Leave empty to disable access logging.",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "access_log_format",
+            "label": "Access Log Format",
+            "description": "Leave empty for a sensible default JSON format.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "access_log_destination_arn", "value": null, "operator": "neq" }
+          },
+          {
+            "id": "default_route_settings",
+            "label": "Default Route Settings",
+            "type": "object",
+            "required": false,
+            "default": {},
+            "fields": [
+              { "id": "throttling_burst_limit", "label": "Throttling Burst Limit", "type": "number", "required": false, "nullable": true },
+              { "id": "throttling_rate_limit", "label": "Throttling Rate Limit", "type": "number", "required": false, "nullable": true },
+              { "id": "detailed_metrics_enabled", "label": "Detailed CloudWatch Metrics", "type": "boolean", "required": false, "default": false }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "vpc_link_section",
+        "label": "VPC Link",
+        "description": "For routes with a private HTTP backend (ALB/NLB listener or Cloud Map service).",
+        "fields": [
+          { "id": "create_vpc_link", "label": "Create VPC Link", "type": "boolean", "required": false, "default": false },
+          {
+            "id": "vpc_link_security_group_ids",
+            "label": "Security Groups",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "create_vpc_link", "value": true, "operator": "eq" },
+            "data_source": {
+              "resource": "ec2.security_groups",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "vpc_link_subnet_ids",
+            "label": "Subnets",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "depends_on": { "field": "create_vpc_link", "value": true, "operator": "eq" },
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "domain_section",
+        "label": "Custom Domain",
+        "fields": [
+          {
+            "id": "domain_name",
+            "label": "Domain Name",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "api.example.com"
+          },
+          {
+            "id": "certificate_arn",
+            "label": "ACM Certificate",
+            "description": "Must be in this API's own region -- HTTP API custom domains are regional-only, unlike REST API's edge-optimized option.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": { "field": "domain_name", "value": null, "operator": "neq" },
+            "data_source": {
+              "resource": "acm.certificates",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "security_policy",
+            "label": "TLS Security Policy",
+            "type": "select",
+            "required": false,
+            "default": "TLS_1_2",
+            "options": [
+              { "value": "TLS_1_2", "label": "TLS 1.2" }
+            ]
+          },
+          {
+            "id": "api_mapping_key",
+            "label": "Path Prefix",
+            "description": "e.g. 'v1'. Leave empty to map the domain's root.",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          { "id": "tags", "label": "Resource Tags", "type": "map", "required": false, "default": {} }
+        ]
+      }
+    ]
+  }
+}

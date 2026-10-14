@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "eks",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "display": {
     "label": "AWS EKS Cluster",
     "icon": "kubernetes",
@@ -18,7 +18,11 @@
       "data_source": {
         "resource": "ec2.regions",
         "params": {},
-        "display": { "value_key": "name", "label_key": "description", "description_key": "name" }
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
       }
     }
   ],
@@ -38,7 +42,12 @@
             "type": "text",
             "required": true,
             "placeholder": "my-cluster",
-            "validation": { "min": 1, "max": 100, "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_]{0,99}$", "pattern_error": "1-100 characters, start with alphanumeric, letters/numbers/hyphens/underscores only." }
+            "validation": {
+              "min": 1,
+              "max": 100,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_]{0,99}$",
+              "pattern_error": "1-100 characters, start with alphanumeric, letters/numbers/hyphens/underscores only."
+            }
           },
           {
             "id": "kubernetes_version",
@@ -47,10 +56,22 @@
             "required": false,
             "default": "1.31",
             "options": [
-              { "value": "1.31", "label": "1.31" },
-              { "value": "1.30", "label": "1.30" },
-              { "value": "1.29", "label": "1.29" },
-              { "value": "1.28", "label": "1.28" }
+              {
+                "value": "1.31",
+                "label": "1.31"
+              },
+              {
+                "value": "1.30",
+                "label": "1.30"
+              },
+              {
+                "value": "1.29",
+                "label": "1.29"
+              },
+              {
+                "value": "1.28",
+                "label": "1.28"
+              }
             ]
           },
           {
@@ -60,18 +81,39 @@
             "required": false,
             "default": "API_AND_CONFIG_MAP",
             "options": [
-              { "value": "API", "label": "API only" },
-              { "value": "API_AND_CONFIG_MAP", "label": "API and aws-auth ConfigMap" },
-              { "value": "CONFIG_MAP", "label": "aws-auth ConfigMap only" }
+              {
+                "value": "API",
+                "label": "API only"
+              },
+              {
+                "value": "API_AND_CONFIG_MAP",
+                "label": "API and aws-auth ConfigMap"
+              },
+              {
+                "value": "CONFIG_MAP",
+                "label": "aws-auth ConfigMap only"
+              }
             ]
           },
-          { "id": "bootstrap_cluster_creator_admin_permissions", "label": "Grant Cluster Creator Admin Access", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "bootstrap_cluster_creator_admin_permissions",
+            "label": "Grant Cluster Creator Admin Access",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
           {
             "id": "enabled_cluster_log_types",
             "label": "Control Plane Log Types",
             "type": "list",
             "required": false,
-            "default": ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+            "default": [
+              "api",
+              "audit",
+              "authenticator",
+              "controllerManager",
+              "scheduler"
+            ]
           }
         ]
       },
@@ -88,8 +130,16 @@
             "nullable": true,
             "data_source": {
               "resource": "ec2.vpcs",
-              "params": { "region": { "from_field": "region" } },
-              "display": { "value_key": "id", "label_key": "name", "description_key": "cidr" },
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -103,8 +153,19 @@
             "default": [],
             "data_source": {
               "resource": "ec2.subnets",
-              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
-              "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+              "params": {
+                "region": {
+                  "from_field": "region"
+                },
+                "vpc_id": {
+                  "from_field": "vpc_id"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "availabilityZone"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -118,23 +179,57 @@
             "default": [],
             "data_source": {
               "resource": "ec2.subnets",
-              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
-              "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+              "params": {
+                "region": {
+                  "from_field": "region"
+                },
+                "vpc_id": {
+                  "from_field": "vpc_id"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "availabilityZone"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
           },
-          { "id": "endpoint_private_access", "label": "Enable Private API Endpoint", "type": "boolean", "required": false, "default": true },
-          { "id": "endpoint_public_access", "label": "Enable Public API Endpoint", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "endpoint_private_access",
+            "label": "Enable Private API Endpoint",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "endpoint_public_access",
+            "label": "Enable Public API Endpoint",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
           {
             "id": "public_access_cidrs",
             "label": "Public Endpoint Allowed CIDRs",
             "type": "list",
             "required": false,
-            "default": ["0.0.0.0/0"],
-            "depends_on": { "field": "endpoint_public_access", "value": true }
+            "default": [
+              "0.0.0.0/0"
+            ],
+            "depends_on": {
+              "field": "endpoint_public_access",
+              "value": true
+            }
           },
-          { "id": "create_cluster_security_group", "label": "Create Dedicated Cluster Security Group", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "create_cluster_security_group",
+            "label": "Create Dedicated Cluster Security Group",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
           {
             "id": "security_group_ids",
             "label": "Additional Security Groups",
@@ -143,8 +238,19 @@
             "default": [],
             "data_source": {
               "resource": "ec2.security_groups",
-              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
-              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "params": {
+                "region": {
+                  "from_field": "region"
+                },
+                "vpc_id": {
+                  "from_field": "vpc_id"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "description"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -156,10 +262,31 @@
             "required": false,
             "nullable": true,
             "fields": [
-              { "id": "service_ipv4_cidr", "label": "Service IPv4 CIDR", "type": "text", "required": false, "nullable": true, "placeholder": "172.20.0.0/16" },
-              { "id": "ip_family", "label": "IP Family", "type": "select", "required": false, "default": "ipv4", "options": [
-                { "value": "ipv4", "label": "IPv4" }, { "value": "ipv6", "label": "IPv6" }
-              ] }
+              {
+                "id": "service_ipv4_cidr",
+                "label": "Service IPv4 CIDR",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "172.20.0.0/16"
+              },
+              {
+                "id": "ip_family",
+                "label": "IP Family",
+                "type": "select",
+                "required": false,
+                "default": "ipv4",
+                "options": [
+                  {
+                    "value": "ipv4",
+                    "label": "IPv4"
+                  },
+                  {
+                    "value": "ipv6",
+                    "label": "IPv6"
+                  }
+                ]
+              }
             ]
           }
         ]
@@ -168,7 +295,13 @@
         "id": "cluster_iam",
         "label": "Cluster IAM Role",
         "fields": [
-          { "id": "create_iam_role", "label": "Create Dedicated Cluster Role", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "create_iam_role",
+            "label": "Create Dedicated Cluster Role",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
           {
             "id": "iam_role_arn",
             "label": "Existing Cluster Role",
@@ -176,11 +309,17 @@
             "type": "select",
             "required": false,
             "nullable": true,
-            "depends_on": { "field": "create_iam_role", "value": false },
+            "depends_on": {
+              "field": "create_iam_role",
+              "value": false
+            },
             "data_source": {
               "resource": "iam.roles",
               "params": {},
-              "display": { "value_key": "arn", "label_key": "name" },
+              "display": {
+                "value_key": "arn",
+                "label_key": "name"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -198,12 +337,30 @@
             "required": false,
             "nullable": true,
             "options": [
-              { "value": "STANDARD", "label": "Standard" },
-              { "value": "EXTENDED", "label": "Extended" }
+              {
+                "value": "STANDARD",
+                "label": "Standard"
+              },
+              {
+                "value": "EXTENDED",
+                "label": "Extended"
+              }
             ]
           },
-          { "id": "enable_zonal_shift", "label": "Enable Zonal Shift", "type": "boolean", "required": false, "default": false },
-          { "id": "bootstrap_self_managed_addons", "label": "Install Default Self-Managed Addons (kube-proxy, CoreDNS, VPC CNI)", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "enable_zonal_shift",
+            "label": "Enable Zonal Shift",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "bootstrap_self_managed_addons",
+            "label": "Install Default Self-Managed Addons (kube-proxy, CoreDNS, VPC CNI)",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
           {
             "id": "kms_key_arn",
             "label": "Secrets Encryption KMS Key",
@@ -213,21 +370,103 @@
             "nullable": true,
             "data_source": {
               "resource": "kms.keys",
-              "params": { "region": { "from_field": "region" } },
-              "display": { "value_key": "arn", "label_key": "name" },
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "arn",
+                "label_key": "name"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
           },
-          { "id": "create_oidc_provider", "label": "Create OIDC Provider (IRSA)", "type": "boolean", "required": false, "default": true }
+          {
+            "id": "create_oidc_provider",
+            "label": "Create OIDC Provider (IRSA)",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "auto_mode_section",
+        "label": "EKS Auto Mode",
+        "description": "AWS-managed compute, storage, and load balancing. Can be combined with the Node Groups section below (AWS supports mixing Auto Mode compute with classic managed node groups on the same cluster).",
+        "fields": [
+          {
+            "id": "compute_config",
+            "label": "Auto Mode",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "fields": [
+              {
+                "id": "enabled",
+                "label": "Enable EKS Auto Mode",
+                "description": "Also turns on the matching network load-balancing and block-storage integrations -- AWS requires all three to move together.",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
+              {
+                "id": "node_pools",
+                "label": "Node Pools",
+                "type": "list",
+                "required": false,
+                "default": [
+                  "general-purpose",
+                  "system"
+                ],
+                "depends_on": {
+                  "field": "enabled",
+                  "value": true,
+                  "operator": "eq"
+                },
+                "options": [
+                  {
+                    "value": "general-purpose",
+                    "label": "General Purpose"
+                  },
+                  {
+                    "value": "system",
+                    "label": "System"
+                  }
+                ]
+              },
+              {
+                "id": "node_role_arn",
+                "label": "Node Role ARN",
+                "description": "Leave empty to let the module create a default Auto Mode node role. This must be a different role than the cluster's own IAM role.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": {
+                  "field": "enabled",
+                  "value": true,
+                  "operator": "eq"
+                }
+              }
+            ]
+          }
         ]
       },
       {
         "id": "node_groups_section",
         "label": "Node Groups",
-        "description": "Managed EC2 compute for the cluster. Without at least one node group, the cluster has no capacity to schedule workloads onto.",
+        "description": "Managed EC2 compute for the cluster. Without at least one node group or EKS Auto Mode enabled above, the cluster has no capacity to schedule workloads onto.",
         "fields": [
-          { "id": "create_node_iam_role", "label": "Create Default Node Group Role", "type": "boolean", "required": false, "default": true },
+          {
+            "id": "create_node_iam_role",
+            "label": "Create Default Node Group Role",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
           {
             "id": "node_iam_role_arn",
             "label": "Existing Node Group Role",
@@ -235,11 +474,17 @@
             "type": "select",
             "required": false,
             "nullable": true,
-            "depends_on": { "field": "create_node_iam_role", "value": false },
+            "depends_on": {
+              "field": "create_node_iam_role",
+              "value": false
+            },
             "data_source": {
               "resource": "iam.roles",
               "params": {},
-              "display": { "value_key": "arn", "label_key": "name" },
+              "display": {
+                "value_key": "arn",
+                "label_key": "name"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -251,8 +496,22 @@
             "required": false,
             "default": [],
             "fields": [
-              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "default" },
-              { "id": "node_group_name", "label": "Name", "description": "Defaults to '<cluster name>-<key>'.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "key",
+                "label": "Key",
+                "description": "Terraform-only identifier, not sent to AWS.",
+                "type": "text",
+                "required": true,
+                "placeholder": "default"
+              },
+              {
+                "id": "node_group_name",
+                "label": "Name",
+                "description": "Defaults to '<cluster name>-<key>'.",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
               {
                 "id": "subnet_ids",
                 "label": "Subnets",
@@ -262,33 +521,121 @@
                 "nullable": true,
                 "data_source": {
                   "resource": "ec2.subnets",
-                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
-                  "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+                  "params": {
+                    "region": {
+                      "from_field": "region"
+                    },
+                    "vpc_id": {
+                      "from_field": "vpc_id"
+                    }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "availabilityZone"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
               },
-              { "id": "instance_types", "label": "Instance Types", "type": "list", "required": false, "default": ["t3.medium"] },
-              { "id": "capacity_type", "label": "Capacity Type", "type": "select", "required": false, "default": "ON_DEMAND", "options": [
-                { "value": "ON_DEMAND", "label": "On-Demand" }, { "value": "SPOT", "label": "Spot" }
-              ] },
-              { "id": "disk_size", "label": "Disk Size (GB)", "type": "number", "required": false, "default": 20 },
-              { "id": "ami_type", "label": "AMI Type", "type": "select", "required": false, "default": "AL2023_x86_64_STANDARD", "options": [
-                { "value": "AL2023_x86_64_STANDARD", "label": "Amazon Linux 2023 (x86_64)" },
-                { "value": "AL2023_ARM_64_STANDARD", "label": "Amazon Linux 2023 (ARM64)" },
-                { "value": "AL2_x86_64", "label": "Amazon Linux 2 (x86_64)" },
-                { "value": "AL2_x86_64_GPU", "label": "Amazon Linux 2 GPU (x86_64)" },
-                { "value": "AL2_ARM_64", "label": "Amazon Linux 2 (ARM64)" },
-                { "value": "BOTTLEROCKET_x86_64", "label": "Bottlerocket (x86_64)" },
-                { "value": "BOTTLEROCKET_ARM_64", "label": "Bottlerocket (ARM64)" },
-                { "value": "BOTTLEROCKET_x86_64_NVIDIA", "label": "Bottlerocket NVIDIA (x86_64)" },
-                { "value": "BOTTLEROCKET_ARM_64_NVIDIA", "label": "Bottlerocket NVIDIA (ARM64)" },
-                { "value": "WINDOWS_CORE_2019_x86_64", "label": "Windows Core 2019 (x86_64)" },
-                { "value": "WINDOWS_FULL_2019_x86_64", "label": "Windows Full 2019 (x86_64)" },
-                { "value": "WINDOWS_CORE_2022_x86_64", "label": "Windows Core 2022 (x86_64)" },
-                { "value": "WINDOWS_FULL_2022_x86_64", "label": "Windows Full 2022 (x86_64)" },
-                { "value": "CUSTOM", "label": "Custom (via Launch Template)" }
-              ] },
+              {
+                "id": "instance_types",
+                "label": "Instance Types",
+                "type": "list",
+                "required": false,
+                "default": [
+                  "t3.medium"
+                ]
+              },
+              {
+                "id": "capacity_type",
+                "label": "Capacity Type",
+                "type": "select",
+                "required": false,
+                "default": "ON_DEMAND",
+                "options": [
+                  {
+                    "value": "ON_DEMAND",
+                    "label": "On-Demand"
+                  },
+                  {
+                    "value": "SPOT",
+                    "label": "Spot"
+                  }
+                ]
+              },
+              {
+                "id": "disk_size",
+                "label": "Disk Size (GB)",
+                "type": "number",
+                "required": false,
+                "default": 20
+              },
+              {
+                "id": "ami_type",
+                "label": "AMI Type",
+                "type": "select",
+                "required": false,
+                "default": "AL2023_x86_64_STANDARD",
+                "options": [
+                  {
+                    "value": "AL2023_x86_64_STANDARD",
+                    "label": "Amazon Linux 2023 (x86_64)"
+                  },
+                  {
+                    "value": "AL2023_ARM_64_STANDARD",
+                    "label": "Amazon Linux 2023 (ARM64)"
+                  },
+                  {
+                    "value": "AL2_x86_64",
+                    "label": "Amazon Linux 2 (x86_64)"
+                  },
+                  {
+                    "value": "AL2_x86_64_GPU",
+                    "label": "Amazon Linux 2 GPU (x86_64)"
+                  },
+                  {
+                    "value": "AL2_ARM_64",
+                    "label": "Amazon Linux 2 (ARM64)"
+                  },
+                  {
+                    "value": "BOTTLEROCKET_x86_64",
+                    "label": "Bottlerocket (x86_64)"
+                  },
+                  {
+                    "value": "BOTTLEROCKET_ARM_64",
+                    "label": "Bottlerocket (ARM64)"
+                  },
+                  {
+                    "value": "BOTTLEROCKET_x86_64_NVIDIA",
+                    "label": "Bottlerocket NVIDIA (x86_64)"
+                  },
+                  {
+                    "value": "BOTTLEROCKET_ARM_64_NVIDIA",
+                    "label": "Bottlerocket NVIDIA (ARM64)"
+                  },
+                  {
+                    "value": "WINDOWS_CORE_2019_x86_64",
+                    "label": "Windows Core 2019 (x86_64)"
+                  },
+                  {
+                    "value": "WINDOWS_FULL_2019_x86_64",
+                    "label": "Windows Full 2019 (x86_64)"
+                  },
+                  {
+                    "value": "WINDOWS_CORE_2022_x86_64",
+                    "label": "Windows Core 2022 (x86_64)"
+                  },
+                  {
+                    "value": "WINDOWS_FULL_2022_x86_64",
+                    "label": "Windows Full 2022 (x86_64)"
+                  },
+                  {
+                    "value": "CUSTOM",
+                    "label": "Custom (via Launch Template)"
+                  }
+                ]
+              },
               {
                 "id": "node_role_arn",
                 "label": "Node IAM Role Override",
@@ -299,21 +646,48 @@
                 "data_source": {
                   "resource": "iam.roles",
                   "params": {},
-                  "display": { "value_key": "arn", "label_key": "name" },
+                  "display": {
+                    "value_key": "arn",
+                    "label_key": "name"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
               },
-              { "id": "force_update_version", "label": "Force Update Version", "type": "boolean", "required": false, "default": false },
+              {
+                "id": "force_update_version",
+                "label": "Force Update Version",
+                "type": "boolean",
+                "required": false,
+                "default": false
+              },
               {
                 "id": "scaling_config",
                 "label": "Scaling Configuration",
                 "type": "object",
                 "required": false,
                 "fields": [
-                  { "id": "desired_size", "label": "Desired Size", "type": "number", "required": false, "default": 2 },
-                  { "id": "max_size", "label": "Max Size", "type": "number", "required": false, "default": 5 },
-                  { "id": "min_size", "label": "Min Size", "type": "number", "required": false, "default": 1 }
+                  {
+                    "id": "desired_size",
+                    "label": "Desired Size",
+                    "type": "number",
+                    "required": false,
+                    "default": 2
+                  },
+                  {
+                    "id": "max_size",
+                    "label": "Max Size",
+                    "type": "number",
+                    "required": false,
+                    "default": 5
+                  },
+                  {
+                    "id": "min_size",
+                    "label": "Min Size",
+                    "type": "number",
+                    "required": false,
+                    "default": 1
+                  }
                 ]
               },
               {
@@ -322,11 +696,30 @@
                 "type": "object",
                 "required": false,
                 "fields": [
-                  { "id": "max_unavailable", "label": "Max Unavailable (Count)", "type": "number", "required": false, "default": 1 },
-                  { "id": "max_unavailable_percentage", "label": "Max Unavailable (Percentage)", "description": "Mutually exclusive with Max Unavailable (Count).", "type": "number", "required": false, "nullable": true }
+                  {
+                    "id": "max_unavailable",
+                    "label": "Max Unavailable (Count)",
+                    "type": "number",
+                    "required": false,
+                    "default": 1
+                  },
+                  {
+                    "id": "max_unavailable_percentage",
+                    "label": "Max Unavailable (Percentage)",
+                    "description": "Mutually exclusive with Max Unavailable (Count).",
+                    "type": "number",
+                    "required": false,
+                    "nullable": true
+                  }
                 ]
               },
-              { "id": "labels", "label": "Kubernetes Labels", "type": "map", "required": false, "default": {} },
+              {
+                "id": "labels",
+                "label": "Kubernetes Labels",
+                "type": "map",
+                "required": false,
+                "default": {}
+              },
               {
                 "id": "taints",
                 "label": "Taint",
@@ -334,11 +727,39 @@
                 "required": false,
                 "default": [],
                 "fields": [
-                  { "id": "key", "label": "Key", "type": "text", "required": true },
-                  { "id": "value", "label": "Value", "type": "text", "required": false, "nullable": true },
-                  { "id": "effect", "label": "Effect", "type": "select", "required": true, "options": [
-                    { "value": "NO_SCHEDULE", "label": "NoSchedule" }, { "value": "NO_EXECUTE", "label": "NoExecute" }, { "value": "PREFER_NO_SCHEDULE", "label": "PreferNoSchedule" }
-                  ] }
+                  {
+                    "id": "key",
+                    "label": "Key",
+                    "type": "text",
+                    "required": true
+                  },
+                  {
+                    "id": "value",
+                    "label": "Value",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "effect",
+                    "label": "Effect",
+                    "type": "select",
+                    "required": true,
+                    "options": [
+                      {
+                        "value": "NO_SCHEDULE",
+                        "label": "NoSchedule"
+                      },
+                      {
+                        "value": "NO_EXECUTE",
+                        "label": "NoExecute"
+                      },
+                      {
+                        "value": "PREFER_NO_SCHEDULE",
+                        "label": "PreferNoSchedule"
+                      }
+                    ]
+                  }
                 ]
               },
               {
@@ -356,13 +777,26 @@
                     "nullable": true,
                     "data_source": {
                       "resource": "ec2.launch_templates",
-                      "params": { "region": { "from_field": "region" } },
-                      "display": { "value_key": "id", "label_key": "name" },
+                      "params": {
+                        "region": {
+                          "from_field": "region"
+                        }
+                      },
+                      "display": {
+                        "value_key": "id",
+                        "label_key": "name"
+                      },
                       "allow_custom": true,
                       "cache_ttl": 300
                     }
                   },
-                  { "id": "version", "label": "Version", "type": "text", "required": false, "default": "$Latest" }
+                  {
+                    "id": "version",
+                    "label": "Version",
+                    "type": "text",
+                    "required": false,
+                    "default": "$Latest"
+                  }
                 ]
               },
               {
@@ -380,8 +814,15 @@
                     "nullable": true,
                     "data_source": {
                       "resource": "ec2.key_pairs",
-                      "params": { "region": { "from_field": "region" } },
-                      "display": { "value_key": "id", "label_key": "name" },
+                      "params": {
+                        "region": {
+                          "from_field": "region"
+                        }
+                      },
+                      "display": {
+                        "value_key": "id",
+                        "label_key": "name"
+                      },
                       "allow_custom": true,
                       "cache_ttl": 300
                     }
@@ -394,15 +835,32 @@
                     "nullable": true,
                     "data_source": {
                       "resource": "ec2.security_groups",
-                      "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
-                      "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                      "params": {
+                        "region": {
+                          "from_field": "region"
+                        },
+                        "vpc_id": {
+                          "from_field": "vpc_id"
+                        }
+                      },
+                      "display": {
+                        "value_key": "id",
+                        "label_key": "name",
+                        "description_key": "description"
+                      },
                       "allow_custom": true,
                       "cache_ttl": 300
                     }
                   }
                 ]
               },
-              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+              {
+                "id": "tags",
+                "label": "Tags",
+                "type": "map",
+                "required": false,
+                "default": {}
+              }
             ]
           }
         ]
@@ -419,7 +877,14 @@
             "required": false,
             "default": [],
             "fields": [
-              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "admin" },
+              {
+                "id": "key",
+                "label": "Key",
+                "description": "Terraform-only identifier, not sent to AWS.",
+                "type": "text",
+                "required": true,
+                "placeholder": "admin"
+              },
               {
                 "id": "principal_arn",
                 "label": "IAM Principal",
@@ -428,19 +893,58 @@
                 "data_source": {
                   "resource": "iam.roles",
                   "params": {},
-                  "display": { "value_key": "arn", "label_key": "name" },
+                  "display": {
+                    "value_key": "arn",
+                    "label_key": "name"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
               },
-              { "id": "type", "label": "Type", "type": "select", "required": false, "default": "STANDARD", "options": [
-                { "value": "STANDARD", "label": "Standard" },
-                { "value": "EC2_LINUX", "label": "EC2 Linux (self-managed nodes)" },
-                { "value": "EC2_WINDOWS", "label": "EC2 Windows (self-managed nodes)" },
-                { "value": "FARGATE_LINUX", "label": "Fargate Linux" }
-              ] },
-              { "id": "user_name", "label": "Username Override", "description": "Only applies to STANDARD type entries.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "type", "value": "STANDARD" } },
-              { "id": "kubernetes_groups", "label": "Kubernetes Groups", "type": "list", "required": false, "default": [] },
+              {
+                "id": "type",
+                "label": "Type",
+                "type": "select",
+                "required": false,
+                "default": "STANDARD",
+                "options": [
+                  {
+                    "value": "STANDARD",
+                    "label": "Standard"
+                  },
+                  {
+                    "value": "EC2_LINUX",
+                    "label": "EC2 Linux (self-managed nodes)"
+                  },
+                  {
+                    "value": "EC2_WINDOWS",
+                    "label": "EC2 Windows (self-managed nodes)"
+                  },
+                  {
+                    "value": "FARGATE_LINUX",
+                    "label": "Fargate Linux"
+                  }
+                ]
+              },
+              {
+                "id": "user_name",
+                "label": "Username Override",
+                "description": "Only applies to STANDARD type entries.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "depends_on": {
+                  "field": "type",
+                  "value": "STANDARD"
+                }
+              },
+              {
+                "id": "kubernetes_groups",
+                "label": "Kubernetes Groups",
+                "type": "list",
+                "required": false,
+                "default": []
+              },
               {
                 "id": "policy_associations",
                 "label": "Policy Association",
@@ -448,18 +952,54 @@
                 "required": false,
                 "default": [],
                 "fields": [
-                  { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true },
-                  { "id": "policy_arn", "label": "AWS Managed Access Policy ARN", "description": "No lookup is wired here -- these are fixed AWS-managed policy ARNs, e.g. arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy.", "type": "text", "required": true, "placeholder": "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy" },
+                  {
+                    "id": "key",
+                    "label": "Key",
+                    "description": "Terraform-only identifier, not sent to AWS.",
+                    "type": "text",
+                    "required": true
+                  },
+                  {
+                    "id": "policy_arn",
+                    "label": "AWS Managed Access Policy ARN",
+                    "description": "No lookup is wired here -- these are fixed AWS-managed policy ARNs, e.g. arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy.",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+                  },
                   {
                     "id": "access_scope",
                     "label": "Access Scope",
                     "type": "object",
                     "required": true,
                     "fields": [
-                      { "id": "type", "label": "Scope", "type": "select", "required": true, "options": [
-                        { "value": "cluster", "label": "Entire cluster" }, { "value": "namespace", "label": "Specific namespaces" }
-                      ] },
-                      { "id": "namespaces", "label": "Namespaces", "type": "list", "required": false, "default": [], "depends_on": { "field": "type", "value": "namespace" } }
+                      {
+                        "id": "type",
+                        "label": "Scope",
+                        "type": "select",
+                        "required": true,
+                        "options": [
+                          {
+                            "value": "cluster",
+                            "label": "Entire cluster"
+                          },
+                          {
+                            "value": "namespace",
+                            "label": "Specific namespaces"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "namespaces",
+                        "label": "Namespaces",
+                        "type": "list",
+                        "required": false,
+                        "default": [],
+                        "depends_on": {
+                          "field": "type",
+                          "value": "namespace"
+                        }
+                      }
                     ]
                   }
                 ]
@@ -479,26 +1019,108 @@
             "required": false,
             "default": [],
             "fields": [
-              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "vpc-cni" },
-              { "id": "addon_name", "label": "Addon", "type": "select", "required": true, "options": [
-                { "value": "vpc-cni", "label": "Amazon VPC CNI" },
-                { "value": "coredns", "label": "CoreDNS" },
-                { "value": "kube-proxy", "label": "kube-proxy" },
-                { "value": "aws-ebs-csi-driver", "label": "Amazon EBS CSI Driver" },
-                { "value": "aws-efs-csi-driver", "label": "Amazon EFS CSI Driver" },
-                { "value": "eks-pod-identity-agent", "label": "EKS Pod Identity Agent" },
-                { "value": "adot", "label": "AWS Distro for OpenTelemetry" },
-                { "value": "aws-guardduty-agent", "label": "Amazon GuardDuty Agent" },
-                { "value": "amazon-cloudwatch-observability", "label": "Amazon CloudWatch Observability" },
-                { "value": "snapshot-controller", "label": "CSI Snapshot Controller" }
-              ] },
-              { "id": "addon_version", "label": "Version", "description": "Leave empty for the latest compatible version.", "type": "text", "required": false, "nullable": true },
-              { "id": "resolve_conflicts_on_create", "label": "On Create Conflict", "type": "select", "required": false, "default": "OVERWRITE", "options": [
-                { "value": "OVERWRITE", "label": "Overwrite" }, { "value": "NONE", "label": "None (fail)" }
-              ] },
-              { "id": "resolve_conflicts_on_update", "label": "On Update Conflict", "type": "select", "required": false, "default": "OVERWRITE", "options": [
-                { "value": "OVERWRITE", "label": "Overwrite" }, { "value": "NONE", "label": "None (fail)" }, { "value": "PRESERVE", "label": "Preserve" }
-              ] },
+              {
+                "id": "key",
+                "label": "Key",
+                "description": "Terraform-only identifier, not sent to AWS.",
+                "type": "text",
+                "required": true,
+                "placeholder": "vpc-cni"
+              },
+              {
+                "id": "addon_name",
+                "label": "Addon",
+                "type": "select",
+                "required": true,
+                "options": [
+                  {
+                    "value": "vpc-cni",
+                    "label": "Amazon VPC CNI"
+                  },
+                  {
+                    "value": "coredns",
+                    "label": "CoreDNS"
+                  },
+                  {
+                    "value": "kube-proxy",
+                    "label": "kube-proxy"
+                  },
+                  {
+                    "value": "aws-ebs-csi-driver",
+                    "label": "Amazon EBS CSI Driver"
+                  },
+                  {
+                    "value": "aws-efs-csi-driver",
+                    "label": "Amazon EFS CSI Driver"
+                  },
+                  {
+                    "value": "eks-pod-identity-agent",
+                    "label": "EKS Pod Identity Agent"
+                  },
+                  {
+                    "value": "adot",
+                    "label": "AWS Distro for OpenTelemetry"
+                  },
+                  {
+                    "value": "aws-guardduty-agent",
+                    "label": "Amazon GuardDuty Agent"
+                  },
+                  {
+                    "value": "amazon-cloudwatch-observability",
+                    "label": "Amazon CloudWatch Observability"
+                  },
+                  {
+                    "value": "snapshot-controller",
+                    "label": "CSI Snapshot Controller"
+                  }
+                ]
+              },
+              {
+                "id": "addon_version",
+                "label": "Version",
+                "description": "Leave empty for the latest compatible version.",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "resolve_conflicts_on_create",
+                "label": "On Create Conflict",
+                "type": "select",
+                "required": false,
+                "default": "OVERWRITE",
+                "options": [
+                  {
+                    "value": "OVERWRITE",
+                    "label": "Overwrite"
+                  },
+                  {
+                    "value": "NONE",
+                    "label": "None (fail)"
+                  }
+                ]
+              },
+              {
+                "id": "resolve_conflicts_on_update",
+                "label": "On Update Conflict",
+                "type": "select",
+                "required": false,
+                "default": "OVERWRITE",
+                "options": [
+                  {
+                    "value": "OVERWRITE",
+                    "label": "Overwrite"
+                  },
+                  {
+                    "value": "NONE",
+                    "label": "None (fail)"
+                  },
+                  {
+                    "value": "PRESERVE",
+                    "label": "Preserve"
+                  }
+                ]
+              },
               {
                 "id": "service_account_role_arn",
                 "label": "IRSA Role",
@@ -509,13 +1131,29 @@
                 "data_source": {
                   "resource": "iam.roles",
                   "params": {},
-                  "display": { "value_key": "arn", "label_key": "name" },
+                  "display": {
+                    "value_key": "arn",
+                    "label_key": "name"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
               },
-              { "id": "configuration_values", "label": "Configuration Values (JSON)", "type": "text", "multiline": true, "required": false, "nullable": true },
-              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+              {
+                "id": "configuration_values",
+                "label": "Configuration Values (JSON)",
+                "type": "text",
+                "multiline": true,
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "tags",
+                "label": "Tags",
+                "type": "map",
+                "required": false,
+                "default": {}
+              }
             ]
           }
         ]
@@ -532,9 +1170,26 @@
             "required": false,
             "default": [],
             "fields": [
-              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "app1" },
-              { "id": "namespace", "label": "Kubernetes Namespace", "type": "text", "required": true },
-              { "id": "service_account", "label": "Kubernetes Service Account", "type": "text", "required": true },
+              {
+                "id": "key",
+                "label": "Key",
+                "description": "Terraform-only identifier, not sent to AWS.",
+                "type": "text",
+                "required": true,
+                "placeholder": "app1"
+              },
+              {
+                "id": "namespace",
+                "label": "Kubernetes Namespace",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "service_account",
+                "label": "Kubernetes Service Account",
+                "type": "text",
+                "required": true
+              },
               {
                 "id": "role_arn",
                 "label": "IAM Role",
@@ -543,7 +1198,10 @@
                 "data_source": {
                   "resource": "iam.roles",
                   "params": {},
-                  "display": { "value_key": "arn", "label_key": "name" },
+                  "display": {
+                    "value_key": "arn",
+                    "label_key": "name"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -556,7 +1214,13 @@
         "id": "tags",
         "label": "Tags",
         "fields": [
-          { "id": "tags", "label": "Resource Tags", "type": "map", "required": false, "default": {} }
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
         ]
       }
     ]

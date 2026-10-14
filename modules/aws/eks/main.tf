@@ -7,7 +7,7 @@ data "aws_iam_policy_document" "cluster_assume_role" {
 
   statement {
     effect  = "Allow"
-    actions = ["sts:AssumeRole"]
+    actions = ["sts:AssumeRole", "sts:TagSession"]
 
     principals {
       type        = "Service"
@@ -39,6 +39,77 @@ resource "aws_iam_role_policy_attachment" "vpc_controller" {
   count      = var.create_iam_role ? 1 : 0
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
   role       = aws_iam_role.cluster[0].name
+}
+
+################################################################################
+# EKS Auto Mode -- Cluster IAM Role Policy Attachments
+################################################################################
+
+resource "aws_iam_role_policy_attachment" "cluster_compute_policy" {
+  count      = var.create_iam_role && var.compute_config != null && var.compute_config.enabled ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSComputePolicy"
+  role       = aws_iam_role.cluster[0].name
+}
+
+resource "aws_iam_role_policy_attachment" "cluster_block_storage_policy" {
+  count      = var.create_iam_role && var.compute_config != null && var.compute_config.enabled ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSBlockStoragePolicyV2"
+  role       = aws_iam_role.cluster[0].name
+}
+
+resource "aws_iam_role_policy_attachment" "cluster_load_balancing_policy" {
+  count      = var.create_iam_role && var.compute_config != null && var.compute_config.enabled ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSLoadBalancingPolicy"
+  role       = aws_iam_role.cluster[0].name
+}
+
+resource "aws_iam_role_policy_attachment" "cluster_networking_policy" {
+  count      = var.create_iam_role && var.compute_config != null && var.compute_config.enabled ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSNetworkingPolicy"
+  role       = aws_iam_role.cluster[0].name
+}
+
+################################################################################
+# EKS Auto Mode -- Default Node IAM Role
+################################################################################
+
+data "aws_iam_policy_document" "auto_mode_node_assume_role" {
+  count = var.create_node_iam_role && var.compute_config != null && var.compute_config.enabled && var.compute_config.node_role_arn == null ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "auto_mode_node" {
+  count              = var.create_node_iam_role && var.compute_config != null && var.compute_config.enabled && var.compute_config.node_role_arn == null ? 1 : 0
+  name               = "${var.name}-auto-mode-node-role"
+  assume_role_policy = data.aws_iam_policy_document.auto_mode_node_assume_role[0].json
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-auto-mode-node-role"
+    }
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "auto_mode_node_minimal_policy" {
+  count      = var.create_node_iam_role && var.compute_config != null && var.compute_config.enabled && var.compute_config.node_role_arn == null ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodeMinimalPolicy"
+  role       = aws_iam_role.auto_mode_node[0].name
+}
+
+resource "aws_iam_role_policy_attachment" "auto_mode_node_ecr_pull_policy" {
+  count      = var.create_node_iam_role && var.compute_config != null && var.compute_config.enabled && var.compute_config.node_role_arn == null ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+  role       = aws_iam_role.auto_mode_node[0].name
 }
 
 ################################################################################
@@ -131,11 +202,36 @@ resource "aws_eks_cluster" "this" {
 
   bootstrap_self_managed_addons = var.bootstrap_self_managed_addons
 
-  dynamic "kubernetes_network_config" {
-    for_each = var.kubernetes_network_config != null ? [var.kubernetes_network_config] : []
+  dynamic "compute_config" {
+    for_each = var.compute_config != null ? [var.compute_config] : []
     content {
-      service_ipv4_cidr = try(kubernetes_network_config.value.service_ipv4_cidr, null)
-      ip_family         = try(kubernetes_network_config.value.ip_family, "ipv4")
+      enabled       = compute_config.value.enabled
+      node_pools    = compute_config.value.enabled ? compute_config.value.node_pools : null
+      node_role_arn = compute_config.value.enabled ? coalesce(compute_config.value.node_role_arn, try(aws_iam_role.auto_mode_node[0].arn, null)) : null
+    }
+  }
+
+  dynamic "kubernetes_network_config" {
+    for_each = var.kubernetes_network_config != null || var.compute_config != null ? [1] : []
+    content {
+      service_ipv4_cidr = try(var.kubernetes_network_config.service_ipv4_cidr, null)
+      ip_family         = try(var.kubernetes_network_config.ip_family, "ipv4")
+
+      dynamic "elastic_load_balancing" {
+        for_each = var.compute_config != null ? [1] : []
+        content {
+          enabled = var.compute_config.enabled
+        }
+      }
+    }
+  }
+
+  dynamic "storage_config" {
+    for_each = var.compute_config != null ? [1] : []
+    content {
+      block_storage {
+        enabled = var.compute_config.enabled
+      }
     }
   }
 
@@ -174,13 +270,33 @@ resource "aws_eks_cluster" "this" {
 
   depends_on = [
     aws_iam_role_policy_attachment.cluster_policy,
-    aws_iam_role_policy_attachment.vpc_controller
+    aws_iam_role_policy_attachment.vpc_controller,
+    aws_iam_role_policy_attachment.cluster_compute_policy,
+    aws_iam_role_policy_attachment.cluster_block_storage_policy,
+    aws_iam_role_policy_attachment.cluster_load_balancing_policy,
+    aws_iam_role_policy_attachment.cluster_networking_policy
   ]
 
   lifecycle {
     precondition {
       condition     = var.create_iam_role || var.iam_role_arn != null
       error_message = "iam_role_arn is required when create_iam_role is false."
+    }
+    precondition {
+      condition     = var.compute_config == null || !var.compute_config.enabled || !var.bootstrap_self_managed_addons
+      error_message = "bootstrap_self_managed_addons must be false when compute_config.enabled is true (EKS Auto Mode)."
+    }
+    precondition {
+      condition     = var.compute_config == null || !var.compute_config.enabled || var.authentication_mode != "CONFIG_MAP"
+      error_message = "authentication_mode cannot be 'CONFIG_MAP' when compute_config.enabled is true -- EKS Auto Mode requires the 'API' or 'API_AND_CONFIG_MAP' authentication mode."
+    }
+    precondition {
+      condition     = var.compute_config == null || !var.compute_config.enabled || !var.enable_zonal_shift
+      error_message = "enable_zonal_shift must be false when compute_config.enabled is true -- EKS Auto Mode does not support ARC zonal shift."
+    }
+    precondition {
+      condition     = var.compute_config == null || !var.compute_config.enabled || var.create_node_iam_role || var.compute_config.node_role_arn != null
+      error_message = "compute_config.node_role_arn (or create_node_iam_role) is required when compute_config.enabled is true."
     }
   }
 }
@@ -425,4 +541,3 @@ resource "aws_eks_pod_identity_association" "this" {
 
   tags = var.tags
 }
-
