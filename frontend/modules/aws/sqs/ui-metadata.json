@@ -1,0 +1,271 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "sqs",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS SQS Queue",
+    "icon": "inbox",
+    "description": "Provision Amazon Simple Queue Service (SQS) standard and FIFO message queues with SSE-SQS / KMS encryption and redrive policies",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "sqs",
+    "key_field": "name",
+    "key_label": "Queue Name",
+    "key_description": "Unique identifier name for the SQS queue. Serves as map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Queue name, FIFO settings, and message deduplication scopes.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Queue Name",
+            "description": "The name of the SQS queue. For FIFO queues, the name must end with '.fifo'.",
+            "type": "text",
+            "required": true,
+            "default": "sqs-default",
+            "placeholder": "my-app-queue",
+            "validation": {
+              "min": 1,
+              "max": 80,
+              "pattern": "^([a-zA-Z0-9_-]{1,80}|[a-zA-Z0-9_-]{1,75}\\.fifo)$",
+              "pattern_error": "Queue name must be 1-80 characters (letters, numbers, hyphens, underscores); FIFO queue names must end with exactly '.fifo' and contain no other periods."
+            }
+          },
+          {
+            "id": "name_prefix",
+            "label": "Name Prefix",
+            "description": "Creates a unique name beginning with the specified prefix. Conflicts with name.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "my-queue-",
+            "validation": {
+              "pattern": "^[a-zA-Z0-9_-]+$",
+              "pattern_error": "Name prefix may only contain letters, numbers, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "fifo_queue",
+            "label": "FIFO Queue",
+            "description": "Designates whether the queue is FIFO. If true, name must end with '.fifo'.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "content_based_deduplication",
+            "label": "Content-Based Deduplication",
+            "description": "Enables content-based message deduplication for FIFO queues.",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": {
+              "field": "fifo_queue",
+              "value": true,
+              "operator": "eq"
+            }
+          },
+          {
+            "id": "deduplication_scope",
+            "label": "Deduplication Scope",
+            "description": "Specifies whether message deduplication occurs at message group or queue level.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "messageGroup", "label": "Message Group" },
+              { "value": "queue", "label": "Queue" }
+            ],
+            "depends_on": {
+              "field": "fifo_queue",
+              "value": true,
+              "operator": "eq"
+            }
+          },
+          {
+            "id": "fifo_throughput_limit",
+            "label": "FIFO Throughput Limit",
+            "description": "Specifies whether FIFO queue throughput quota applies to entire queue or per message group.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "perQueue", "label": "Per Queue" },
+              { "value": "perMessageGroupId", "label": "Per Message Group ID" }
+            ],
+            "depends_on": {
+              "field": "fifo_queue",
+              "value": true,
+              "operator": "eq"
+            }
+          }
+        ]
+      },
+      {
+        "id": "delivery",
+        "label": "Message Timing & Retention",
+        "description": "Timeouts, retention periods, delay settings, and long polling.",
+        "fields": [
+          {
+            "id": "visibility_timeout_seconds",
+            "label": "Visibility Timeout (seconds)",
+            "description": "The visibility timeout for the queue in seconds (0 to 43200).",
+            "type": "number",
+            "required": false,
+            "default": 30,
+            "validation": { "min": 0, "max": 43200 }
+          },
+          {
+            "id": "message_retention_seconds",
+            "label": "Message Retention (seconds)",
+            "description": "Number of seconds Amazon SQS retains a message (60 to 1209600).",
+            "type": "number",
+            "required": false,
+            "default": 345600,
+            "validation": { "min": 60, "max": 1209600 }
+          },
+          {
+            "id": "max_message_size",
+            "label": "Max Message Size (bytes)",
+            "description": "Limit in bytes before SQS rejects a message (1024 to 262144).",
+            "type": "number",
+            "required": false,
+            "default": 262144,
+            "validation": { "min": 1024, "max": 262144 }
+          },
+          {
+            "id": "delay_seconds",
+            "label": "Delivery Delay (seconds)",
+            "description": "Time in seconds that delivery of messages is delayed (0 to 900).",
+            "type": "number",
+            "required": false,
+            "default": 0,
+            "validation": { "min": 0, "max": 900 }
+          },
+          {
+            "id": "receive_wait_time_seconds",
+            "label": "Receive Wait Time (seconds)",
+            "description": "Time in seconds that ReceiveMessage waits for messages (long polling, 0 to 20).",
+            "type": "number",
+            "required": false,
+            "default": 0,
+            "validation": { "min": 0, "max": 20 }
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Encryption & Access Policies",
+        "description": "SSE-SQS / KMS server-side encryption and IAM queue policies.",
+        "fields": [
+          {
+            "id": "sqs_managed_sse_enabled",
+            "label": "Enable SQS-Managed SSE",
+            "description": "Enable server-side encryption with SQS-owned encryption keys (SSE-SQS).",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "kms_master_key_id",
+            "label": "KMS Master Key ID",
+            "description": "KMS CMK ID, ARN, or alias (e.g. alias/aws/sqs) for custom encryption.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "alias/aws/sqs"
+          },
+          {
+            "id": "kms_data_key_reuse_period_seconds",
+            "label": "KMS Data Key Reuse (seconds)",
+            "description": "Time in seconds Amazon SQS can reuse a data key (60 to 86400).",
+            "type": "number",
+            "required": false,
+            "default": 300,
+            "validation": { "min": 60, "max": 86400 }
+          },
+          {
+            "id": "policy",
+            "label": "Queue IAM Policy",
+            "description": "IAM resource policy for the queue as a JSON string.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": []\n}"
+          }
+        ]
+      },
+      {
+        "id": "redrive",
+        "label": "Dead Letter Queue & Redrive",
+        "description": "Redrive policy and DLQ routing permissions.",
+        "fields": [
+          {
+            "id": "redrive_policy",
+            "label": "Redrive Policy (JSON)",
+            "description": "JSON string containing deadLetterTargetArn and maxReceiveCount.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "{\n  \"deadLetterTargetArn\": \"arn:aws:sqs:...\",\n  \"maxReceiveCount\": 3\n}"
+          },
+          {
+            "id": "redrive_allow_policy",
+            "label": "Redrive Allow Policy (JSON)",
+            "description": "JSON string specifying which source queues can use this queue as a DLQ.",
+            "type": "text",
+            "multiline": true,
+            "required": false,
+            "default": null,
+            "nullable": true
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "Resource tags assigned to the SQS queue.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value tags assigned to the queue.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
