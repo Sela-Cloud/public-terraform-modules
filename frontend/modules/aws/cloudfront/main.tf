@@ -3,7 +3,7 @@
  *****************************************/
 
 module "cloudfront" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/cloudfront?ref=v0.9.8"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/cloudfront?ref=v0.9.9"
   for_each = var.cloudfront
 
   enabled             = each.value.enabled

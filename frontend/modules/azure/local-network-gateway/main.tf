@@ -1,5 +1,5 @@
 module "local_network_gateway" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/local-network-gateway?ref=v0.9.8"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/local-network-gateway?ref=v0.9.9"
   for_each = var.local_network_gateway
 
   name                = each.value.name
