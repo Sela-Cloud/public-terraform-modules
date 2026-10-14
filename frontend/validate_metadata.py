@@ -110,6 +110,8 @@ KNOWN_DATA_SOURCES = {
     "ec2.nat_gateways",
     "ec2.vpc_peering_connection",
     "ec2.vpc_peering_connections",
+    "ecr.repository",
+    "ecr.repositories",
     "ec2.security_group",
     "ec2.security_groups",
     "ec2.key_pair",
