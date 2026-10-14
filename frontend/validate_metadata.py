@@ -114,6 +114,8 @@ KNOWN_DATA_SOURCES = {
     "ecr.repositories",
     "wafv2.web_acl",
     "wafv2.web_acls",
+    "efs.file_system",
+    "efs.file_systems",
     "ec2.security_group",
     "ec2.security_groups",
     "ec2.key_pair",
