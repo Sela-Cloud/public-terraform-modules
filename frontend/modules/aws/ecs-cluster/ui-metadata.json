@@ -1,0 +1,357 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "ecs-cluster",
+  "version": "1.0.0",
+  "display": {
+    "label": "ECS Cluster",
+    "icon": "ecs",
+    "description": "An ECS cluster with Fargate and optional EC2 capacity providers, Container Insights, ECS Exec logging and a default Service Connect namespace.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "ecs_cluster",
+    "key_field": "name",
+    "key_label": "Cluster name",
+    "key_description": "Cannot be changed after creation.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Cluster",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Cluster name",
+            "type": "text",
+            "required": true,
+            "placeholder": "orders-prod",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+              "pattern_error": "Use letters, numbers, hyphens and underscores."
+            }
+          },
+          {
+            "id": "container_insights",
+            "label": "Container Insights",
+            "type": "select",
+            "default": "disabled",
+            "description": "CloudWatch metrics for the cluster's services and tasks. Enhanced adds container-level detail and costs more.",
+            "options": [
+              {
+                "value": "disabled",
+                "label": "Disabled"
+              },
+              {
+                "value": "enabled",
+                "label": "Enabled"
+              },
+              {
+                "value": "enhanced",
+                "label": "Enhanced observability"
+              }
+            ]
+          },
+          {
+            "id": "service_connect_namespace_arn",
+            "label": "Default Service Connect namespace ARN",
+            "type": "text",
+            "nullable": true,
+            "placeholder": "arn:aws:servicediscovery:REGION:ACCOUNT:namespace/ns-...",
+            "description": "Namespace ARN from the ECS Service Connect Namespace module. Services that enable Service Connect without naming a namespace join this one."
+          },
+          {
+            "id": "tags",
+            "label": "Tags",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "capacity",
+        "label": "Capacity",
+        "fields": [
+          {
+            "id": "enable_fargate",
+            "label": "Enable Fargate",
+            "type": "boolean",
+            "default": true,
+            "description": "Registers the FARGATE and FARGATE_SPOT capacity providers."
+          },
+          {
+            "id": "ec2_capacity_providers",
+            "label": "EC2 capacity providers",
+            "type": "repeatable",
+            "description": "Run tasks on instances from an existing Auto Scaling Group. Its launch template must use an ECS-optimised AMI and set ECS_CLUSTER to this cluster's name in user data.",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Capacity provider name",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "pattern": "^(?![Aa][Ww][Ss]|[Ee][Cc][Ss]|[Ff][Aa][Rr][Gg][Aa][Tt][Ee])[A-Za-z0-9_-]+$",
+                  "pattern_error": "Letters, numbers, hyphens, underscores; cannot start with aws, ecs or fargate."
+                }
+              },
+              {
+                "id": "auto_scaling_group_arn",
+                "label": "Auto Scaling Group ARN",
+                "type": "text",
+                "required": true,
+                "placeholder": "arn:aws:autoscaling:REGION:ACCOUNT:autoScalingGroup:...:autoScalingGroupName/NAME"
+              },
+              {
+                "id": "managed_scaling",
+                "label": "Managed scaling",
+                "type": "boolean",
+                "default": true,
+                "description": "ECS grows and shrinks the Auto Scaling Group to fit the tasks."
+              },
+              {
+                "id": "target_capacity",
+                "label": "Target capacity (%)",
+                "type": "number",
+                "default": 100,
+                "validation": {
+                  "min": 1,
+                  "max": 100
+                },
+                "description": "How full ECS keeps the instances. 100 packs them; lower leaves spare room for fast scale-out.",
+                "depends_on": {
+                  "field": "managed_scaling",
+                  "value": true
+                }
+              },
+              {
+                "id": "managed_termination_protection",
+                "label": "Managed termination protection",
+                "type": "boolean",
+                "default": false,
+                "description": "Stops the group from terminating instances still running tasks. Needs scale-in protection turned on in the Auto Scaling Group."
+              },
+              {
+                "id": "managed_draining",
+                "label": "Managed draining",
+                "type": "boolean",
+                "default": true,
+                "description": "Moves tasks off an instance before the group terminates it."
+              }
+            ]
+          },
+          {
+            "id": "default_capacity_provider_strategy",
+            "label": "Default capacity provider strategy",
+            "type": "repeatable",
+            "description": "Where tasks go for services that set no strategy of their own. Name FARGATE, FARGATE_SPOT, or an EC2 capacity provider above.",
+            "default": [
+              {
+                "capacity_provider": "FARGATE",
+                "weight": 1,
+                "base": 0
+              }
+            ],
+            "fields": [
+              {
+                "id": "capacity_provider",
+                "label": "Capacity provider",
+                "type": "text",
+                "required": true,
+                "placeholder": "FARGATE"
+              },
+              {
+                "id": "weight",
+                "label": "Weight",
+                "type": "number",
+                "default": 1,
+                "validation": {
+                  "min": 0,
+                  "max": 1000
+                },
+                "description": "Share of tasks above the base, relative to the other providers."
+              },
+              {
+                "id": "base",
+                "label": "Base",
+                "type": "number",
+                "default": 0,
+                "validation": {
+                  "min": 0,
+                  "max": 100000
+                },
+                "description": "Tasks always placed here first. Only one provider can have a base above 0."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "exec",
+        "label": "ECS Exec logging",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "execute_command_logging",
+            "label": "Session logging",
+            "type": "select",
+            "default": "DEFAULT",
+            "description": "Where the output of ECS Exec (shell) sessions goes.",
+            "options": [
+              {
+                "value": "DEFAULT",
+                "label": "The task's own log configuration"
+              },
+              {
+                "value": "OVERRIDE",
+                "label": "A dedicated log group, /ecs/<cluster>/exec"
+              },
+              {
+                "value": "NONE",
+                "label": "Not logged"
+              }
+            ]
+          },
+          {
+            "id": "execute_command_log_retention_days",
+            "label": "Session log retention",
+            "type": "select",
+            "description": "How long ECS Exec session logs are kept.",
+            "default": "30",
+            "options": [
+              {
+                "value": "0",
+                "label": "Never expire"
+              },
+              {
+                "value": "1",
+                "label": "1 day"
+              },
+              {
+                "value": "3",
+                "label": "3 days"
+              },
+              {
+                "value": "5",
+                "label": "5 days"
+              },
+              {
+                "value": "7",
+                "label": "7 days"
+              },
+              {
+                "value": "14",
+                "label": "14 days"
+              },
+              {
+                "value": "30",
+                "label": "30 days"
+              },
+              {
+                "value": "60",
+                "label": "60 days"
+              },
+              {
+                "value": "90",
+                "label": "90 days"
+              },
+              {
+                "value": "120",
+                "label": "120 days"
+              },
+              {
+                "value": "150",
+                "label": "150 days"
+              },
+              {
+                "value": "180",
+                "label": "180 days"
+              },
+              {
+                "value": "365",
+                "label": "365 days"
+              },
+              {
+                "value": "400",
+                "label": "400 days"
+              },
+              {
+                "value": "545",
+                "label": "545 days"
+              },
+              {
+                "value": "731",
+                "label": "731 days"
+              },
+              {
+                "value": "1096",
+                "label": "1096 days"
+              },
+              {
+                "value": "1827",
+                "label": "1827 days"
+              },
+              {
+                "value": "2192",
+                "label": "2192 days"
+              },
+              {
+                "value": "2557",
+                "label": "2557 days"
+              },
+              {
+                "value": "2922",
+                "label": "2922 days"
+              },
+              {
+                "value": "3288",
+                "label": "3288 days"
+              },
+              {
+                "value": "3653",
+                "label": "3653 days"
+              }
+            ],
+            "depends_on": {
+              "field": "execute_command_logging",
+              "value": "OVERRIDE"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "satellites": [
+    {
+      "address": "aws_ecs_capacity_provider.ec2",
+      "driven_by": "ec2_capacity_providers"
+    },
+    {
+      "address": "aws_ecs_cluster_capacity_providers.this",
+      "driven_by": "enable_fargate"
+    },
+    {
+      "address": "aws_cloudwatch_log_group.exec",
+      "driven_by": "execute_command_logging"
+    }
+  ]
+}

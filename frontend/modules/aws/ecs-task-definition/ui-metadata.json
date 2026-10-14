@@ -1,0 +1,752 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "ecs-task-definition",
+  "version": "1.0.0",
+  "display": {
+    "label": "ECS Task Definition",
+    "icon": "ecs",
+    "description": "An ECS task definition: containers, ports, environment, secrets, health checks and volumes, with a CloudWatch log group the containers write to.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "ecs_task_definition",
+    "key_field": "family",
+    "key_label": "Family",
+    "key_description": "Each change registers a new revision under this family. Cannot be changed after creation.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Task",
+        "fields": [
+          {
+            "id": "family",
+            "label": "Family",
+            "type": "text",
+            "required": true,
+            "placeholder": "orders-api",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+              "pattern_error": "Use letters, numbers, hyphens and underscores."
+            }
+          },
+          {
+            "id": "requires_compatibilities",
+            "label": "Launch types",
+            "type": "list",
+            "default": [
+              "FARGATE"
+            ],
+            "description": "FARGATE, EC2, or both. Fargate needs awsvpc networking and task-level CPU and memory."
+          },
+          {
+            "id": "cpu",
+            "label": "Task CPU units",
+            "type": "select",
+            "nullable": true,
+            "default": "256",
+            "description": "1024 units = 1 vCPU. On Fargate each CPU size allows only certain memory sizes.",
+            "options": [
+              {
+                "value": "256",
+                "label": "0.25 vCPU"
+              },
+              {
+                "value": "512",
+                "label": "0.5 vCPU"
+              },
+              {
+                "value": "1024",
+                "label": "1 vCPU"
+              },
+              {
+                "value": "2048",
+                "label": "2 vCPU"
+              },
+              {
+                "value": "4096",
+                "label": "4 vCPU"
+              },
+              {
+                "value": "8192",
+                "label": "8 vCPU"
+              },
+              {
+                "value": "16384",
+                "label": "16 vCPU"
+              }
+            ]
+          },
+          {
+            "id": "memory",
+            "label": "Task memory (MiB)",
+            "type": "number",
+            "nullable": true,
+            "default": 512,
+            "validation": {
+              "min": 128
+            },
+            "description": "Fargate: 512-2048 for 0.25 vCPU, 1024-4096 for 0.5, 2048-8192 for 1, 4096-16384 for 2, and up."
+          },
+          {
+            "id": "network_mode",
+            "label": "Network mode",
+            "type": "select",
+            "default": "awsvpc",
+            "options": [
+              {
+                "value": "awsvpc",
+                "label": "awsvpc (own network interface, required for Fargate)"
+              },
+              {
+                "value": "bridge",
+                "label": "bridge"
+              },
+              {
+                "value": "host",
+                "label": "host"
+              },
+              {
+                "value": "none",
+                "label": "none"
+              }
+            ]
+          },
+          {
+            "id": "cpu_architecture",
+            "label": "CPU architecture",
+            "type": "select",
+            "default": "X86_64",
+            "description": "The image must be built for it.",
+            "options": [
+              {
+                "value": "X86_64",
+                "label": "x86-64"
+              },
+              {
+                "value": "ARM64",
+                "label": "ARM64 (Graviton)"
+              }
+            ]
+          },
+          {
+            "id": "operating_system_family",
+            "label": "Operating system",
+            "type": "select",
+            "default": "LINUX",
+            "options": [
+              {
+                "value": "LINUX",
+                "label": "Linux"
+              },
+              {
+                "value": "WINDOWS_SERVER_2022_CORE",
+                "label": "Windows Server 2022 Core"
+              },
+              {
+                "value": "WINDOWS_SERVER_2022_FULL",
+                "label": "Windows Server 2022 Full"
+              },
+              {
+                "value": "WINDOWS_SERVER_2019_CORE",
+                "label": "Windows Server 2019 Core"
+              },
+              {
+                "value": "WINDOWS_SERVER_2019_FULL",
+                "label": "Windows Server 2019 Full"
+              }
+            ]
+          },
+          {
+            "id": "tags",
+            "label": "Tags",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "iam",
+        "label": "Roles",
+        "fields": [
+          {
+            "id": "execution_role_arn",
+            "label": "Task execution role",
+            "type": "select",
+            "nullable": true,
+            "data_source": {
+              "resource": "iam.roles",
+              "params": {},
+              "display": {
+                "value_key": "arn",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            },
+            "description": "Used by ECS to pull private images, fetch secrets and write logs. Needs AmazonECSTaskExecutionRolePolicy. Required on Fargate when logging or using secrets."
+          },
+          {
+            "id": "task_role_arn",
+            "label": "Task role",
+            "type": "select",
+            "nullable": true,
+            "data_source": {
+              "resource": "iam.roles",
+              "params": {},
+              "display": {
+                "value_key": "arn",
+                "label_key": "name"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            },
+            "description": "Assumed by your containers to call AWS APIs. Leave empty if they make none."
+          }
+        ]
+      },
+      {
+        "id": "containers",
+        "label": "Containers",
+        "fields": [
+          {
+            "id": "containers",
+            "label": "Containers",
+            "type": "repeatable",
+            "required": true,
+            "fields": [
+              {
+                "id": "name",
+                "label": "Container name",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "min": 1,
+                  "max": 255,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                  "pattern_error": "Use letters, numbers, hyphens and underscores."
+                }
+              },
+              {
+                "id": "image",
+                "label": "Image",
+                "type": "text",
+                "required": true,
+                "placeholder": "ACCOUNT.dkr.ecr.REGION.amazonaws.com/app:1.0.0"
+              },
+              {
+                "id": "essential",
+                "label": "Essential",
+                "type": "boolean",
+                "default": true,
+                "description": "The task stops if this container stops."
+              },
+              {
+                "id": "cpu",
+                "label": "CPU units",
+                "type": "number",
+                "nullable": true,
+                "validation": {
+                  "min": 0
+                },
+                "description": "Share of the task's CPU reserved for this container."
+              },
+              {
+                "id": "memory",
+                "label": "Memory hard limit (MiB)",
+                "type": "number",
+                "nullable": true,
+                "validation": {
+                  "min": 6
+                },
+                "description": "The container is killed above this."
+              },
+              {
+                "id": "memory_reservation",
+                "label": "Memory soft limit (MiB)",
+                "type": "number",
+                "nullable": true,
+                "validation": {
+                  "min": 6
+                }
+              },
+              {
+                "id": "port_mappings",
+                "label": "Port mappings",
+                "type": "repeatable",
+                "fields": [
+                  {
+                    "id": "container_port",
+                    "label": "Container port",
+                    "type": "number",
+                    "required": true,
+                    "validation": {
+                      "min": 1,
+                      "max": 65535
+                    }
+                  },
+                  {
+                    "id": "host_port",
+                    "label": "Host port",
+                    "type": "number",
+                    "nullable": true,
+                    "validation": {
+                      "min": 0,
+                      "max": 65535
+                    },
+                    "description": "Leave empty for awsvpc networking, where it always equals the container port."
+                  },
+                  {
+                    "id": "protocol",
+                    "label": "Protocol",
+                    "type": "select",
+                    "default": "tcp",
+                    "options": [
+                      {
+                        "value": "tcp",
+                        "label": "TCP"
+                      },
+                      {
+                        "value": "udp",
+                        "label": "UDP"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "name",
+                    "label": "Port name",
+                    "type": "text",
+                    "nullable": true,
+                    "placeholder": "http",
+                    "description": "Needed for Service Connect, which refers to ports by name.",
+                    "validation": {
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "pattern_error": "Use lowercase letters, numbers and hyphens."
+                    }
+                  },
+                  {
+                    "id": "app_protocol",
+                    "label": "Application protocol",
+                    "type": "select",
+                    "nullable": true,
+                    "description": "Lets Service Connect report protocol-level metrics.",
+                    "options": [
+                      {
+                        "value": "http",
+                        "label": "HTTP"
+                      },
+                      {
+                        "value": "http2",
+                        "label": "HTTP/2"
+                      },
+                      {
+                        "value": "grpc",
+                        "label": "gRPC"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "environment",
+                "label": "Environment variables",
+                "type": "map",
+                "description": "Plain values only. Put passwords and keys in Secrets."
+              },
+              {
+                "id": "secrets",
+                "label": "Secrets",
+                "type": "repeatable",
+                "description": "Injected as environment variables from Secrets Manager or SSM Parameter Store. The task execution role must be allowed to read them.",
+                "fields": [
+                  {
+                    "id": "name",
+                    "label": "Variable name",
+                    "type": "text",
+                    "required": true
+                  },
+                  {
+                    "id": "value_from",
+                    "label": "Secret or parameter ARN",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "arn:aws:secretsmanager:REGION:ACCOUNT:secret:NAME:json-key::"
+                  }
+                ]
+              },
+              {
+                "id": "command",
+                "label": "Command",
+                "type": "list",
+                "description": "Overrides the image's CMD, one argument per entry."
+              },
+              {
+                "id": "entry_point",
+                "label": "Entry point",
+                "type": "list",
+                "description": "Overrides the image's ENTRYPOINT, one argument per entry."
+              },
+              {
+                "id": "working_directory",
+                "label": "Working directory",
+                "type": "text",
+                "nullable": true
+              },
+              {
+                "id": "user",
+                "label": "User",
+                "type": "text",
+                "nullable": true,
+                "placeholder": "1000:1000"
+              },
+              {
+                "id": "readonly_root_filesystem",
+                "label": "Read-only root filesystem",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "health_check",
+                "label": "Container health check",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "command",
+                    "label": "Command",
+                    "type": "list",
+                    "required": true,
+                    "description": "For example CMD-SHELL, then: curl -f http://localhost:8080/health || exit 1"
+                  },
+                  {
+                    "id": "interval",
+                    "label": "Interval (seconds)",
+                    "type": "number",
+                    "default": 30,
+                    "validation": {
+                      "min": 5,
+                      "max": 300
+                    }
+                  },
+                  {
+                    "id": "timeout",
+                    "label": "Timeout (seconds)",
+                    "type": "number",
+                    "default": 5,
+                    "validation": {
+                      "min": 2,
+                      "max": 60
+                    }
+                  },
+                  {
+                    "id": "retries",
+                    "label": "Retries",
+                    "type": "number",
+                    "default": 3,
+                    "validation": {
+                      "min": 1,
+                      "max": 10
+                    }
+                  },
+                  {
+                    "id": "start_period",
+                    "label": "Start period (seconds)",
+                    "type": "number",
+                    "default": 0,
+                    "validation": {
+                      "min": 0,
+                      "max": 300
+                    },
+                    "description": "Failures during this time after start do not count."
+                  }
+                ]
+              },
+              {
+                "id": "mount_points",
+                "label": "Mount points",
+                "type": "repeatable",
+                "fields": [
+                  {
+                    "id": "source_volume",
+                    "label": "Volume name",
+                    "type": "text",
+                    "required": true,
+                    "description": "A volume defined in this task's Volumes section."
+                  },
+                  {
+                    "id": "container_path",
+                    "label": "Path in the container",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "/data"
+                  },
+                  {
+                    "id": "read_only",
+                    "label": "Read-only",
+                    "type": "boolean",
+                    "default": false
+                  }
+                ]
+              },
+              {
+                "id": "depends_on",
+                "label": "Start after",
+                "type": "repeatable",
+                "description": "Containers in this task that must reach a state before this one starts.",
+                "fields": [
+                  {
+                    "id": "container_name",
+                    "label": "Container name",
+                    "type": "text",
+                    "required": true
+                  },
+                  {
+                    "id": "condition",
+                    "label": "Condition",
+                    "type": "select",
+                    "default": "START",
+                    "options": [
+                      {
+                        "value": "START",
+                        "label": "Started"
+                      },
+                      {
+                        "value": "HEALTHY",
+                        "label": "Healthy"
+                      },
+                      {
+                        "value": "COMPLETE",
+                        "label": "Exited"
+                      },
+                      {
+                        "value": "SUCCESS",
+                        "label": "Exited with status 0"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "enable_logging",
+                "label": "Send logs to CloudWatch",
+                "type": "boolean",
+                "default": true,
+                "description": "Writes to the task's log group, /ecs/<family>, under a stream named after the container."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "label": "Storage and logs",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "ephemeral_storage_gib",
+            "label": "Ephemeral storage (GiB)",
+            "type": "number",
+            "nullable": true,
+            "validation": {
+              "min": 21,
+              "max": 200
+            },
+            "description": "Fargate only. Leave empty for the 20 GiB default."
+          },
+          {
+            "id": "volumes",
+            "label": "Volumes",
+            "type": "repeatable",
+            "description": "Mounted into containers by name. Without EFS a volume is scratch space that lasts as long as the task.",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Volume name",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "efs",
+                "label": "EFS file system",
+                "type": "object",
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "file_system_id",
+                    "label": "File system ID",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "fs-0123456789abcdef0"
+                  },
+                  {
+                    "id": "access_point_id",
+                    "label": "Access point ID",
+                    "type": "text",
+                    "nullable": true,
+                    "placeholder": "fsap-0123456789abcdef0"
+                  },
+                  {
+                    "id": "root_directory",
+                    "label": "Root directory",
+                    "type": "text",
+                    "nullable": true,
+                    "placeholder": "/",
+                    "description": "Ignored when an access point is set; the access point decides the directory."
+                  },
+                  {
+                    "id": "transit_encryption",
+                    "label": "Encrypt in transit",
+                    "type": "boolean",
+                    "default": true
+                  },
+                  {
+                    "id": "iam_authorization",
+                    "label": "Use IAM authorization",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Mount as the task role. Needs encryption in transit."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "log_retention_days",
+            "label": "Log retention",
+            "type": "select",
+            "description": "How long container logs in /ecs/<family> are kept.",
+            "default": "30",
+            "options": [
+              {
+                "value": "0",
+                "label": "Never expire"
+              },
+              {
+                "value": "1",
+                "label": "1 day"
+              },
+              {
+                "value": "3",
+                "label": "3 days"
+              },
+              {
+                "value": "5",
+                "label": "5 days"
+              },
+              {
+                "value": "7",
+                "label": "7 days"
+              },
+              {
+                "value": "14",
+                "label": "14 days"
+              },
+              {
+                "value": "30",
+                "label": "30 days"
+              },
+              {
+                "value": "60",
+                "label": "60 days"
+              },
+              {
+                "value": "90",
+                "label": "90 days"
+              },
+              {
+                "value": "120",
+                "label": "120 days"
+              },
+              {
+                "value": "150",
+                "label": "150 days"
+              },
+              {
+                "value": "180",
+                "label": "180 days"
+              },
+              {
+                "value": "365",
+                "label": "365 days"
+              },
+              {
+                "value": "400",
+                "label": "400 days"
+              },
+              {
+                "value": "545",
+                "label": "545 days"
+              },
+              {
+                "value": "731",
+                "label": "731 days"
+              },
+              {
+                "value": "1096",
+                "label": "1096 days"
+              },
+              {
+                "value": "1827",
+                "label": "1827 days"
+              },
+              {
+                "value": "2192",
+                "label": "2192 days"
+              },
+              {
+                "value": "2557",
+                "label": "2557 days"
+              },
+              {
+                "value": "2922",
+                "label": "2922 days"
+              },
+              {
+                "value": "3288",
+                "label": "3288 days"
+              },
+              {
+                "value": "3653",
+                "label": "3653 days"
+              }
+            ]
+          },
+          {
+            "id": "skip_destroy",
+            "label": "Keep old revisions",
+            "type": "boolean",
+            "default": false,
+            "description": "Leave previous revisions registered when a new one replaces them, so rollbacks can still use them."
+          }
+        ]
+      }
+    ]
+  },
+  "satellites": [
+    {
+      "address": "aws_cloudwatch_log_group.this",
+      "driven_by": "containers",
+      "note": "The /ecs/<family> log group is created alongside the task definition."
+    }
+  ]
+}

@@ -1,0 +1,567 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "ecs-service",
+  "version": "1.0.0",
+  "display": {
+    "label": "ECS Service",
+    "icon": "ecs",
+    "description": "An ECS service running a task definition in a cluster, with load balancer registration, Service Connect, deployment safeguards and autoscaling.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "ecs_service",
+    "key_field": "name",
+    "key_label": "Service name",
+    "key_description": "Cannot be changed after creation.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Service",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Service name",
+            "type": "text",
+            "required": true,
+            "placeholder": "orders-api",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+              "pattern_error": "Use letters, numbers, hyphens and underscores."
+            }
+          },
+          {
+            "id": "cluster",
+            "label": "Cluster",
+            "type": "text",
+            "required": true,
+            "placeholder": "orders-prod",
+            "description": "Name or ARN of the cluster, such as one from the ECS Cluster module."
+          },
+          {
+            "id": "task_definition",
+            "label": "Task definition",
+            "type": "text",
+            "required": true,
+            "placeholder": "orders-api",
+            "description": "A family (runs its latest revision), family:revision, or the full ARN from the ECS Task Definition module."
+          },
+          {
+            "id": "desired_count",
+            "label": "Desired tasks",
+            "type": "number",
+            "default": 1,
+            "validation": {
+              "min": 0
+            },
+            "description": "With autoscaling on, an apply that changes the service resets the count to this value; autoscaling then adjusts it."
+          },
+          {
+            "id": "launch_type",
+            "label": "Launch type",
+            "type": "select",
+            "nullable": true,
+            "description": "Leave empty to use the capacity provider strategy below, or the cluster's default.",
+            "options": [
+              {
+                "value": "FARGATE",
+                "label": "Fargate"
+              },
+              {
+                "value": "EC2",
+                "label": "EC2"
+              },
+              {
+                "value": "EXTERNAL",
+                "label": "External (ECS Anywhere)"
+              }
+            ]
+          },
+          {
+            "id": "capacity_provider_strategy",
+            "label": "Capacity provider strategy",
+            "type": "repeatable",
+            "description": "Overrides the cluster's default strategy. Cannot be combined with a launch type.",
+            "depends_on": {
+              "field": "launch_type",
+              "value": [
+                "FARGATE",
+                "EC2",
+                "EXTERNAL"
+              ],
+              "operator": "not_in"
+            },
+            "fields": [
+              {
+                "id": "capacity_provider",
+                "label": "Capacity provider",
+                "type": "text",
+                "required": true,
+                "placeholder": "FARGATE_SPOT"
+              },
+              {
+                "id": "weight",
+                "label": "Weight",
+                "type": "number",
+                "default": 1,
+                "validation": {
+                  "min": 0,
+                  "max": 1000
+                }
+              },
+              {
+                "id": "base",
+                "label": "Base",
+                "type": "number",
+                "default": 0,
+                "validation": {
+                  "min": 0,
+                  "max": 100000
+                }
+              }
+            ]
+          },
+          {
+            "id": "tags",
+            "label": "Tags",
+            "type": "map"
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Networking",
+        "description": "For task definitions using awsvpc networking, which includes every Fargate task.",
+        "fields": [
+          {
+            "id": "subnet_ids",
+            "label": "Subnets",
+            "type": "list",
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "security_group_ids",
+            "label": "Security group IDs",
+            "type": "list",
+            "placeholder": "sg-0123456789abcdef0"
+          },
+          {
+            "id": "assign_public_ip",
+            "label": "Assign public IP",
+            "type": "boolean",
+            "default": false,
+            "description": "Fargate only. Needed in a public subnet with no NAT gateway, or tasks cannot pull images."
+          }
+        ]
+      },
+      {
+        "id": "load-balancing",
+        "label": "Load balancing",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "load_balancers",
+            "label": "Target groups",
+            "type": "repeatable",
+            "description": "The target group's type must be ip for awsvpc tasks.",
+            "fields": [
+              {
+                "id": "target_group_arn",
+                "label": "Target group ARN",
+                "type": "text",
+                "required": true,
+                "placeholder": "arn:aws:elasticloadbalancing:REGION:ACCOUNT:targetgroup/NAME/ID"
+              },
+              {
+                "id": "container_name",
+                "label": "Container name",
+                "type": "text",
+                "required": true
+              },
+              {
+                "id": "container_port",
+                "label": "Container port",
+                "type": "number",
+                "required": true,
+                "validation": {
+                  "min": 1,
+                  "max": 65535
+                }
+              }
+            ]
+          },
+          {
+            "id": "health_check_grace_period_seconds",
+            "label": "Health check grace period (seconds)",
+            "type": "number",
+            "default": 60,
+            "validation": {
+              "min": 0,
+              "max": 2147483647
+            },
+            "description": "Load balancer health check failures are ignored this long after a task starts."
+          }
+        ]
+      },
+      {
+        "id": "service-connect",
+        "label": "Service Connect",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "service_connect",
+            "label": "Service Connect",
+            "type": "object",
+            "fields": [
+              {
+                "id": "enabled",
+                "label": "Enable Service Connect",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "namespace",
+                "label": "Namespace",
+                "type": "text",
+                "nullable": true,
+                "placeholder": "arn:aws:servicediscovery:REGION:ACCOUNT:namespace/ns-...",
+                "description": "ARN or name of a namespace from the ECS Service Connect Namespace module. Leave empty for the cluster's default.",
+                "depends_on": {
+                  "field": "enabled",
+                  "value": true
+                }
+              },
+              {
+                "id": "services",
+                "label": "Published ports",
+                "type": "repeatable",
+                "description": "Ports other services can call. Leave empty for a client that only calls others.",
+                "depends_on": {
+                  "field": "enabled",
+                  "value": true
+                },
+                "fields": [
+                  {
+                    "id": "port_name",
+                    "label": "Port name",
+                    "type": "text",
+                    "required": true,
+                    "description": "A named port mapping in the task definition."
+                  },
+                  {
+                    "id": "discovery_name",
+                    "label": "Discovery name",
+                    "type": "text",
+                    "nullable": true,
+                    "description": "Name registered in the namespace. Defaults to the port name."
+                  },
+                  {
+                    "id": "client_alias_dns_name",
+                    "label": "Client DNS name",
+                    "type": "text",
+                    "nullable": true,
+                    "placeholder": "orders",
+                    "description": "What callers use. Defaults to the discovery name."
+                  },
+                  {
+                    "id": "client_alias_port",
+                    "label": "Client port",
+                    "type": "number",
+                    "required": true,
+                    "validation": {
+                      "min": 1,
+                      "max": 65535
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "deployment",
+        "label": "Deployment",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "deployment_minimum_healthy_percent",
+            "label": "Minimum healthy percent",
+            "type": "number",
+            "default": 100,
+            "validation": {
+              "min": 0
+            },
+            "description": "Tasks kept running during a deployment, as a percentage of desired tasks."
+          },
+          {
+            "id": "deployment_maximum_percent",
+            "label": "Maximum percent",
+            "type": "number",
+            "default": 200,
+            "validation": {
+              "min": 100
+            },
+            "description": "Tasks allowed during a deployment, as a percentage of desired tasks."
+          },
+          {
+            "id": "deployment_circuit_breaker",
+            "label": "Circuit breaker",
+            "type": "object",
+            "fields": [
+              {
+                "id": "enable",
+                "label": "Stop failing deployments",
+                "type": "boolean",
+                "default": true
+              },
+              {
+                "id": "rollback",
+                "label": "Roll back on failure",
+                "type": "boolean",
+                "default": true,
+                "depends_on": {
+                  "field": "enable",
+                  "value": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "availability_zone_rebalancing",
+            "label": "Availability Zone rebalancing",
+            "type": "select",
+            "default": "ENABLED",
+            "description": "Needs a maximum percent above 100.",
+            "options": [
+              {
+                "value": "ENABLED",
+                "label": "Enabled"
+              },
+              {
+                "value": "DISABLED",
+                "label": "Disabled"
+              }
+            ]
+          },
+          {
+            "id": "force_new_deployment",
+            "label": "Force new deployment",
+            "type": "boolean",
+            "default": false,
+            "description": "Restart all tasks on every change, to pick up a re-pushed image tag such as :latest."
+          },
+          {
+            "id": "wait_for_steady_state",
+            "label": "Wait for steady state",
+            "type": "boolean",
+            "default": false,
+            "description": "Fail the deployment in Sela Craft if the service does not become stable."
+          },
+          {
+            "id": "enable_execute_command",
+            "label": "Enable ECS Exec",
+            "type": "boolean",
+            "default": false,
+            "description": "Allow shell access into tasks. The task role needs the ssmmessages permissions."
+          },
+          {
+            "id": "propagate_tags",
+            "label": "Copy tags to tasks from",
+            "type": "select",
+            "default": "SERVICE",
+            "options": [
+              {
+                "value": "SERVICE",
+                "label": "Service"
+              },
+              {
+                "value": "TASK_DEFINITION",
+                "label": "Task definition"
+              },
+              {
+                "value": "NONE",
+                "label": "None"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "autoscaling",
+        "label": "Autoscaling",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "autoscaling",
+            "label": "Autoscaling",
+            "type": "object",
+            "fields": [
+              {
+                "id": "enabled",
+                "label": "Enable autoscaling",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "min_capacity",
+                "label": "Minimum tasks",
+                "type": "number",
+                "default": 1,
+                "validation": {
+                  "min": 0
+                },
+                "depends_on": {
+                  "field": "enabled",
+                  "value": true
+                }
+              },
+              {
+                "id": "max_capacity",
+                "label": "Maximum tasks",
+                "type": "number",
+                "default": 4,
+                "validation": {
+                  "min": 1
+                },
+                "depends_on": {
+                  "field": "enabled",
+                  "value": true
+                }
+              },
+              {
+                "id": "policies",
+                "label": "Target tracking policies",
+                "type": "repeatable",
+                "depends_on": {
+                  "field": "enabled",
+                  "value": true
+                },
+                "fields": [
+                  {
+                    "id": "name",
+                    "label": "Policy name",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "cpu"
+                  },
+                  {
+                    "id": "metric",
+                    "label": "Metric",
+                    "type": "select",
+                    "required": true,
+                    "default": "ECSServiceAverageCPUUtilization",
+                    "options": [
+                      {
+                        "value": "ECSServiceAverageCPUUtilization",
+                        "label": "Average CPU utilization (%)"
+                      },
+                      {
+                        "value": "ECSServiceAverageMemoryUtilization",
+                        "label": "Average memory utilization (%)"
+                      },
+                      {
+                        "value": "ALBRequestCountPerTarget",
+                        "label": "Load balancer requests per task"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "target_value",
+                    "label": "Target value",
+                    "type": "number",
+                    "required": true,
+                    "default": 70,
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "resource_label",
+                    "label": "Load balancer resource label",
+                    "type": "text",
+                    "nullable": true,
+                    "placeholder": "app/LB-NAME/LB-ID/targetgroup/TG-NAME/TG-ID",
+                    "depends_on": {
+                      "field": "metric",
+                      "value": "ALBRequestCountPerTarget"
+                    }
+                  },
+                  {
+                    "id": "scale_out_cooldown",
+                    "label": "Scale-out cooldown (seconds)",
+                    "type": "number",
+                    "default": 60,
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "scale_in_cooldown",
+                    "label": "Scale-in cooldown (seconds)",
+                    "type": "number",
+                    "default": 300,
+                    "validation": {
+                      "min": 0
+                    }
+                  },
+                  {
+                    "id": "disable_scale_in",
+                    "label": "Never scale in",
+                    "type": "boolean",
+                    "default": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "satellites": [
+    {
+      "address": "aws_appautoscaling_target.this",
+      "driven_by": "autoscaling"
+    },
+    {
+      "address": "aws_appautoscaling_policy.this",
+      "driven_by": "autoscaling"
+    }
+  ]
+}

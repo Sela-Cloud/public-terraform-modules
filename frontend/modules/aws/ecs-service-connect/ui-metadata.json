@@ -1,0 +1,69 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "ecs-service-connect",
+  "version": "1.0.0",
+  "display": {
+    "label": "ECS Service Connect Namespace",
+    "icon": "ecs",
+    "description": "A Cloud Map namespace ECS services join with Service Connect to reach each other by name. Make it the default of a cluster, or name it in each service.",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "ecs_service_connect",
+    "key_field": "name",
+    "key_label": "Namespace name",
+    "key_description": "Services reach each other inside this namespace. Cannot be changed after creation.",
+    "locked_after_create": true,
+    "sections": [
+      {
+        "id": "basics",
+        "label": "Namespace",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Namespace name",
+            "type": "text",
+            "required": true,
+            "placeholder": "orders-prod",
+            "validation": {
+              "min": 1,
+              "max": 1024,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+              "pattern_error": "Use letters, numbers, dots, hyphens and underscores."
+            }
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text",
+            "nullable": true
+          },
+          {
+            "id": "tags",
+            "label": "Tags",
+            "type": "map"
+          }
+        ]
+      }
+    ]
+  }
+}
