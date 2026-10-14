@@ -1,0 +1,23 @@
+name = "prod-s2s-vpn"
+
+customer_gateway_ip_address = "203.0.113.1"
+customer_gateway_bgp_asn    = "65000"
+
+vpn_gateway_id = "vgw-0123456789abcdef0"
+
+static_routes_only = false
+
+tunnel1 = {
+  preshared_key      = "SuperSecretKey123"
+  dpd_timeout_action = "restart"
+}
+
+tunnel2 = {
+  preshared_key      = "AnotherSecretKey456"
+  dpd_timeout_action = "restart"
+}
+
+tags = {
+  Environment = "production"
+  ManagedBy   = "Terraform"
+}

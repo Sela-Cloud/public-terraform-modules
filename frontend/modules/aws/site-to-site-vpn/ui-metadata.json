@@ -1,0 +1,1082 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "site-to-site-vpn",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Site-to-Site VPN",
+    "icon": "vpn",
+    "description": "Provision a Customer Gateway (created or referenced) and a Site-to-Site VPN Connection to a Virtual Private Gateway or Transit Gateway, with both tunnels and optional static routes",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "site_to_site_vpn",
+    "key_field": "name",
+    "key_label": "Name",
+    "key_description": "Unique name for the VPN Connection, applied as the 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Name",
+            "type": "text",
+            "required": true,
+            "placeholder": "prod-s2s-vpn",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Name must contain only alphanumeric characters, dashes, and underscores."
+            }
+          }
+        ]
+      },
+      {
+        "id": "customer_gateway",
+        "label": "Customer Gateway",
+        "description": "The on-premises side of the VPN connection. Create a new Customer Gateway here, or reference an existing one.",
+        "fields": [
+          {
+            "id": "create_customer_gateway",
+            "label": "Create Customer Gateway",
+            "description": "Uncheck to reference an existing Customer Gateway instead.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "customer_gateway_id",
+            "label": "Existing Customer Gateway",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "depends_on": {
+              "field": "create_customer_gateway",
+              "value": false,
+              "operator": "eq"
+            },
+            "data_source": {
+              "resource": "ec2.customer_gateways",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "ipAddress"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "customer_gateway_ip_address",
+            "label": "Outside IP Address",
+            "description": "The IPv4 address for the customer gateway device's outside interface.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "203.0.113.1",
+            "depends_on": {
+              "field": "create_customer_gateway",
+              "value": true,
+              "operator": "eq"
+            }
+          },
+          {
+            "id": "customer_gateway_bgp_asn",
+            "label": "BGP ASN",
+            "description": "1 to 2147483647. Mutually exclusive with Extended BGP ASN below.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "65000",
+            "depends_on": {
+              "field": "create_customer_gateway",
+              "value": true,
+              "operator": "eq"
+            }
+          },
+          {
+            "id": "customer_gateway_bgp_asn_extended",
+            "label": "Extended BGP ASN",
+            "description": "2147483648 to 4294967295. Mutually exclusive with BGP ASN above.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": {
+              "field": "create_customer_gateway",
+              "value": true,
+              "operator": "eq"
+            }
+          },
+          {
+            "id": "customer_gateway_certificate_arn",
+            "label": "Device Certificate ARN",
+            "description": "For certificate-based authentication instead of a pre-shared key. No lookup is wired here -- this catalog's ACM lookup returns public certificates, not the private-CA device certificates this field needs -- enter the ARN directly.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": {
+              "field": "create_customer_gateway",
+              "value": true,
+              "operator": "eq"
+            }
+          },
+          {
+            "id": "customer_gateway_device_name",
+            "label": "Device Name",
+            "description": "For your own reference.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "depends_on": {
+              "field": "create_customer_gateway",
+              "value": true,
+              "operator": "eq"
+            }
+          }
+        ]
+      },
+      {
+        "id": "vpn_connection_target",
+        "label": "VPN Connection Target",
+        "description": "Exactly one of these two is required.",
+        "fields": [
+          {
+            "id": "vpn_gateway_id",
+            "label": "Virtual Private Gateway",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "ec2.vpn_gateways",
+              "params": {
+                "region": {
+                  "from_field": "region"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "vpcId"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "transit_gateway_id",
+            "label": "Transit Gateway",
+            "description": "No lookup is wired here, since this catalog does not yet create Transit Gateways -- enter the ID directly.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "tgw-0123456789abcdef0"
+          }
+        ]
+      },
+      {
+        "id": "vpn_connection",
+        "label": "VPN Connection",
+        "fields": [
+          {
+            "id": "static_routes_only",
+            "label": "Static Routes Only",
+            "description": "For customer gateway devices that don't support BGP. Leave unchecked for dynamic BGP routing.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "enable_acceleration",
+            "label": "Enable Acceleration",
+            "description": "Only valid when connected to a Transit Gateway above.",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "depends_on": {
+              "field": "transit_gateway_id",
+              "value": null,
+              "operator": "neq"
+            }
+          },
+          {
+            "id": "local_ipv4_network_cidr",
+            "label": "Local IPv4 Network CIDR",
+            "description": "The IPv4 CIDR on the AWS side of the VPN connection.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "0.0.0.0/0"
+          },
+          {
+            "id": "remote_ipv4_network_cidr",
+            "label": "Remote IPv4 Network CIDR",
+            "description": "The IPv4 CIDR on the customer gateway side of the VPN connection.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "0.0.0.0/0"
+          },
+          {
+            "id": "local_ipv6_network_cidr",
+            "label": "Local IPv6 Network CIDR",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "remote_ipv6_network_cidr",
+            "label": "Remote IPv6 Network CIDR",
+            "type": "text",
+            "required": false,
+            "nullable": true
+          },
+          {
+            "id": "outside_ip_address_type",
+            "label": "Outside IP Address Type",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "options": [
+              {
+                "value": "PublicIpv4",
+                "label": "Public IPv4"
+              },
+              {
+                "value": "PrivateIpv4",
+                "label": "Private IPv4 (requires Transport Transit Gateway Attachment below)"
+              }
+            ]
+          },
+          {
+            "id": "transport_transit_gateway_attachment_id",
+            "label": "Transport Transit Gateway Attachment",
+            "description": "Required when Outside IP Address Type is Private IPv4. No lookup is wired here, since this catalog does not yet create Transit Gateway attachments -- enter the ID directly.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "tgw-attach-0123456789abcdef0"
+          },
+          {
+            "id": "tunnel_inside_ip_version",
+            "label": "Tunnel Inside IP Version",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "options": [
+              {
+                "value": "ipv4",
+                "label": "IPv4"
+              },
+              {
+                "value": "ipv6",
+                "label": "IPv6"
+              }
+            ]
+          },
+          {
+            "id": "tunnel_bandwidth",
+            "label": "Tunnel Bandwidth",
+            "description": "Not supported when attached to a Virtual Private Gateway, or when acceleration is enabled.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "options": [
+              {
+                "value": "standard",
+                "label": "Standard (1.25 Gbps)"
+              },
+              {
+                "value": "large",
+                "label": "Large (5 Gbps, Transit Gateway only)"
+              }
+            ]
+          },
+          {
+            "id": "preshared_key_storage",
+            "label": "Pre-Shared Key Storage",
+            "description": "Leave as Standard to keep pre-shared keys in the Site-to-Site VPN service (and Terraform state). Choose Secrets Manager to store them there instead.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "default": null,
+            "options": [
+              {
+                "value": "Standard",
+                "label": "Standard"
+              },
+              {
+                "value": "SecretsManager",
+                "label": "AWS Secrets Manager"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tunnel1",
+        "label": "Tunnel 1",
+        "fields": [
+          {
+            "id": "tunnel1",
+            "label": "Tunnel 1 Options",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "default": {},
+            "fields": [
+              {
+                "id": "inside_cidr",
+                "label": "Inside IPv4 CIDR",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "169.254.100.0/30"
+              },
+              {
+                "id": "inside_ipv6_cidr",
+                "label": "Inside IPv6 CIDR",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "preshared_key",
+                "label": "Pre-Shared Key",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "sensitive": true
+              },
+              {
+                "id": "dpd_timeout_action",
+                "label": "DPD Timeout Action",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "clear",
+                    "label": "Clear"
+                  },
+                  {
+                    "value": "none",
+                    "label": "None"
+                  },
+                  {
+                    "value": "restart",
+                    "label": "Restart"
+                  }
+                ]
+              },
+              {
+                "id": "dpd_timeout_seconds",
+                "label": "DPD Timeout (seconds)",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "ike_versions",
+                "label": "IKE Versions",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "ikev1",
+                    "label": "IKEv1"
+                  },
+                  {
+                    "value": "ikev2",
+                    "label": "IKEv2"
+                  }
+                ]
+              },
+              {
+                "id": "phase1_dh_group_numbers",
+                "label": "Phase 1 Diffie-Hellman Group Numbers",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "description": "Valid values: 2 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24. AWS picks its own default set if left empty."
+              },
+              {
+                "id": "phase1_encryption_algorithms",
+                "label": "Phase 1 Encryption Algorithms",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "AES128",
+                    "label": "AES128"
+                  },
+                  {
+                    "value": "AES256",
+                    "label": "AES256"
+                  },
+                  {
+                    "value": "AES128-GCM-16",
+                    "label": "AES128-GCM-16"
+                  },
+                  {
+                    "value": "AES256-GCM-16",
+                    "label": "AES256-GCM-16"
+                  }
+                ]
+              },
+              {
+                "id": "phase1_integrity_algorithms",
+                "label": "Phase 1 Integrity Algorithms",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "SHA1",
+                    "label": "SHA1"
+                  },
+                  {
+                    "value": "SHA2-256",
+                    "label": "SHA2-256"
+                  },
+                  {
+                    "value": "SHA2-384",
+                    "label": "SHA2-384"
+                  },
+                  {
+                    "value": "SHA2-512",
+                    "label": "SHA2-512"
+                  }
+                ]
+              },
+              {
+                "id": "phase1_lifetime_seconds",
+                "label": "Phase 1 Lifetime (seconds)",
+                "description": "AWS default is 28800 if left empty.",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "phase2_dh_group_numbers",
+                "label": "Phase 2 Diffie-Hellman Group Numbers",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "description": "Valid values: 2 | 5 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24. AWS picks its own default set if left empty."
+              },
+              {
+                "id": "phase2_encryption_algorithms",
+                "label": "Phase 2 Encryption Algorithms",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "AES128",
+                    "label": "AES128"
+                  },
+                  {
+                    "value": "AES256",
+                    "label": "AES256"
+                  },
+                  {
+                    "value": "AES128-GCM-16",
+                    "label": "AES128-GCM-16"
+                  },
+                  {
+                    "value": "AES256-GCM-16",
+                    "label": "AES256-GCM-16"
+                  }
+                ]
+              },
+              {
+                "id": "phase2_integrity_algorithms",
+                "label": "Phase 2 Integrity Algorithms",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "SHA1",
+                    "label": "SHA1"
+                  },
+                  {
+                    "value": "SHA2-256",
+                    "label": "SHA2-256"
+                  },
+                  {
+                    "value": "SHA2-384",
+                    "label": "SHA2-384"
+                  },
+                  {
+                    "value": "SHA2-512",
+                    "label": "SHA2-512"
+                  }
+                ]
+              },
+              {
+                "id": "phase2_lifetime_seconds",
+                "label": "Phase 2 Lifetime (seconds)",
+                "description": "AWS default is 3600 if left empty.",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "rekey_fuzz_percentage",
+                "label": "Rekey Fuzz Percentage",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "rekey_margin_time_seconds",
+                "label": "Rekey Margin Time (seconds)",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "replay_window_size",
+                "label": "Replay Window Size",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "startup_action",
+                "label": "Startup Action",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "add",
+                    "label": "Add"
+                  },
+                  {
+                    "value": "start",
+                    "label": "Start"
+                  }
+                ]
+              },
+              {
+                "id": "enable_tunnel_lifecycle_control",
+                "label": "Enable Tunnel Lifecycle Control",
+                "type": "boolean",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "cloudwatch_log_options",
+                "label": "CloudWatch Log Options",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "fields": [
+                  {
+                    "id": "log_enabled",
+                    "label": "Log Enabled",
+                    "type": "boolean",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "log_group_arn",
+                    "label": "Log Group",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "description": "No lookup is wired here, since this catalog does not yet have a CloudWatch Logs log-group lookup -- enter the ARN directly."
+                  },
+                  {
+                    "id": "log_output_format",
+                    "label": "Log Output Format",
+                    "type": "select",
+                    "required": false,
+                    "nullable": true,
+                    "default": null,
+                    "options": [
+                      {
+                        "value": "json",
+                        "label": "JSON"
+                      },
+                      {
+                        "value": "text",
+                        "label": "Text"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "bgp_log_enabled",
+                    "label": "BGP Log Enabled",
+                    "type": "boolean",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "bgp_log_group_arn",
+                    "label": "BGP Log Group",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "description": "No lookup is wired here, since this catalog does not yet have a CloudWatch Logs log-group lookup -- enter the ARN directly."
+                  },
+                  {
+                    "id": "bgp_log_output_format",
+                    "label": "BGP Log Output Format",
+                    "type": "select",
+                    "required": false,
+                    "nullable": true,
+                    "default": null,
+                    "options": [
+                      {
+                        "value": "json",
+                        "label": "JSON"
+                      },
+                      {
+                        "value": "text",
+                        "label": "Text"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tunnel2",
+        "label": "Tunnel 2",
+        "fields": [
+          {
+            "id": "tunnel2",
+            "label": "Tunnel 2 Options",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "default": {},
+            "fields": [
+              {
+                "id": "inside_cidr",
+                "label": "Inside IPv4 CIDR",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "169.254.100.4/30"
+              },
+              {
+                "id": "inside_ipv6_cidr",
+                "label": "Inside IPv6 CIDR",
+                "type": "text",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "preshared_key",
+                "label": "Pre-Shared Key",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "sensitive": true
+              },
+              {
+                "id": "dpd_timeout_action",
+                "label": "DPD Timeout Action",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "clear",
+                    "label": "Clear"
+                  },
+                  {
+                    "value": "none",
+                    "label": "None"
+                  },
+                  {
+                    "value": "restart",
+                    "label": "Restart"
+                  }
+                ]
+              },
+              {
+                "id": "dpd_timeout_seconds",
+                "label": "DPD Timeout (seconds)",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "ike_versions",
+                "label": "IKE Versions",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "ikev1",
+                    "label": "IKEv1"
+                  },
+                  {
+                    "value": "ikev2",
+                    "label": "IKEv2"
+                  }
+                ]
+              },
+              {
+                "id": "phase1_dh_group_numbers",
+                "label": "Phase 1 Diffie-Hellman Group Numbers",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "description": "Valid values: 2 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24. AWS picks its own default set if left empty."
+              },
+              {
+                "id": "phase1_encryption_algorithms",
+                "label": "Phase 1 Encryption Algorithms",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "AES128",
+                    "label": "AES128"
+                  },
+                  {
+                    "value": "AES256",
+                    "label": "AES256"
+                  },
+                  {
+                    "value": "AES128-GCM-16",
+                    "label": "AES128-GCM-16"
+                  },
+                  {
+                    "value": "AES256-GCM-16",
+                    "label": "AES256-GCM-16"
+                  }
+                ]
+              },
+              {
+                "id": "phase1_integrity_algorithms",
+                "label": "Phase 1 Integrity Algorithms",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "SHA1",
+                    "label": "SHA1"
+                  },
+                  {
+                    "value": "SHA2-256",
+                    "label": "SHA2-256"
+                  },
+                  {
+                    "value": "SHA2-384",
+                    "label": "SHA2-384"
+                  },
+                  {
+                    "value": "SHA2-512",
+                    "label": "SHA2-512"
+                  }
+                ]
+              },
+              {
+                "id": "phase1_lifetime_seconds",
+                "label": "Phase 1 Lifetime (seconds)",
+                "description": "AWS default is 28800 if left empty.",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "phase2_dh_group_numbers",
+                "label": "Phase 2 Diffie-Hellman Group Numbers",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "description": "Valid values: 2 | 5 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24. AWS picks its own default set if left empty."
+              },
+              {
+                "id": "phase2_encryption_algorithms",
+                "label": "Phase 2 Encryption Algorithms",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "AES128",
+                    "label": "AES128"
+                  },
+                  {
+                    "value": "AES256",
+                    "label": "AES256"
+                  },
+                  {
+                    "value": "AES128-GCM-16",
+                    "label": "AES128-GCM-16"
+                  },
+                  {
+                    "value": "AES256-GCM-16",
+                    "label": "AES256-GCM-16"
+                  }
+                ]
+              },
+              {
+                "id": "phase2_integrity_algorithms",
+                "label": "Phase 2 Integrity Algorithms",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "SHA1",
+                    "label": "SHA1"
+                  },
+                  {
+                    "value": "SHA2-256",
+                    "label": "SHA2-256"
+                  },
+                  {
+                    "value": "SHA2-384",
+                    "label": "SHA2-384"
+                  },
+                  {
+                    "value": "SHA2-512",
+                    "label": "SHA2-512"
+                  }
+                ]
+              },
+              {
+                "id": "phase2_lifetime_seconds",
+                "label": "Phase 2 Lifetime (seconds)",
+                "description": "AWS default is 3600 if left empty.",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "rekey_fuzz_percentage",
+                "label": "Rekey Fuzz Percentage",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "rekey_margin_time_seconds",
+                "label": "Rekey Margin Time (seconds)",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "replay_window_size",
+                "label": "Replay Window Size",
+                "type": "number",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "startup_action",
+                "label": "Startup Action",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "options": [
+                  {
+                    "value": "add",
+                    "label": "Add"
+                  },
+                  {
+                    "value": "start",
+                    "label": "Start"
+                  }
+                ]
+              },
+              {
+                "id": "enable_tunnel_lifecycle_control",
+                "label": "Enable Tunnel Lifecycle Control",
+                "type": "boolean",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "id": "cloudwatch_log_options",
+                "label": "CloudWatch Log Options",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "default": null,
+                "fields": [
+                  {
+                    "id": "log_enabled",
+                    "label": "Log Enabled",
+                    "type": "boolean",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "log_group_arn",
+                    "label": "Log Group",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "description": "No lookup is wired here, since this catalog does not yet have a CloudWatch Logs log-group lookup -- enter the ARN directly."
+                  },
+                  {
+                    "id": "log_output_format",
+                    "label": "Log Output Format",
+                    "type": "select",
+                    "required": false,
+                    "nullable": true,
+                    "default": null,
+                    "options": [
+                      {
+                        "value": "json",
+                        "label": "JSON"
+                      },
+                      {
+                        "value": "text",
+                        "label": "Text"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "bgp_log_enabled",
+                    "label": "BGP Log Enabled",
+                    "type": "boolean",
+                    "required": false,
+                    "nullable": true
+                  },
+                  {
+                    "id": "bgp_log_group_arn",
+                    "label": "BGP Log Group",
+                    "type": "text",
+                    "required": false,
+                    "nullable": true,
+                    "description": "No lookup is wired here, since this catalog does not yet have a CloudWatch Logs log-group lookup -- enter the ARN directly."
+                  },
+                  {
+                    "id": "bgp_log_output_format",
+                    "label": "BGP Log Output Format",
+                    "type": "select",
+                    "required": false,
+                    "nullable": true,
+                    "default": null,
+                    "options": [
+                      {
+                        "value": "json",
+                        "label": "JSON"
+                      },
+                      {
+                        "value": "text",
+                        "label": "Text"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "routes",
+        "label": "Static Routes",
+        "description": "Only meaningful when Static Routes Only is checked above -- with BGP dynamic routing, AWS determines routes automatically.",
+        "fields": [
+          {
+            "id": "routes",
+            "label": "Route",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "key",
+                "label": "Key",
+                "description": "Terraform-only identifier for this route, not sent to AWS.",
+                "type": "text",
+                "required": true,
+                "placeholder": "office_network"
+              },
+              {
+                "id": "destination_cidr_block",
+                "label": "Destination CIDR",
+                "type": "text",
+                "required": true,
+                "placeholder": "192.168.0.0/16"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
