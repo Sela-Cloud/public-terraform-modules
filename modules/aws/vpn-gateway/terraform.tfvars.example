@@ -1,0 +1,9 @@
+name   = "prod-vgw"
+vpc_id = "vpc-0123456789abcdef0"
+
+route_table_ids = ["rtb-0123456789abcdef0"]
+
+tags = {
+  Environment = "production"
+  ManagedBy   = "Terraform"
+}
