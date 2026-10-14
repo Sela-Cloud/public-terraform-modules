@@ -1,0 +1,296 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "route-table",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Route Table",
+    "icon": "route",
+    "description": "Provision an Amazon VPC Route Table, its routes, and its subnet or gateway associations",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "route_table",
+    "key_field": "name",
+    "key_label": "Route Table Name",
+    "key_description": "Unique identifier for this route table, applied as its 'Name' tag.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "VPC placement and associations.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Route Table Name",
+            "description": "Unique name for the route table, applied as the 'Name' tag and map key.",
+            "type": "text",
+            "required": true,
+            "placeholder": "prod-public-rt",
+            "validation": {
+              "min": 1,
+              "max": 255,
+              "pattern": "^[a-zA-Z0-9-_]+$",
+              "pattern_error": "Name must only contain alphanumeric characters, hyphens, and underscores."
+            }
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "description": "The VPC in which to create the route table.",
+            "type": "select",
+            "required": true,
+            "placeholder": "vpc-0123456789abcdef0",
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": {
+                "region": { "from_field": "region" }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "cidr"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnets",
+            "label": "Subnets",
+            "description": "Subnets to associate with this route table. Mutually exclusive with Gateway (edge association) below -- AWS allows either subnet associations or a single gateway association, not both.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": {
+                "region": { "from_field": "region" },
+                "vpc_id": { "from_field": "vpc_id" }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "availabilityZone"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "gateway_id",
+            "label": "Gateway (Edge Association)",
+            "description": "For edge/ingress routing: associate this route table directly with an Internet Gateway or Virtual Private Gateway instead of subnets. No lookup is wired here, since a gateway could be either type and only Internet Gateways and NAT Gateways are created elsewhere in this catalog today -- enter the Gateway ID directly (e.g. igw-... or vgw-...).",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "placeholder": "igw-0123456789abcdef0"
+          },
+          {
+            "id": "propagating_vgws",
+            "label": "Propagating Virtual Private Gateways",
+            "description": "Virtual Private Gateway IDs whose routes should propagate into this route table. No lookup is wired here, since this catalog does not yet create Virtual Private Gateways -- enter VGW IDs directly.",
+            "type": "list",
+            "required": false,
+            "default": []
+          }
+        ]
+      },
+      {
+        "id": "routes",
+        "label": "Routes",
+        "description": "Routes to create in this route table. Each must specify exactly one destination and exactly one target.",
+        "fields": [
+          {
+            "id": "routes",
+            "label": "Route",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "key",
+                "label": "Key",
+                "description": "Terraform-only identifier for this route, not sent to AWS.",
+                "type": "text",
+                "required": true,
+                "placeholder": "default_ipv4"
+              },
+              {
+                "id": "destination_cidr_block",
+                "label": "Destination IPv4 CIDR",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "0.0.0.0/0",
+                "description": "Give exactly one destination: an IPv4 CIDR, an IPv6 CIDR, or a managed prefix list."
+              },
+              {
+                "id": "destination_ipv6_cidr_block",
+                "label": "Destination IPv6 CIDR",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "::/0"
+              },
+              {
+                "id": "destination_prefix_list_id",
+                "label": "Destination Prefix List ID",
+                "description": "An AWS-managed or customer-managed prefix list ID. No lookup is wired here, since this catalog does not yet create prefix lists -- enter the ID directly.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "pl-63a5400a"
+              },
+              {
+                "id": "gateway_id",
+                "label": "Internet / Virtual Private Gateway",
+                "description": "Give exactly one target. No lookup is wired here, since a gateway could be an Internet Gateway, Virtual Private Gateway, or other edge type not yet created elsewhere in this catalog -- enter the ID directly.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "igw-0123456789abcdef0"
+              },
+              {
+                "id": "nat_gateway_id",
+                "label": "NAT Gateway",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.nat_gateways",
+                  "params": {
+                    "region": { "from_field": "region" },
+                    "vpc_id": { "from_field": "vpc_id" }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "subnetId"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "vpc_peering_connection_id",
+                "label": "VPC Peering Connection",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.vpc_peering_connections",
+                  "params": {
+                    "region": { "from_field": "region" }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name"
+                  },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "transit_gateway_id",
+                "label": "Transit Gateway",
+                "description": "No lookup is wired here, since this catalog does not yet create Transit Gateways -- enter the ID directly.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "tgw-0123456789abcdef0"
+              },
+              {
+                "id": "vpc_endpoint_id",
+                "label": "Gateway VPC Endpoint",
+                "description": "No lookup is wired here yet -- enter the VPC Endpoint ID directly.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "vpce-0123456789abcdef0"
+              },
+              {
+                "id": "network_interface_id",
+                "label": "Network Interface (ENI)",
+                "description": "No lookup is wired here, since this catalog does not yet create standalone network interfaces -- enter the ENI ID directly.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "eni-0123456789abcdef0"
+              },
+              {
+                "id": "egress_only_gateway_id",
+                "label": "Egress-Only Internet Gateway",
+                "description": "No lookup is wired here, since this catalog does not yet create Egress-Only Internet Gateways -- enter the ID directly.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "eigw-0123456789abcdef0"
+              },
+              {
+                "id": "carrier_gateway_id",
+                "label": "Carrier Gateway",
+                "description": "No lookup is wired here, since this catalog does not yet create Carrier Gateways -- enter the ID directly.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "cagw-0123456789abcdef0"
+              },
+              {
+                "id": "local_gateway_id",
+                "label": "Local Gateway (Outposts)",
+                "description": "No lookup is wired here, since this catalog does not yet create Local Gateways -- enter the ID directly.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "lgw-0123456789abcdef0"
+              },
+              {
+                "id": "core_network_arn",
+                "label": "Cloud WAN Core Network ARN",
+                "description": "No lookup is wired here, since this catalog does not yet create Cloud WAN Core Networks -- enter the ARN directly.",
+                "type": "text",
+                "required": false,
+                "nullable": true,
+                "placeholder": "arn:aws:networkmanager::123456789012:core-network/core-network-0123456789abcdef0"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "description": "User-defined key-value tags to assign to the route table.",
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Resource Tags",
+            "description": "Key-value map of resource tags.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
