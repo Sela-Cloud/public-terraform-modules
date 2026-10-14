@@ -1,5 +1,5 @@
 module "manage_identities" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/manage-identities?ref=v0.9.5"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/manage-identities?ref=v0.9.7"
   for_each = var.manage_identities
 
   name                = each.value.name

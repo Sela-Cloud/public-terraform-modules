@@ -3,7 +3,7 @@
  *****************************************/
 
 module "nat_gateway" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/nat-gateway?ref=v0.9.5"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/nat-gateway?ref=v0.9.7"
   for_each = var.nat_gateway
 
   name                               = coalesce(each.value.name, each.key)
