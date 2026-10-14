@@ -1,0 +1,348 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "datasync",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS DataSync",
+    "icon": "sync",
+    "description": "Automate data transfer and synchronization between on-premises storage and AWS storage services (S3, EFS, FSx)",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": { "value_key": "name", "label_key": "description", "description_key": "name" }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "datasync",
+    "key_field": "name",
+    "key_label": "Deployment Name",
+    "key_description": "Unique identifier for this DataSync deployment configuration. Not sent to AWS directly -- agents, locations, and tasks are named from their own keys.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Deployment Name",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-datasync-deployment",
+            "validation": { "min": 1, "max": 255, "pattern": "^[a-zA-Z0-9-_]+$", "pattern_error": "Name must contain only alphanumeric characters, dashes, and underscores." }
+          }
+        ]
+      },
+      {
+        "id": "agents_section",
+        "label": "Agents",
+        "description": "On-premises or self-managed DataSync agents, required for NFS, SMB, and most on-prem transfers.",
+        "fields": [
+          {
+            "id": "agents",
+            "label": "Agent",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, referenced elsewhere as Agent Key.", "type": "text", "required": true, "placeholder": "onprem-agent" },
+              { "id": "name", "label": "Name", "description": "Defaults to the Key.", "type": "text", "required": false, "nullable": true },
+              { "id": "activation_key", "label": "Activation Key", "description": "Obtained by activating the agent VM against this account.", "type": "text", "required": false, "nullable": true },
+              { "id": "ip_address", "label": "Agent IP Address", "description": "Alternative to Activation Key: let Terraform activate the agent directly by IP.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "security_group_arns",
+                "label": "Security Groups (VPC Endpoint)",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.security_groups",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "arn", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "subnet_arns",
+                "label": "Subnets (VPC Endpoint)",
+                "type": "list",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.subnets",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "arn", "label_key": "name", "description_key": "availabilityZone" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "vpc_endpoint_id", "label": "VPC Endpoint ID", "description": "No lookup is wired here, since this is a PrivateLink interface endpoint ID (vpce-...), not a general VPC endpoint.", "type": "text", "required": false, "nullable": true },
+              { "id": "private_link_endpoint", "label": "Private Link Endpoint IP", "type": "text", "required": false, "nullable": true },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "s3_locations_section",
+        "label": "S3 Locations",
+        "fields": [
+          {
+            "id": "s3_locations",
+            "label": "S3 Location",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, referenced by Tasks below as a Location Key.", "type": "text", "required": true, "placeholder": "s3-dest" },
+              { "id": "name", "label": "Name", "description": "Defaults to the Key.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "s3_bucket_arn",
+                "label": "S3 Bucket",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "s3.buckets",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "subdirectory", "label": "Subdirectory", "type": "text", "required": false, "default": "/" },
+              { "id": "s3_storage_class", "label": "Storage Class", "type": "select", "required": false, "default": "STANDARD", "options": [
+                { "value": "STANDARD", "label": "Standard" },
+                { "value": "STANDARD_IA", "label": "Standard-IA" },
+                { "value": "ONEZONE_IA", "label": "One Zone-IA" },
+                { "value": "INTELLIGENT_TIERING", "label": "Intelligent-Tiering" },
+                { "value": "GLACIER", "label": "Glacier Flexible Retrieval" },
+                { "value": "GLACIER_INSTANT_RETRIEVAL", "label": "Glacier Instant Retrieval" },
+                { "value": "DEEP_ARCHIVE", "label": "Glacier Deep Archive" },
+                { "value": "OUTPOSTS", "label": "S3 on Outposts" }
+              ] },
+              {
+                "id": "s3_config",
+                "label": "S3 Access Configuration",
+                "type": "object",
+                "required": true,
+                "fields": [
+                  {
+                    "id": "bucket_access_role_arn",
+                    "label": "Bucket Access Role",
+                    "type": "select",
+                    "required": true,
+                    "data_source": {
+                      "resource": "iam.roles",
+                      "params": {},
+                      "display": { "value_key": "arn", "label_key": "name" },
+                      "allow_custom": true,
+                      "cache_ttl": 300
+                    }
+                  }
+                ]
+              },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "efs_locations_section",
+        "label": "EFS Locations",
+        "fields": [
+          {
+            "id": "efs_locations",
+            "label": "EFS Location",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, referenced by Tasks below as a Location Key.", "type": "text", "required": true, "placeholder": "efs-dest" },
+              { "id": "name", "label": "Name", "description": "Defaults to the Key.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "efs_file_system_arn",
+                "label": "EFS File System",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "efs.file_systems",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "subdirectory", "label": "Subdirectory", "type": "text", "required": false, "default": "/" },
+              { "id": "access_point_arn", "label": "EFS Access Point ARN", "description": "No lookup is wired here -- enter the access point ARN directly.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "file_system_access_role_arn",
+                "label": "File System Access Role",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "iam.roles",
+                  "params": {},
+                  "display": { "value_key": "arn", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "in_transit_encryption", "label": "In-Transit Encryption", "type": "select", "required": false, "default": "TLS1_2", "options": [
+                { "value": "NONE", "label": "None" }, { "value": "TLS1_2", "label": "TLS 1.2" }
+              ] },
+              {
+                "id": "ec2_config",
+                "label": "EC2 Mount Configuration",
+                "type": "object",
+                "required": true,
+                "fields": [
+                  {
+                    "id": "security_group_arns",
+                    "label": "Security Groups",
+                    "type": "list",
+                    "required": true,
+                    "data_source": {
+                      "resource": "ec2.security_groups",
+                      "params": { "region": { "from_field": "region" } },
+                      "display": { "value_key": "arn", "label_key": "name", "description_key": "description" },
+                      "allow_custom": true,
+                      "cache_ttl": 300
+                    }
+                  },
+                  {
+                    "id": "subnet_arn",
+                    "label": "Subnet",
+                    "type": "select",
+                    "required": true,
+                    "data_source": {
+                      "resource": "ec2.subnets",
+                      "params": { "region": { "from_field": "region" } },
+                      "display": { "value_key": "arn", "label_key": "name", "description_key": "availabilityZone" },
+                      "allow_custom": true,
+                      "cache_ttl": 300
+                    }
+                  }
+                ]
+              },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "deferred_locations_section",
+        "label": "Other Location Types",
+        "description": "NFS, SMB, FSx (ONTAP, OpenZFS, Windows, Lustre), generic Object Storage, Azure Blob, and HDFS locations are not yet broken into individual fields in this form. Provide each as a raw JSON object matching the shape the corresponding Terraform resource's arguments take, keyed by a location identifier you choose (referenced by Tasks below as a Location Key). Leave empty to skip.",
+        "fields": [
+          { "id": "nfs_locations", "label": "NFS Locations (raw JSON)", "type": "text", "multiline": true, "required": false, "nullable": true, "placeholder": "{\n  \"nfs-src\": {\n    \"server_hostname\": \"nfs.example.com\",\n    \"subdirectory\": \"/export\",\n    \"on_prem_config\": { \"agent_keys\": [\"onprem-agent\"] }\n  }\n}" },
+          { "id": "smb_locations", "label": "SMB Locations (raw JSON)", "type": "text", "multiline": true, "required": false, "nullable": true, "placeholder": "{\n  \"smb-src\": {\n    \"server_hostname\": \"smb.example.com\",\n    \"subdirectory\": \"/share\",\n    \"user\": \"svc-datasync\",\n    \"password\": \"...\",\n    \"agent_keys\": [\"onprem-agent\"]\n  }\n}" },
+          { "id": "fsx_ontap_locations", "label": "FSx for NetApp ONTAP Locations (raw JSON)", "type": "text", "multiline": true, "required": false, "nullable": true },
+          { "id": "fsx_openzfs_locations", "label": "FSx for OpenZFS Locations (raw JSON)", "type": "text", "multiline": true, "required": false, "nullable": true },
+          { "id": "fsx_windows_locations", "label": "FSx for Windows File Server Locations (raw JSON)", "type": "text", "multiline": true, "required": false, "nullable": true },
+          { "id": "fsx_lustre_locations", "label": "FSx for Lustre Locations (raw JSON)", "type": "text", "multiline": true, "required": false, "nullable": true },
+          { "id": "object_storage_locations", "label": "Generic Object Storage Locations (raw JSON)", "type": "text", "multiline": true, "required": false, "nullable": true },
+          { "id": "azure_blob_locations", "label": "Azure Blob Storage Locations (raw JSON)", "type": "text", "multiline": true, "required": false, "nullable": true },
+          { "id": "hdfs_locations", "label": "HDFS Locations (raw JSON)", "type": "text", "multiline": true, "required": false, "nullable": true }
+        ]
+      },
+      {
+        "id": "tasks_section",
+        "label": "Tasks",
+        "description": "A task is what actually performs a sync between a source and a destination location. Without at least one task, the agents and locations above transfer nothing.",
+        "fields": [
+          {
+            "id": "tasks",
+            "label": "Task",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "nfs-to-s3" },
+              { "id": "name", "label": "Name", "description": "Defaults to the Key.", "type": "text", "required": false, "nullable": true },
+              { "id": "source_location_key", "label": "Source Location Key", "description": "Must match a Key from Agents' Locations above (S3/EFS/or one of the Other Location Types). Alternative to Source Location ARN below.", "type": "text", "required": false, "nullable": true },
+              { "id": "source_location_arn", "label": "Source Location ARN", "description": "Alternative to Source Location Key, for a location created outside this form.", "type": "text", "required": false, "nullable": true },
+              { "id": "destination_location_key", "label": "Destination Location Key", "description": "Must match a Key from the Locations above. Alternative to Destination Location ARN below.", "type": "text", "required": false, "nullable": true },
+              { "id": "destination_location_arn", "label": "Destination Location ARN", "description": "Alternative to Destination Location Key, for a location created outside this form.", "type": "text", "required": false, "nullable": true },
+              { "id": "cloudwatch_log_group_arn", "label": "CloudWatch Log Group ARN", "description": "No lookup is wired here -- enter the log group ARN directly.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "schedule",
+                "label": "Schedule",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  { "id": "schedule_expression", "label": "Schedule Expression (cron)", "type": "text", "required": true, "placeholder": "cron(0 12 * * ? *)" }
+                ]
+              },
+              {
+                "id": "options",
+                "label": "Task Options",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  { "id": "atime", "label": "Preserve Access Time", "type": "select", "required": false, "nullable": true, "options": [{ "value": "BEST_EFFORT", "label": "Best effort" }, { "value": "NONE", "label": "None" }] },
+                  { "id": "mtime", "label": "Preserve Modification Time", "type": "select", "required": false, "nullable": true, "options": [{ "value": "PRESERVE", "label": "Preserve" }, { "value": "NONE", "label": "None" }] },
+                  { "id": "bytes_per_second", "label": "Bandwidth Limit (Bytes/Second)", "type": "number", "required": false, "nullable": true },
+                  { "id": "gid", "label": "Group ID Handling", "type": "select", "required": false, "nullable": true, "options": [{ "value": "NONE", "label": "None" }, { "value": "INT_VALUE", "label": "Preserve as integer" }, { "value": "NAME", "label": "Preserve by name" }, { "value": "BOTH", "label": "Both" }] },
+                  { "id": "uid", "label": "User ID Handling", "type": "select", "required": false, "nullable": true, "options": [{ "value": "NONE", "label": "None" }, { "value": "INT_VALUE", "label": "Preserve as integer" }, { "value": "NAME", "label": "Preserve by name" }, { "value": "BOTH", "label": "Both" }] },
+                  { "id": "log_level", "label": "Log Level", "type": "select", "required": false, "nullable": true, "options": [{ "value": "OFF", "label": "Off" }, { "value": "BASIC", "label": "Basic" }, { "value": "TRANSFER", "label": "Transfer" }] },
+                  { "id": "overwrite_mode", "label": "Overwrite Mode", "type": "select", "required": false, "nullable": true, "options": [{ "value": "ALWAYS", "label": "Always" }, { "value": "NEVER", "label": "Never" }] },
+                  { "id": "posix_permissions", "label": "POSIX Permissions", "type": "select", "required": false, "nullable": true, "options": [{ "value": "PRESERVE", "label": "Preserve" }, { "value": "NONE", "label": "None" }] },
+                  { "id": "preserve_deleted_files", "label": "Preserve Deleted Files", "type": "select", "required": false, "nullable": true, "options": [{ "value": "PRESERVE", "label": "Preserve" }, { "value": "REMOVE", "label": "Remove" }] },
+                  { "id": "preserve_devices", "label": "Preserve Devices", "type": "select", "required": false, "nullable": true, "options": [{ "value": "NONE", "label": "None" }, { "value": "PRESERVE", "label": "Preserve" }] },
+                  { "id": "security_descriptor_copy_flags", "label": "Security Descriptor Copy Flags", "type": "select", "required": false, "nullable": true, "options": [{ "value": "NONE", "label": "None" }, { "value": "OWNER_DACL", "label": "Owner + DACL" }, { "value": "OWNER_DACL_SACL", "label": "Owner + DACL + SACL" }] },
+                  { "id": "task_queueing", "label": "Task Queueing", "type": "select", "required": false, "nullable": true, "options": [{ "value": "ENABLED", "label": "Enabled" }, { "value": "DISABLED", "label": "Disabled" }] },
+                  { "id": "transfer_mode", "label": "Transfer Mode", "type": "select", "required": false, "nullable": true, "options": [{ "value": "CHANGED", "label": "Changed files only" }, { "value": "ALL", "label": "All files" }] },
+                  { "id": "verify_mode", "label": "Verify Mode", "type": "select", "required": false, "nullable": true, "options": [{ "value": "POINT_IN_TIME_CONSISTENT", "label": "Point-in-time consistent" }, { "value": "ONLY_FILES_TRANSFERRED", "label": "Only files transferred" }, { "value": "NONE", "label": "None" }] }
+                ]
+              },
+              {
+                "id": "includes",
+                "label": "Include Filter",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  { "id": "filter_type", "label": "Filter Type", "type": "select", "required": false, "default": "SIMPLE_PATTERN", "options": [{ "value": "SIMPLE_PATTERN", "label": "Simple pattern" }] },
+                  { "id": "value", "label": "Pattern", "type": "text", "required": true, "placeholder": "/photos|/videos" }
+                ]
+              },
+              {
+                "id": "excludes",
+                "label": "Exclude Filter",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "fields": [
+                  { "id": "filter_type", "label": "Filter Type", "type": "select", "required": false, "default": "SIMPLE_PATTERN", "options": [{ "value": "SIMPLE_PATTERN", "label": "Simple pattern" }] },
+                  { "id": "value", "label": "Pattern", "type": "text", "required": true, "placeholder": "*.tmp" }
+                ]
+              },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          { "id": "tags", "label": "Resource Tags", "type": "map", "required": false, "default": {} }
+        ]
+      }
+    ]
+  }
+}
