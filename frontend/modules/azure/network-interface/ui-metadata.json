@@ -183,14 +183,52 @@
                 "placeholder": "internal"
               },
               {
+                "id": "virtual_network_name",
+                "label": "Virtual Network",
+                "description": "Virtual Network containing the Subnet.",
+                "type": "select",
+                "ui_only": true,
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "network.virtualNetworks",
+                  "params": {
+                    "resource_group": {
+                      "from_field": "resource_group_name"
+                    }
+                  },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "name",
+                    "description_key": "addressSpace"
+                  }
+                }
+              },
+              {
                 "id": "subnet_id",
-                "label": "Subnet ID",
-                "description": "The ID of the Subnet where this Network Interface should be located.",
-                "type": "text",
+                "label": "Subnet",
+                "description": "The Subnet where this Network Interface should be located.",
+                "type": "select",
                 "required": false,
                 "default": null,
                 "nullable": true,
-                "placeholder": "/subscriptions/.../subnets/..."
+                "data_source": {
+                  "resource": "network.subnets",
+                  "params": {
+                    "vnet": {
+                      "from_field": "virtual_network_name"
+                    },
+                    "resource_group": {
+                      "from_field": "resource_group_name"
+                    }
+                  },
+                  "display": {
+                    "value_key": "id",
+                    "label_key": "name",
+                    "description_key": "addressPrefix"
+                  },
+                  "allow_custom": true
+                }
               },
               {
                 "id": "private_ip_address_allocation",
