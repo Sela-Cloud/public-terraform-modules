@@ -100,6 +100,8 @@ KNOWN_DATA_SOURCES = {
     "ec2.instances",
     "ec2.network_interface",
     "ec2.network_interfaces",
+    "ec2.snapshot",
+    "ec2.snapshots",
     "ec2.security_group",
     "ec2.security_groups",
     "ec2.key_pair",
