@@ -98,6 +98,15 @@ output "node_iam_role_name" {
 }
 
 ################################################################################
+# EKS Auto Mode Outputs
+################################################################################
+
+output "auto_mode_node_iam_role_arn" {
+  description = "Default IAM role ARN created for EKS Auto Mode compute, if compute_config.enabled is true and no node_role_arn override was given."
+  value       = try(aws_iam_role.auto_mode_node[0].arn, var.compute_config != null ? var.compute_config.node_role_arn : null)
+}
+
+################################################################################
 # Addon Outputs
 ################################################################################
 

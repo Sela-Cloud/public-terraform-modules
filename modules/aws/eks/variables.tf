@@ -97,9 +97,36 @@ variable "enable_zonal_shift" {
 }
 
 variable "bootstrap_self_managed_addons" {
-  description = "Indicates whether default self-managed addons (kube-proxy, coredns, vpc-cni) are installed during cluster creation."
+  description = "Indicates whether default self-managed addons (kube-proxy, coredns, vpc-cni) are installed during cluster creation. Must be false when compute_config.enabled is true (EKS Auto Mode)."
   type        = bool
   default     = true
+}
+
+################################################################################
+# EKS Auto Mode
+################################################################################
+
+variable "compute_config" {
+  description = <<-EOT
+    EKS Auto Mode configuration. Leave null for a classic cluster (self-managed compute via
+    node_groups). When set with enabled = true, AWS provisions and manages the cluster's compute,
+    storage, and load balancing directly -- this is additive to, not a replacement for,
+    node_groups: AWS supports mixing Auto Mode compute with classic managed node groups on the same
+    cluster ("mix-mode"). Setting enabled = true also turns on the matching
+    kubernetes_network_config.elastic_load_balancing and storage_config.block_storage blocks
+    automatically -- AWS requires all three to move in lockstep.
+  EOT
+  type = object({
+    enabled       = optional(bool, false)
+    node_pools    = optional(list(string), ["general-purpose", "system"])
+    node_role_arn = optional(string, null)
+  })
+  default = null
+
+  validation {
+    condition     = var.compute_config == null || length(setsubtract(var.compute_config.node_pools, ["general-purpose", "system"])) == 0
+    error_message = "compute_config.node_pools may only contain 'general-purpose' and/or 'system'."
+  }
 }
 
 variable "security_group_ids" {
