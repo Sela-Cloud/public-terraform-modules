@@ -1,7 +1,7 @@
 {
   "$schema": "../../ui-metadata.schema.json",
   "module": "bastion-host",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "Bastion Host",
     "icon": "azure-bastion",
@@ -26,7 +26,6 @@
             "description": "Name of the Azure Bastion Host. Must be 1-80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, underscores, hyphens, or periods.",
             "type": "text",
             "required": true,
-            "default": "bastion-default",
             "placeholder": "bastion-prod-01",
             "locked_after_create": true,
             "validation": {
@@ -59,7 +58,6 @@
             "description": "The Azure Region where the Bastion Host should be created.",
             "type": "select",
             "required": true,
-            "default": "eastus",
             "locked_after_create": true,
             "options": [
               { "value": "eastus", "label": "East US (Virginia)" },

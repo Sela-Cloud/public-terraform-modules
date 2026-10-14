@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "route53-zone",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "Route 53 Hosted Zone",
     "icon": "dns",
@@ -12,11 +12,18 @@
     {
       "id": "region",
       "label": "AWS Region",
-      "description": "The AWS region where resources will be provisioned.",
-      "type": "text",
+      "description": "The AWS region where resources will be provisioned. Route 53 zones are global; the region only sets where the provider connects.",
+      "type": "select",
       "required": true,
-      "default": "us-east-1",
-      "placeholder": "us-east-1"
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": {
+          "value_key": "name",
+          "label_key": "description",
+          "description_key": "name"
+        }
+      }
     }
   ],
   "resource": {

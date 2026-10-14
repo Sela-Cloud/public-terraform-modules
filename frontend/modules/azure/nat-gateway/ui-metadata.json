@@ -1,7 +1,7 @@
 {
   "$schema": "../../ui-metadata.schema.json",
   "module": "nat-gateway",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "NAT Gateway",
     "icon": "nat-gateway",
@@ -26,7 +26,6 @@
             "description": "Name of the Azure NAT Gateway. Must be between 1 and 80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores.",
             "type": "text",
             "required": true,
-            "default": "ng-default",
             "placeholder": "ng-my-workload",
             "locked_after_create": true,
             "validation": {
@@ -59,7 +58,6 @@
             "description": "The Azure Region where the NAT Gateway should be created.",
             "type": "select",
             "required": true,
-            "default": "eastus",
             "locked_after_create": true,
             "options": [
               { "value": "eastus", "label": "East US (Virginia)" },

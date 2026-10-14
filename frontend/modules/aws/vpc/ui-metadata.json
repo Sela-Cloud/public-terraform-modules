@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "vpc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "AWS VPC",
     "icon": "vpc",
@@ -15,7 +15,6 @@
       "description": "The AWS region where resources will be provisioned.",
       "type": "select",
       "required": true,
-      "default": "us-east-1",
       "data_source": {
         "resource": "ec2.regions",
         "params": {},
@@ -50,7 +49,6 @@
             "description": "Unique name for the VPC, applied as the 'Name' tag and map key.",
             "type": "text",
             "required": true,
-            "default": "vpc-default",
             "placeholder": "production-vpc",
             "validation": {
               "min": 1,

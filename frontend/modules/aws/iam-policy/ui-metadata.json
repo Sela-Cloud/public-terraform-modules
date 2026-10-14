@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "iam-policy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "AWS IAM Policy",
     "icon": "iam",
@@ -15,7 +15,6 @@
       "description": "The AWS region where resources will be provisioned.",
       "type": "select",
       "required": true,
-      "default": "us-east-1",
       "data_source": {
         "resource": "ec2.regions",
         "params": {},
@@ -44,7 +43,6 @@
             "description": "Friendly name of the policy. Conflicts with name_prefix.",
             "type": "text",
             "required": true,
-            "default": "iam-policy-default",
             "placeholder": "app-custom-policy",
             "validation": {
               "min": 1,

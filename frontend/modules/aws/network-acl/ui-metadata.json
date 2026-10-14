@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "network-acl",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "AWS Network ACL",
     "icon": "shield",
@@ -15,7 +15,6 @@
       "description": "The AWS region where resources will be provisioned.",
       "type": "select",
       "required": true,
-      "default": "us-east-1",
       "data_source": {
         "resource": "ec2.regions",
         "params": {},
@@ -44,7 +43,6 @@
             "description": "Name applied to the Network ACL as an identifier and 'Name' tag.",
             "type": "text",
             "required": true,
-            "default": "network-acl-default",
             "placeholder": "custom-web-nacl",
             "validation": {
               "min": 1,

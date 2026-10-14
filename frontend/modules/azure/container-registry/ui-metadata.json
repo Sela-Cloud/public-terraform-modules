@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "container-registry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "Container Registry",
     "icon": "azure-container-registry",
@@ -58,7 +58,6 @@
             "description": "The Azure Region where the Container Registry should be created. Changing this forces a new resource to be created.",
             "type": "select",
             "required": true,
-            "default": "eastus",
             "locked_after_create": true,
             "options": [
               { "value": "eastus", "label": "East US (Virginia)" },
@@ -300,7 +299,6 @@
                 "description": "The Azure location where the container registry should be geo-replicated.",
                 "type": "select",
                 "required": true,
-                "default": "westeurope",
                 "options": [
                   { "value": "eastus", "label": "East US (Virginia)" },
                   { "value": "eastus2", "label": "East US 2 (Virginia)" },

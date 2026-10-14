@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "eib",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "AWS EC2 Image Builder",
     "icon": "layers",
@@ -15,7 +15,6 @@
       "description": "The AWS region where resources will be provisioned.",
       "type": "select",
       "required": true,
-      "default": "us-east-1",
       "data_source": {
         "resource": "ec2.regions",
         "params": {},
@@ -44,7 +43,6 @@
             "description": "Unique name identifier for the Image Builder pipeline.",
             "type": "text",
             "required": true,
-            "default": "eib-default",
             "placeholder": "my-golden-image-pipeline",
             "validation": {
               "min": 1,
@@ -85,11 +83,11 @@
           {
             "id": "parent_image",
             "label": "Parent Image",
-            "description": "Base image ARN or AMI ID (e.g. arn:aws:imagebuilder:us-east-1:aws:image/amazon-linux-2-x86/x.x.x). Pick one of this account's own AMIs, or type an Image Builder image ARN directly.",
+            "description": "One of this account's AMIs in the selected region, a full Image Builder image ARN, or an AWS-managed image name such as amazon-linux-2-x86/x.x.x, which is turned into the ARN for the selected region.",
             "type": "select",
             "required": true,
-            "default": "arn:aws:imagebuilder:us-east-1:aws:image/amazon-linux-2-x86/x.x.x",
-            "placeholder": "arn:aws:imagebuilder:us-east-1:aws:image/amazon-linux-2-x86/x.x.x",
+            "default": "amazon-linux-2-x86/x.x.x",
+            "placeholder": "amazon-linux-2-x86/x.x.x",
             "data_source": {
               "resource": "ec2.images",
               "params": { "region": { "from_field": "region" } },

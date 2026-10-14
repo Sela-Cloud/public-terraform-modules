@@ -1,7 +1,7 @@
 {
   "$schema": "../../ui-metadata.schema.json",
   "module": "application-security-group",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "Application Security Group",
     "icon": "application-security-group",
@@ -26,7 +26,6 @@
             "description": "Name of the Azure Application Security Group. Must be 1-80 characters using alphanumeric, underscores, hyphens, and periods.",
             "type": "text",
             "required": true,
-            "default": "asg-default",
             "placeholder": "asg-my-workload",
             "locked_after_create": true,
             "validation": {
@@ -59,7 +58,6 @@
             "description": "The Azure Region where the Application Security Group should be created.",
             "type": "select",
             "required": true,
-            "default": "eastus",
             "locked_after_create": true,
             "options": [
               { "value": "eastus", "label": "East US (Virginia)" },

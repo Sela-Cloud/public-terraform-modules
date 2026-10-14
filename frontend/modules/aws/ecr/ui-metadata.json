@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "ecr",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "AWS ECR Repository",
     "icon": "package",
@@ -15,7 +15,6 @@
       "description": "The AWS region where resources will be provisioned.",
       "type": "select",
       "required": true,
-      "default": "us-east-1",
       "data_source": {
         "resource": "ec2.regions",
         "params": {},
@@ -44,7 +43,6 @@
             "description": "Unique name for the repository. Can include namespaces separated by slashes (e.g., project/app).",
             "type": "text",
             "required": true,
-            "default": "ecr-default",
             "placeholder": "my-container-app",
             "validation": {
               "min": 2,

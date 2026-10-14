@@ -1,7 +1,7 @@
 {
   "$schema": "../../ui-metadata.schema.json",
   "module": "route-table",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "Route Table",
     "icon": "route-table",
@@ -26,7 +26,6 @@
             "description": "Name of the Azure Route Table. Must be between 1 and 80 characters, begin with an alphanumeric character, end with an alphanumeric character or underscore, and contain only alphanumerics, hyphens, periods, or underscores.",
             "type": "text",
             "required": true,
-            "default": "rt-default",
             "placeholder": "rt-my-workload",
             "locked_after_create": true,
             "validation": {
@@ -59,7 +58,6 @@
             "description": "The Azure Region where the Route Table should be created.",
             "type": "select",
             "required": true,
-            "default": "eastus",
             "locked_after_create": true,
             "options": [
               { "value": "eastus", "label": "East US (Virginia)" },

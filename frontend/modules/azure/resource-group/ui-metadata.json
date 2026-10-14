@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "resource-group",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "Resource Group",
     "icon": "resource-group",
@@ -27,7 +27,6 @@
             "description": "Name of the Azure Resource Group. Must be 1-90 characters using alphanumeric, underscores, hyphens, parentheses, and periods (cannot end in a period).",
             "type": "text",
             "required": true,
-            "default": "rg-default",
             "placeholder": "rg-my-workload",
             "locked_after_create": true,
             "validation": {
@@ -43,7 +42,6 @@
             "description": "The Azure Region where the Resource Group should be created.",
             "type": "select",
             "required": true,
-            "default": "eastus",
             "locked_after_create": true,
             "options": [
               { "value": "eastus", "label": "East US (Virginia)" },

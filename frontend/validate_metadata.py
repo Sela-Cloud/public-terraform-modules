@@ -169,6 +169,7 @@ KNOWN_DATA_SOURCES = {
     "azure.resourceGroups",
     "compute.vmSizes",
     "container.kubernetesVersions",
+    "dns.zones",
     "keyvault.certificates",
     "keyvault.vaults",
     "managedIdentity.userAssignedIdentities",

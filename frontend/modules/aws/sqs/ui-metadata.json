@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "sqs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "AWS SQS Queue",
     "icon": "inbox",
@@ -15,7 +15,6 @@
       "description": "The AWS region where resources will be provisioned.",
       "type": "select",
       "required": true,
-      "default": "us-east-1",
       "data_source": {
         "resource": "ec2.regions",
         "params": {},
@@ -44,7 +43,6 @@
             "description": "The name of the SQS queue. For FIFO queues, the name must end with '.fifo'.",
             "type": "text",
             "required": true,
-            "default": "sqs-default",
             "placeholder": "my-app-queue",
             "validation": {
               "min": 1,

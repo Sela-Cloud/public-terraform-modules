@@ -9,7 +9,7 @@ variable "eib" {
   type = map(object({
     name                          = optional(string, null)
     description                   = optional(string, null)
-    parent_image                  = optional(string, "arn:aws:imagebuilder:us-east-1:aws:image/amazon-linux-2-x86/x.x.x")
+    parent_image                  = optional(string, "amazon-linux-2-x86/x.x.x")
     recipe_version                = optional(string, "1.0.0")
     components                    = optional(list(string), [])
     instance_types                = optional(list(string), ["t3.medium"])
@@ -49,7 +49,7 @@ variable "eib" {
     "eib-default" = {
       name                          = "eib-default"
       description                   = null
-      parent_image                  = "arn:aws:imagebuilder:us-east-1:aws:image/amazon-linux-2-x86/x.x.x"
+      parent_image                  = "amazon-linux-2-x86/x.x.x"
       recipe_version                = "1.0.0"
       components                    = []
       instance_types                = ["t3.medium"]

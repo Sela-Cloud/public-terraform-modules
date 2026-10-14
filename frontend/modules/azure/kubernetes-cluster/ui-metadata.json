@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "kubernetes-cluster",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "Azure Kubernetes Service (AKS)",
     "icon": "azure-kubernetes",
@@ -615,12 +615,7 @@
                 "id": "zones",
                 "label": "Availability Zones",
                 "description": "Availability zones for node placement (e.g. ['1', '2', '3']).",
-                "type": "list",
-                "default": [
-                  "1",
-                  "2",
-                  "3"
-                ]
+                "type": "list"
               }
             ]
           }

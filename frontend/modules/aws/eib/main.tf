@@ -6,9 +6,12 @@ module "eib" {
   source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/eib?ref=v0.9.8"
   for_each = var.eib
 
-  name                          = coalesce(each.value.name, each.key)
-  description                   = each.value.description
-  parent_image                  = each.value.parent_image
+  name        = coalesce(each.value.name, each.key)
+  description = each.value.description
+  # An AMI id or a full ARN passes through. Anything else is an AWS-managed Image Builder image
+  # name, made into an ARN in the deployment's own region: a fixed ARN would name us-east-1 wherever
+  # the pipeline runs, and Image Builder rejects a parent image from another region.
+  parent_image                  = can(regex("^(arn:|ami-)", each.value.parent_image)) ? each.value.parent_image : "arn:aws:imagebuilder:${var.region}:aws:image/${each.value.parent_image}"
   recipe_version                = each.value.recipe_version
   components                    = each.value.components
   instance_types                = each.value.instance_types

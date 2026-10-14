@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "private-endpoint",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "Private Endpoint",
     "icon": "azure-private-endpoint",
@@ -27,7 +27,6 @@
             "type": "text",
             "required": true,
             "locked_after_create": true,
-            "default": "pe-default",
             "placeholder": "pe-my-service",
             "validation": {
               "min": 1,
@@ -60,7 +59,6 @@
             "type": "select",
             "required": true,
             "locked_after_create": true,
-            "default": "eastus",
             "options": [
               { "value": "eastus", "label": "East US (Virginia)" },
               { "value": "eastus2", "label": "East US 2 (Virginia)" },

@@ -1,7 +1,7 @@
 {
   "$schema": "../../ui-metadata.schema.json",
   "module": "dns-a-record",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "DNS A Record",
     "icon": "azure-dns",
@@ -26,7 +26,6 @@
             "description": "The relative name of the DNS A Record. Use '@' for the zone apex or a subdomain label like 'www' or 'api'. Changing this forces a new resource to be created.",
             "type": "text",
             "required": true,
-            "default": "@",
             "placeholder": "@ or www",
             "locked_after_create": true,
             "validation": {
@@ -34,22 +33,6 @@
               "max": 63,
               "pattern": "^(@|[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*)$",
               "pattern_error": "Must be '@' or between 1 and 63 alphanumeric characters, hyphens, or underscores."
-            }
-          },
-          {
-            "id": "zone_name",
-            "label": "DNS Zone Name",
-            "description": "The name of the parent DNS Zone where the record will be created (e.g., example.com). Changing this forces a new resource to be created.",
-            "type": "text",
-            "required": true,
-            "default": "example.com",
-            "placeholder": "example.com",
-            "locked_after_create": true,
-            "validation": {
-              "min": 1,
-              "max": 253,
-              "pattern": "^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}$",
-              "pattern_error": "Must be a valid domain name (e.g., example.com)."
             }
           },
           {
@@ -67,6 +50,34 @@
                 "label_key": "name",
                 "description_key": "location"
               }
+            }
+          },
+          {
+            "id": "zone_name",
+            "label": "DNS Zone Name",
+            "description": "The parent DNS zone the record is created in, from the resource group above. Changing this forces a new resource to be created.",
+            "type": "select",
+            "required": true,
+            "placeholder": "example.com",
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "dns.zones",
+              "params": {
+                "resource_group": { "from_field": "resource_group_name" }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              },
+              "allow_custom": true,
+              "cache_ttl": 300
+            },
+            "validation": {
+              "min": 1,
+              "max": 253,
+              "pattern": "^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}$",
+              "pattern_error": "Must be a valid domain name (e.g., example.com)."
             }
           }
         ]

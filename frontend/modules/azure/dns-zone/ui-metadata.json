@@ -1,7 +1,7 @@
 {
   "$schema": "../../ui-metadata.schema.json",
   "module": "dns-zone",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "DNS Zone",
     "icon": "azure-dns",
@@ -26,7 +26,6 @@
             "description": "Name of the DNS Zone. Must be a valid domain name (e.g., example.com, sub.example.com). Changing this forces a new resource to be created.",
             "type": "text",
             "required": true,
-            "default": "example.com",
             "placeholder": "mydomain.com",
             "locked_after_create": true,
             "validation": {

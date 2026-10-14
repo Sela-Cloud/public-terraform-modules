@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "storage-account",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "display": {
     "label": "Storage Account",
     "icon": "storage-account",
@@ -59,7 +59,6 @@
             "type": "select",
             "required": true,
             "locked_after_create": true,
-            "default": "eastus",
             "options": [
               { "value": "eastus", "label": "East US (Virginia)" },
               { "value": "eastus2", "label": "East US 2 (Virginia)" },
