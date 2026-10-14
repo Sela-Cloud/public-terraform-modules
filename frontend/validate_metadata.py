@@ -116,6 +116,8 @@ KNOWN_DATA_SOURCES = {
     "wafv2.web_acls",
     "efs.file_system",
     "efs.file_systems",
+    "servicediscovery.http_namespace",
+    "servicediscovery.http_namespaces",
     "ec2.security_group",
     "ec2.security_groups",
     "ec2.key_pair",
