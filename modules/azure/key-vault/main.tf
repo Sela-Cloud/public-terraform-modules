@@ -42,4 +42,10 @@ resource "azurerm_key_vault" "key_vault" {
     read   = "5m"
     delete = "60m"
   }
+
+  lifecycle {
+    ignore_changes = [
+      contact
+    ]
+  }
 }

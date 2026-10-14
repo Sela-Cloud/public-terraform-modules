@@ -61,7 +61,7 @@ This module manages Azure Key Vault resources, supporting Azure RBAC authorizati
 
 ```hcl
 module "key_vault" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/key-vault?ref=azure-key-vault"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/key-vault?ref=azure-key-vault-fix"
 
   name                       = "kv-prod-app-01"
   resource_group_name        = "rg-prod-app"
@@ -90,7 +90,7 @@ module "key_vault" {
 
 ```hcl
 module "key_vault_access_policies" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/key-vault?ref=azure-key-vault"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/key-vault?ref=azure-key-vault-fix"
 
   name                       = "kv-dev-app-01"
   resource_group_name        = "rg-dev-app"
