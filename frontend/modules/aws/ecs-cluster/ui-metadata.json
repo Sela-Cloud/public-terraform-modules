@@ -74,11 +74,18 @@
           },
           {
             "id": "service_connect_namespace_arn",
-            "label": "Default Service Connect namespace ARN",
-            "type": "text",
+            "label": "Default Service Connect Namespace",
+            "type": "select",
+            "required": false,
             "nullable": true,
-            "placeholder": "arn:aws:servicediscovery:REGION:ACCOUNT:namespace/ns-...",
-            "description": "Namespace ARN from the ECS Service Connect Namespace module. Services that enable Service Connect without naming a namespace join this one."
+            "description": "Services that enable Service Connect without naming a namespace join this one.",
+            "data_source": {
+              "resource": "servicediscovery.http_namespaces",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "tags",
@@ -116,10 +123,16 @@
               },
               {
                 "id": "auto_scaling_group_arn",
-                "label": "Auto Scaling Group ARN",
-                "type": "text",
+                "label": "Auto Scaling Group",
+                "type": "select",
                 "required": true,
-                "placeholder": "arn:aws:autoscaling:REGION:ACCOUNT:autoScalingGroup:...:autoScalingGroupName/NAME"
+                "data_source": {
+                  "resource": "autoscaling.groups",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
               },
               {
                 "id": "managed_scaling",
