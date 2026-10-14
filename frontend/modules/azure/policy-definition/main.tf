@@ -1,5 +1,5 @@
 module "policy_definition" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/policy-definition?ref=azure-policy-definition"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/policy-definition?ref=v0.9.11"
   for_each = var.policy_definition
 
   name                = each.value.name

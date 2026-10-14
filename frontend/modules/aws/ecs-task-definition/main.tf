@@ -1,5 +1,5 @@
 module "ecs_task_definition" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ecs-task-definition?ref=v0.9.9"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ecs-task-definition?ref=v0.9.11"
   for_each = var.ecs_task_definition
 
   family                   = each.value.family
