@@ -3,7 +3,7 @@
  *****************************************/
 
 module "eip" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/eip?ref=v0.9.7"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/eip?ref=v0.9.8"
   for_each = var.eip
 
   name                      = coalesce(each.value.name, each.key)

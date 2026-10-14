@@ -1,5 +1,5 @@
 module "ecs_cluster" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ecs-cluster?ref=v0.9.7"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ecs-cluster?ref=v0.9.8"
   for_each = var.ecs_cluster
 
   name                               = each.value.name
