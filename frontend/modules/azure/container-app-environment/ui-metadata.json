@@ -1,0 +1,326 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "container-app-environment",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Container App Environment",
+    "icon": "azure-container-app",
+    "description": "Secure infrastructure boundary and hosting environment for Azure Container Apps",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "container_app_environment",
+    "key_field": "name",
+    "key_label": "Environment Name",
+    "key_description": "The unique name for the Azure Container App Environment. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Container App Environment identification and regional placement.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Environment Name",
+            "description": "The name of the Container App Environment. Must be 2-32 lowercase alphanumerics or hyphens.",
+            "type": "text",
+            "required": true,
+            "locked_after_create": true,
+            "placeholder": "cae-my-env",
+            "validation": {
+              "min": 2,
+              "max": 32,
+              "pattern": "^[a-z0-9][a-z0-9-]{0,30}[a-z0-9]$",
+              "pattern_error": "Name must be 2-32 characters, start and end with an alphanumeric character, and contain only lowercase letters, numbers, and hyphens."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Container App Environment.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "location"
+              }
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Container App Environment should exist.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "default": "eastus",
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (Sydney)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo)" },
+              { "value": "centralindia", "label": "Central India (Pune)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "monitoring",
+        "label": "Monitoring & Diagnostics",
+        "description": "Logging destination and Log Analytics integration.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "logs_destination",
+            "label": "Logs Destination",
+            "description": "Where application and system logs are stored.",
+            "type": "select",
+            "required": false,
+            "default": "log-analytics",
+            "options": [
+              { "value": "log-analytics", "label": "Azure Log Analytics" },
+              { "value": "azure-monitor", "label": "Azure Monitor" },
+              { "value": "none", "label": "None" }
+            ]
+          },
+          {
+            "id": "log_analytics_workspace_id",
+            "label": "Log Analytics Workspace",
+            "description": "Resource ID of the Log Analytics Workspace linked to this environment.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "depends_on": {
+              "field": "logs_destination",
+              "operator": "eq",
+              "value": "log-analytics"
+            },
+            "data_source": {
+              "resource": "operationalinsights.workspaces",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              },
+              "allow_custom": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Networking & VNet Integration",
+        "description": "Virtual network delegation, ingress visibility, and network access controls.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "infrastructure_subnet_id",
+            "label": "Infrastructure Subnet ID",
+            "description": "Existing delegated Subnet ID (Microsoft.App/environments). Leave empty for platform-managed virtual network.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "data_source": {
+              "resource": "network.virtualNetworks.subnets",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "vnetName"
+              },
+              "allow_custom": true
+            }
+          },
+          {
+            "id": "internal_load_balancer_enabled",
+            "label": "Internal Load Balancer Mode",
+            "description": "Enable to restrict ingress traffic to the virtual network. Requires an infrastructure subnet.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "public_network_access",
+            "label": "Public Network Access",
+            "description": "Whether public network access is enabled or disabled.",
+            "type": "select",
+            "required": false,
+            "default": "Enabled",
+            "options": [
+              { "value": "Enabled", "label": "Enabled" },
+              { "value": "Disabled", "label": "Disabled" }
+            ]
+          },
+          {
+            "id": "mutual_tls_enabled",
+            "label": "Mutual TLS (mTLS)",
+            "description": "Enables mutual TLS authentication across container apps in this environment.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "infrastructure_resource_group_name",
+            "label": "Infrastructure Resource Group Name",
+            "description": "Custom name for the platform-managed resource group created for environment networking.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "rg-cae-infra"
+          }
+        ]
+      },
+      {
+        "id": "resilience_and_compute",
+        "label": "Resilience & Workload Profiles",
+        "description": "High availability, zone redundancy, and dedicated compute workload profiles.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "zone_redundancy_enabled",
+            "label": "Zone Redundancy",
+            "description": "Spreads instances across Azure Availability Zones. Requires an infrastructure subnet.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "workload_profiles",
+            "label": "Workload Profiles",
+            "description": "Workload profiles for dedicated or specialized compute instances.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Profile Name",
+                "description": "Unique name of the workload profile (e.g. Consumption, D4, E4).",
+                "type": "text",
+                "required": true,
+                "placeholder": "Consumption"
+              },
+              {
+                "id": "workload_profile_type",
+                "label": "Profile Type",
+                "description": "Type of the workload profile (e.g. Consumption, D4, D8, E4).",
+                "type": "text",
+                "required": true,
+                "placeholder": "Consumption"
+              },
+              {
+                "id": "minimum_count",
+                "label": "Minimum Node Count",
+                "description": "Minimum number of nodes for this workload profile (0 for Consumption).",
+                "type": "number",
+                "required": false,
+                "default": 0
+              },
+              {
+                "id": "maximum_count",
+                "label": "Maximum Node Count",
+                "description": "Maximum number of nodes for this workload profile.",
+                "type": "number",
+                "required": false,
+                "default": 10
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "label": "Identity & Dapr Integration",
+        "description": "Managed identity and Dapr telemetry configuration.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "identity",
+            "label": "Managed Service Identity",
+            "description": "Managed Identity for this environment.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "type",
+                "label": "Identity Type",
+                "description": "Type of managed identity to assign.",
+                "type": "select",
+                "required": true,
+                "default": "SystemAssigned",
+                "options": [
+                  { "value": "SystemAssigned", "label": "SystemAssigned" },
+                  { "value": "UserAssigned", "label": "UserAssigned" },
+                  { "value": "SystemAssigned, UserAssigned", "label": "SystemAssigned, UserAssigned" }
+                ]
+              },
+              {
+                "id": "identity_ids",
+                "label": "User Assigned Identity IDs",
+                "description": "List of user-assigned managed identity resource IDs.",
+                "type": "list",
+                "required": false,
+                "default": null,
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "id": "dapr_application_insights_connection_string",
+            "label": "Dapr App Insights Connection String",
+            "description": "Application Insights connection string for Dapr telemetry.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "sensitive": true,
+            "placeholder": "InstrumentationKey=..."
+          }
+        ]
+      },
+      {
+        "id": "tagging",
+        "label": "Tagging",
+        "description": "Resource tags for governance, categorization, and cost allocation.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Key-value pairs to assign to the environment.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
