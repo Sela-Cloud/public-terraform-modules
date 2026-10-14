@@ -1,0 +1,672 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "application-load-balancer",
+  "version": "1.0.0",
+  "display": {
+    "label": "AWS Application Load Balancer",
+    "icon": "load-balancer",
+    "description": "Provision an Application Load Balancer with target groups, listeners, routing rules, and optional WAF protection",
+    "category": "regional"
+  },
+  "globals": [
+    {
+      "id": "region",
+      "label": "AWS Region",
+      "description": "The AWS region where resources will be provisioned.",
+      "type": "select",
+      "required": true,
+      "default": "us-east-1",
+      "data_source": {
+        "resource": "ec2.regions",
+        "params": {},
+        "display": { "value_key": "name", "label_key": "description", "description_key": "name" }
+      }
+    }
+  ],
+  "resource": {
+    "variable": "application_load_balancer",
+    "key_field": "name",
+    "key_label": "Name",
+    "key_description": "Unique name for the ALB. Up to 32 characters.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Name",
+            "type": "text",
+            "required": true,
+            "placeholder": "my-alb",
+            "validation": { "min": 1, "max": 32, "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9-]{0,30}[a-zA-Z0-9])?$", "pattern_error": "1-32 characters, alphanumeric and hyphens, cannot start or end with a hyphen." }
+          },
+          {
+            "id": "name_prefix",
+            "label": "Name Prefix",
+            "description": "Alternative to Name: lets AWS generate a unique name from this prefix. Mutually exclusive with Name -- set one or the other, not both.",
+            "type": "text",
+            "required": false,
+            "nullable": true,
+            "validation": { "max": 6 }
+          },
+          { "id": "internal", "label": "Internal (Private)", "type": "boolean", "required": false, "default": false },
+          {
+            "id": "ip_address_type",
+            "label": "IP Address Type",
+            "type": "select",
+            "required": false,
+            "default": "ipv4",
+            "options": [
+              { "value": "ipv4", "label": "IPv4" },
+              { "value": "dualstack", "label": "Dual-stack" }
+            ]
+          },
+          {
+            "id": "vpc_id",
+            "label": "VPC",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "ec2.vpcs",
+              "params": { "region": { "from_field": "region" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "cidr" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "networking",
+        "label": "Subnets",
+        "fields": [
+          {
+            "id": "subnets",
+            "label": "Subnets",
+            "description": "At least two subnets across different Availability Zones. Mutually exclusive with Subnet Mapping below.",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.subnets",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          {
+            "id": "subnet_mapping",
+            "label": "Subnet Mapping",
+            "description": "Attach subnets with specific EIP allocations or private IPs (for dual-stack/static-IP ALBs). Mutually exclusive with Subnets above.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "subnet_id",
+                "label": "Subnet",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "ec2.subnets",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "availabilityZone" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              {
+                "id": "allocation_id",
+                "label": "EIP Allocation",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.eips",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "publicIp" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "private_ipv4_address", "label": "Private IPv4 Address", "type": "text", "required": false, "nullable": true },
+              { "id": "ipv6_address", "label": "IPv6 Address", "type": "text", "required": false, "nullable": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "security_group",
+        "label": "Security Group",
+        "fields": [
+          {
+            "id": "security_groups",
+            "label": "Existing Security Groups",
+            "type": "list",
+            "required": false,
+            "default": [],
+            "data_source": {
+              "resource": "ec2.security_groups",
+              "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          },
+          { "id": "create_security_group", "label": "Create Dedicated Security Group", "type": "boolean", "required": false, "default": false },
+          { "id": "security_group_name", "label": "Security Group Name", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "create_security_group", "value": true } },
+          { "id": "security_group_description", "label": "Security Group Description", "type": "text", "required": false, "default": "Security group for Application Load Balancer", "depends_on": { "field": "create_security_group", "value": true } },
+          {
+            "id": "security_group_ingress_rules",
+            "label": "Security Group Ingress Rules",
+            "type": "repeatable",
+            "required": false,
+            "default": [
+              { "description": "Allow HTTP inbound from all", "from_port": 80, "to_port": 80, "ip_protocol": "tcp", "cidr_ipv4": "0.0.0.0/0" },
+              { "description": "Allow HTTPS inbound from all", "from_port": 443, "to_port": 443, "ip_protocol": "tcp", "cidr_ipv4": "0.0.0.0/0" }
+            ],
+            "depends_on": { "field": "create_security_group", "value": true },
+            "fields": [
+              { "id": "description", "label": "Description", "type": "text", "required": false, "nullable": true },
+              { "id": "ip_protocol", "label": "Protocol", "type": "select", "required": true, "default": "tcp", "options": [
+                { "value": "tcp", "label": "TCP" }, { "value": "udp", "label": "UDP" }, { "value": "icmp", "label": "ICMP" }, { "value": "-1", "label": "All protocols" }
+              ] },
+              { "id": "from_port", "label": "From port", "type": "number", "required": false, "nullable": true, "validation": { "min": -1, "max": 65535 } },
+              { "id": "to_port", "label": "To port", "type": "number", "required": false, "nullable": true, "validation": { "min": -1, "max": 65535 } },
+              { "id": "cidr_ipv4", "label": "IPv4 CIDR", "type": "text", "required": false, "nullable": true, "description": "Give exactly one source: an IPv4 CIDR, an IPv6 CIDR, or a security group." },
+              { "id": "cidr_ipv6", "label": "IPv6 CIDR", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "referenced_security_group_id",
+                "label": "Source security group",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.security_groups",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          },
+          {
+            "id": "security_group_egress_rules",
+            "label": "Security Group Egress Rules",
+            "type": "repeatable",
+            "required": false,
+            "default": [
+              { "description": "Allow all outbound traffic", "ip_protocol": "-1", "cidr_ipv4": "0.0.0.0/0" }
+            ],
+            "depends_on": { "field": "create_security_group", "value": true },
+            "fields": [
+              { "id": "description", "label": "Description", "type": "text", "required": false, "nullable": true },
+              { "id": "ip_protocol", "label": "Protocol", "type": "select", "required": true, "default": "-1", "options": [
+                { "value": "tcp", "label": "TCP" }, { "value": "udp", "label": "UDP" }, { "value": "icmp", "label": "ICMP" }, { "value": "-1", "label": "All protocols" }
+              ] },
+              { "id": "from_port", "label": "From port", "type": "number", "required": false, "nullable": true, "validation": { "min": -1, "max": 65535 } },
+              { "id": "to_port", "label": "To port", "type": "number", "required": false, "nullable": true, "validation": { "min": -1, "max": 65535 } },
+              { "id": "cidr_ipv4", "label": "IPv4 CIDR", "type": "text", "required": false, "default": "0.0.0.0/0", "description": "Give exactly one source: an IPv4 CIDR, an IPv6 CIDR, or a security group." },
+              { "id": "cidr_ipv6", "label": "IPv6 CIDR", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "referenced_security_group_id",
+                "label": "Source security group",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.security_groups",
+                  "params": { "region": { "from_field": "region" }, "vpc_id": { "from_field": "vpc_id" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "attributes",
+        "label": "Load Balancer Attributes",
+        "fields": [
+          { "id": "idle_timeout", "label": "Idle Timeout (Seconds)", "type": "number", "required": false, "default": 60 },
+          { "id": "enable_deletion_protection", "label": "Enable Deletion Protection", "type": "boolean", "required": false, "default": false },
+          { "id": "enable_cross_zone_load_balancing", "label": "Enable Cross-Zone Load Balancing", "type": "boolean", "required": false, "default": true },
+          { "id": "enable_http2", "label": "Enable HTTP/2", "type": "boolean", "required": false, "default": true },
+          { "id": "enable_tls_version_and_cipher_suite_headers", "label": "Send TLS Version/Cipher Headers to Targets", "type": "boolean", "required": false, "default": false },
+          { "id": "enable_waf_fail_open", "label": "Route to Targets if WAF is Unavailable", "type": "boolean", "required": false, "default": false },
+          { "id": "enable_xff_client_port", "label": "Preserve Client Port in X-Forwarded-For", "type": "boolean", "required": false, "default": false },
+          { "id": "drop_invalid_header_fields", "label": "Drop Invalid HTTP Header Fields", "type": "boolean", "required": false, "default": false },
+          { "id": "preserve_host_header", "label": "Preserve Host Header", "type": "boolean", "required": false, "default": false },
+          { "id": "client_keep_alive", "label": "Client Keep-Alive (Seconds)", "type": "number", "required": false, "default": 3600, "validation": { "min": 60, "max": 604800 } }
+        ]
+      },
+      {
+        "id": "logging",
+        "label": "Logging",
+        "fields": [
+          {
+            "id": "access_logs",
+            "label": "Access Logs",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "bucket",
+                "label": "S3 Bucket",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "s3.buckets",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "prefix", "label": "Prefix", "type": "text", "required": false, "nullable": true },
+              { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": true }
+            ]
+          },
+          {
+            "id": "connection_logs",
+            "label": "Connection Logs",
+            "type": "object",
+            "required": false,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "bucket",
+                "label": "S3 Bucket",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "s3.buckets",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "prefix", "label": "Prefix", "type": "text", "required": false, "nullable": true },
+              { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": true }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "target_groups_section",
+        "label": "Target Groups",
+        "fields": [
+          {
+            "id": "target_groups",
+            "label": "Target Group",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, referenced by Listeners/Rules below as Target Group Key.", "type": "text", "required": true, "placeholder": "web" },
+              { "id": "name", "label": "Name", "description": "Defaults to '<ALB name>-<key>'.", "type": "text", "required": false, "nullable": true },
+              { "id": "name_prefix", "label": "Name Prefix", "description": "Mutually exclusive with Name.", "type": "text", "required": false, "nullable": true },
+              {
+                "id": "target_type",
+                "label": "Target Type",
+                "type": "select",
+                "required": false,
+                "default": "instance",
+                "options": [
+                  { "value": "instance", "label": "EC2 Instance" },
+                  { "value": "ip", "label": "IP Address" },
+                  { "value": "lambda", "label": "Lambda Function" },
+                  { "value": "alb", "label": "Application Load Balancer" }
+                ]
+              },
+              { "id": "port", "label": "Port", "type": "number", "required": false, "default": 80, "depends_on": { "field": "target_type", "operator": "neq", "value": "lambda" } },
+              { "id": "protocol", "label": "Protocol", "type": "select", "required": false, "default": "HTTP", "depends_on": { "field": "target_type", "operator": "neq", "value": "lambda" }, "options": [
+                { "value": "HTTP", "label": "HTTP" }, { "value": "HTTPS", "label": "HTTPS" }
+              ] },
+              { "id": "protocol_version", "label": "Protocol Version", "type": "select", "required": false, "default": "HTTP1", "depends_on": { "field": "target_type", "operator": "neq", "value": "lambda" }, "options": [
+                { "value": "HTTP1", "label": "HTTP/1.1" }, { "value": "HTTP2", "label": "HTTP/2" }, { "value": "GRPC", "label": "gRPC" }
+              ] },
+              {
+                "id": "vpc_id",
+                "label": "VPC",
+                "description": "Defaults to the ALB's own VPC above.",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "target_type", "operator": "neq", "value": "lambda" },
+                "data_source": {
+                  "resource": "ec2.vpcs",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "cidr" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "deregistration_delay", "label": "Deregistration Delay (Seconds)", "type": "number", "required": false, "default": 300 },
+              { "id": "slow_start", "label": "Slow Start Duration (Seconds)", "type": "number", "required": false, "default": 0 },
+              { "id": "load_balancing_algorithm_type", "label": "Load Balancing Algorithm", "type": "select", "required": false, "default": "round_robin", "options": [
+                { "value": "round_robin", "label": "Round robin" }, { "value": "least_outstanding_requests", "label": "Least outstanding requests" }, { "value": "weighted_random", "label": "Weighted random" }
+              ] },
+              {
+                "id": "health_check",
+                "label": "Health Check",
+                "type": "object",
+                "required": false,
+                "fields": [
+                  { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": true },
+                  { "id": "path", "label": "Path", "type": "text", "required": false, "default": "/" },
+                  { "id": "protocol", "label": "Protocol", "type": "select", "required": false, "default": "HTTP", "options": [
+                    { "value": "HTTP", "label": "HTTP" }, { "value": "HTTPS", "label": "HTTPS" }
+                  ] },
+                  { "id": "port", "label": "Port", "type": "text", "required": false, "default": "traffic-port" },
+                  { "id": "interval", "label": "Interval (Seconds)", "type": "number", "required": false, "default": 30 },
+                  { "id": "timeout", "label": "Timeout (Seconds)", "type": "number", "required": false, "default": 5 },
+                  { "id": "healthy_threshold", "label": "Healthy Threshold", "type": "number", "required": false, "default": 3 },
+                  { "id": "unhealthy_threshold", "label": "Unhealthy Threshold", "type": "number", "required": false, "default": 3 },
+                  { "id": "matcher", "label": "Success Codes", "type": "text", "required": false, "default": "200-299" }
+                ]
+              },
+              {
+                "id": "stickiness",
+                "label": "Stickiness",
+                "type": "object",
+                "required": false,
+                "fields": [
+                  { "id": "enabled", "label": "Enabled", "type": "boolean", "required": false, "default": false },
+                  { "id": "type", "label": "Type", "type": "select", "required": false, "default": "lb_cookie", "depends_on": { "field": "enabled", "value": true }, "options": [
+                    { "value": "lb_cookie", "label": "Load balancer generated cookie" }, { "value": "app_cookie", "label": "Application generated cookie" }
+                  ] },
+                  { "id": "cookie_duration", "label": "Cookie Duration (Seconds)", "type": "number", "required": false, "default": 86400, "depends_on": { "field": "enabled", "value": true } },
+                  { "id": "cookie_name", "label": "Application Cookie Name", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "type", "value": "app_cookie" } }
+                ]
+              },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          },
+          {
+            "id": "target_group_attachments",
+            "label": "Target Group Attachment",
+            "description": "Statically register targets. Omit for target groups fed dynamically by an Auto Scaling Group instead.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "web-instance-1" },
+              { "id": "target_group_key", "label": "Target Group Key", "description": "Must match a Key from Target Groups above.", "type": "text", "required": true },
+              { "id": "target_id", "label": "Target ID", "description": "An instance ID, IP address, or Lambda function ARN, depending on the target group's type.", "type": "text", "required": true },
+              { "id": "port", "label": "Port", "type": "number", "required": false, "nullable": true },
+              {
+                "id": "availability_zone",
+                "label": "Availability Zone Override",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "data_source": {
+                  "resource": "ec2.availability_zones",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "name", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "listeners_section",
+        "label": "Listeners",
+        "description": "A listener checks for connection requests and routes them to a default action. Without at least one listener, the ALB carries no traffic.",
+        "fields": [
+          {
+            "id": "listeners",
+            "label": "Listener",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, referenced by Extra Certificates/Rules below as Listener Key.", "type": "text", "required": true, "placeholder": "https" },
+              { "id": "port", "label": "Port", "type": "number", "required": true, "placeholder": "443" },
+              { "id": "protocol", "label": "Protocol", "type": "select", "required": false, "default": "HTTP", "options": [
+                { "value": "HTTP", "label": "HTTP" }, { "value": "HTTPS", "label": "HTTPS" }
+              ] },
+              { "id": "ssl_policy", "label": "SSL Policy", "description": "Defaults to a modern TLS 1.2+ policy. Only applies to HTTPS.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "protocol", "value": "HTTPS" } },
+              {
+                "id": "certificate_arn",
+                "label": "Default Certificate",
+                "type": "select",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "protocol", "value": "HTTPS" },
+                "data_source": {
+                  "resource": "acm.certificates",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              },
+              { "id": "alpn_policy", "label": "ALPN Policy", "type": "text", "required": false, "nullable": true },
+              { "id": "default_action_type", "label": "Default Action", "type": "select", "required": false, "default": "forward", "options": [
+                { "value": "forward", "label": "Forward to target group" }, { "value": "redirect", "label": "Redirect" }, { "value": "fixed-response", "label": "Fixed response" }
+              ] },
+              { "id": "target_group_key", "label": "Target Group Key", "description": "Must match a Key from Target Groups above. Used when Default Action is forward and Weighted Forward below is empty.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "default_action_type", "value": "forward" } },
+              { "id": "target_group_arn", "label": "Existing Target Group ARN", "description": "Alternative to Target Group Key, for a target group created outside this form.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "default_action_type", "value": "forward" } },
+              {
+                "id": "redirect",
+                "label": "Redirect",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "default_action_type", "value": "redirect" },
+                "fields": [
+                  { "id": "status_code", "label": "Status Code", "type": "select", "required": true, "options": [
+                    { "value": "HTTP_301", "label": "301 Permanent" }, { "value": "HTTP_302", "label": "302 Found" }
+                  ] },
+                  { "id": "protocol", "label": "Protocol", "type": "select", "required": false, "nullable": true, "options": [
+                    { "value": "HTTP", "label": "HTTP" }, { "value": "HTTPS", "label": "HTTPS" }, { "value": "#{protocol}", "label": "Same as request" }
+                  ] },
+                  { "id": "port", "label": "Port", "type": "text", "required": false, "nullable": true, "placeholder": "443" },
+                  { "id": "host", "label": "Host", "type": "text", "required": false, "nullable": true, "placeholder": "#{host}" },
+                  { "id": "path", "label": "Path", "type": "text", "required": false, "nullable": true, "placeholder": "/#{path}" },
+                  { "id": "query", "label": "Query", "type": "text", "required": false, "nullable": true, "placeholder": "#{query}" }
+                ]
+              },
+              {
+                "id": "fixed_response",
+                "label": "Fixed Response",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "default_action_type", "value": "fixed-response" },
+                "fields": [
+                  { "id": "status_code", "label": "Status Code", "type": "text", "required": true, "placeholder": "200" },
+                  { "id": "content_type", "label": "Content Type", "type": "select", "required": true, "options": [
+                    { "value": "text/plain", "label": "text/plain" }, { "value": "text/css", "label": "text/css" }, { "value": "text/html", "label": "text/html" }, { "value": "application/javascript", "label": "application/javascript" }, { "value": "application/json", "label": "application/json" }
+                  ] },
+                  { "id": "message_body", "label": "Message Body", "type": "text", "multiline": true, "required": false, "nullable": true }
+                ]
+              },
+              {
+                "id": "forward",
+                "label": "Weighted Forward",
+                "description": "Split traffic across multiple target groups by weight, instead of a single Target Group Key above.",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "default_action_type", "value": "forward" },
+                "fields": [
+                  {
+                    "id": "target_groups",
+                    "label": "Weighted Target Group",
+                    "type": "repeatable",
+                    "required": true,
+                    "fields": [
+                      { "id": "target_group_key", "label": "Target Group Key", "type": "text", "required": false, "nullable": true },
+                      { "id": "target_group_arn", "label": "Existing Target Group ARN", "type": "text", "required": false, "nullable": true },
+                      { "id": "weight", "label": "Weight", "type": "number", "required": false, "default": 1 }
+                    ]
+                  }
+                ]
+              },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          },
+          {
+            "id": "extra_certificates",
+            "label": "Extra Certificate (SNI)",
+            "description": "Additional certificates for multi-domain HTTPS listeners.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true },
+              { "id": "listener_key", "label": "Listener Key", "description": "Must match a Key from Listeners above.", "type": "text", "required": true },
+              {
+                "id": "certificate_arn",
+                "label": "Certificate",
+                "type": "select",
+                "required": true,
+                "data_source": {
+                  "resource": "acm.certificates",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "listener_rules_section",
+        "label": "Listener Rules",
+        "description": "Path-based, host-based, or header-based routing rules evaluated before a listener's default action.",
+        "fields": [
+          {
+            "id": "listener_rules",
+            "label": "Listener Rule",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              { "id": "key", "label": "Key", "description": "Terraform-only identifier, not sent to AWS.", "type": "text", "required": true, "placeholder": "api-rule" },
+              { "id": "listener_key", "label": "Listener Key", "description": "Must match a Key from Listeners above.", "type": "text", "required": true },
+              { "id": "priority", "label": "Priority", "description": "Lower numbers are evaluated first. Leave empty to auto-assign.", "type": "number", "required": false, "nullable": true },
+              { "id": "action_type", "label": "Action", "type": "select", "required": false, "default": "forward", "options": [
+                { "value": "forward", "label": "Forward to target group" }, { "value": "redirect", "label": "Redirect" }, { "value": "fixed-response", "label": "Fixed response" }
+              ] },
+              { "id": "target_group_key", "label": "Target Group Key", "description": "Must match a Key from Target Groups above.", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "action_type", "value": "forward" } },
+              { "id": "target_group_arn", "label": "Existing Target Group ARN", "type": "text", "required": false, "nullable": true, "depends_on": { "field": "action_type", "value": "forward" } },
+              {
+                "id": "redirect",
+                "label": "Redirect",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "action_type", "value": "redirect" },
+                "fields": [
+                  { "id": "status_code", "label": "Status Code", "type": "select", "required": true, "options": [
+                    { "value": "HTTP_301", "label": "301 Permanent" }, { "value": "HTTP_302", "label": "302 Found" }
+                  ] },
+                  { "id": "protocol", "label": "Protocol", "type": "select", "required": false, "nullable": true, "options": [
+                    { "value": "HTTP", "label": "HTTP" }, { "value": "HTTPS", "label": "HTTPS" }, { "value": "#{protocol}", "label": "Same as request" }
+                  ] },
+                  { "id": "port", "label": "Port", "type": "text", "required": false, "nullable": true },
+                  { "id": "host", "label": "Host", "type": "text", "required": false, "nullable": true },
+                  { "id": "path", "label": "Path", "type": "text", "required": false, "nullable": true },
+                  { "id": "query", "label": "Query", "type": "text", "required": false, "nullable": true }
+                ]
+              },
+              {
+                "id": "fixed_response",
+                "label": "Fixed Response",
+                "type": "object",
+                "required": false,
+                "nullable": true,
+                "depends_on": { "field": "action_type", "value": "fixed-response" },
+                "fields": [
+                  { "id": "status_code", "label": "Status Code", "type": "text", "required": true, "placeholder": "200" },
+                  { "id": "content_type", "label": "Content Type", "type": "select", "required": true, "options": [
+                    { "value": "text/plain", "label": "text/plain" }, { "value": "text/html", "label": "text/html" }, { "value": "application/json", "label": "application/json" }
+                  ] },
+                  { "id": "message_body", "label": "Message Body", "type": "text", "multiline": true, "required": false, "nullable": true }
+                ]
+              },
+              {
+                "id": "conditions",
+                "label": "Conditions",
+                "type": "object",
+                "required": false,
+                "fields": [
+                  { "id": "path_patterns", "label": "Path Patterns", "type": "list", "required": false, "default": [], "placeholder": "/api/*" },
+                  { "id": "host_headers", "label": "Host Headers", "type": "list", "required": false, "default": [], "placeholder": "api.example.com" },
+                  { "id": "http_request_methods", "label": "HTTP Methods", "type": "list", "required": false, "default": [], "placeholder": "GET" },
+                  { "id": "source_ips", "label": "Source IP CIDRs", "type": "list", "required": false, "default": [] },
+                  {
+                    "id": "http_headers",
+                    "label": "HTTP Header Condition",
+                    "type": "repeatable",
+                    "required": false,
+                    "default": [],
+                    "fields": [
+                      { "id": "http_header_name", "label": "Header Name", "type": "text", "required": true },
+                      { "id": "values", "label": "Values", "type": "list", "required": true }
+                    ]
+                  },
+                  {
+                    "id": "query_strings",
+                    "label": "Query String Condition",
+                    "type": "repeatable",
+                    "required": false,
+                    "default": [],
+                    "fields": [
+                      { "id": "key", "label": "Key", "type": "text", "required": false, "nullable": true },
+                      { "id": "value", "label": "Value", "type": "text", "required": true }
+                    ]
+                  }
+                ]
+              },
+              { "id": "tags", "label": "Tags", "type": "map", "required": false, "default": {} }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "waf",
+        "label": "WAF",
+        "fields": [
+          {
+            "id": "waf_web_acl_arn",
+            "label": "WAFv2 Web ACL",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "wafv2.web_acls",
+              "params": { "region": { "from_field": "region" }, "scope": { "static": "REGIONAL" } },
+              "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Tags",
+        "fields": [
+          { "id": "tags", "label": "Resource Tags", "type": "map", "required": false, "default": {} }
+        ]
+      }
+    ]
+  }
+}
