@@ -239,7 +239,7 @@ variable "boot_diagnostics" {
   description = "Boot diagnostics configuration to capture serial output and screenshots of virtual machines."
   type = object({
     enabled     = optional(bool, true)
-    storage_uri = string
+    storage_uri = optional(string, null)
   })
   default = null
 }

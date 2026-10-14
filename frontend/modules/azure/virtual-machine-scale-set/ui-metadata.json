@@ -351,6 +351,19 @@
                 "default": false
               }
             ]
+          },
+          {
+            "id": "license_type",
+            "label": "Windows License Type (Azure Hybrid Benefit)",
+            "description": "Specifies the Windows OS license type for Windows machines. Allowed values are 'Windows_Client' and 'Windows_Server'.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "Windows_Client", "label": "Windows Client" },
+              { "value": "Windows_Server", "label": "Windows Server" }
+            ]
           }
         ]
       },
@@ -405,14 +418,16 @@
                 ]
               },
               {
-                "id": "disk_size_gb",
-                "label": "Disk Size (GB)",
-                "description": "Custom OS disk size in GB (optional override).",
-                "type": "number",
+                "id": "os_type",
+                "label": "Operating System Type",
+                "description": "Specifies the operating system type of the OS disk. Possible values are Linux and Windows.",
+                "type": "select",
                 "required": false,
-                "default": null,
-                "nullable": true,
-                "placeholder": "30"
+                "default": "Linux",
+                "options": [
+                  { "value": "Linux", "label": "Linux" },
+                  { "value": "Windows", "label": "Windows" }
+                ]
               }
             ]
           },
@@ -786,14 +801,21 @@
                 "description": "Whether to enable boot diagnostics.",
                 "type": "boolean",
                 "required": false,
-                "default": true
+                "default": false
               },
               {
                 "id": "storage_uri",
                 "label": "Storage Account Blob Endpoint",
                 "description": "Primary blob endpoint URI of storage account for diagnostic data.",
                 "type": "select",
-                "required": true,
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "depends_on": {
+                  "field": "enabled",
+                  "operator": "eq",
+                  "value": true
+                },
                 "data_source": {
                   "resource": "storage.storageAccounts",
                   "params": {},
@@ -804,6 +826,77 @@
                   },
                   "allow_custom": true
                 }
+              }
+            ]
+          },
+          {
+            "id": "extensions",
+            "label": "Scale Set Extensions",
+            "description": "List of virtual machine scale set extension profiles.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Extension Name",
+                "description": "The name of the extension profile.",
+                "type": "text",
+                "required": true,
+                "placeholder": "customScript"
+              },
+              {
+                "id": "publisher",
+                "label": "Publisher",
+                "description": "The publisher of the extension.",
+                "type": "text",
+                "required": true,
+                "placeholder": "Microsoft.Azure.Extensions"
+              },
+              {
+                "id": "type",
+                "label": "Type",
+                "description": "The type of extension.",
+                "type": "text",
+                "required": true,
+                "placeholder": "CustomScript"
+              },
+              {
+                "id": "type_handler_version",
+                "label": "Type Handler Version",
+                "description": "Specifies the version of the extension to use.",
+                "type": "text",
+                "required": true,
+                "placeholder": "2.0"
+              },
+              {
+                "id": "auto_upgrade_minor_version",
+                "label": "Auto Upgrade Minor Version",
+                "description": "Specifies if the extension should automatically upgrade to new minor versions.",
+                "type": "boolean",
+                "required": false,
+                "default": true
+              },
+              {
+                "id": "settings",
+                "label": "Settings (JSON)",
+                "description": "JSON formatted public settings for the extension.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "multiline": true
+              },
+              {
+                "id": "protected_settings",
+                "label": "Protected Settings (JSON)",
+                "description": "JSON formatted protected settings for the extension.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "sensitive": true,
+                "multiline": true
               }
             ]
           }

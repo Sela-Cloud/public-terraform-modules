@@ -109,7 +109,7 @@ variable "virtual_machine_scale_set" {
     }), null)
     boot_diagnostics = optional(object({
       enabled     = optional(bool, true)
-      storage_uri = string
+      storage_uri = optional(string, null)
     }), null)
     extensions = optional(list(object({
       name                       = string

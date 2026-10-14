@@ -36,4 +36,5 @@ output "network_profile" {
 output "virtual_machine_scale_set" {
   description = "The full Azure Virtual Machine Scale Set resource object."
   value       = azurerm_virtual_machine_scale_set.vmss
+  sensitive   = true
 }

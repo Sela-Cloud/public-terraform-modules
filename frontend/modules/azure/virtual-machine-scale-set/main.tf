@@ -1,5 +1,5 @@
 module "virtual_machine_scale_set" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine-scale-set?ref=v0.9.9"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine-scale-set?ref=azure-virtual-machine-scale-set-fix"
   for_each = var.virtual_machine_scale_set
 
   name                            = each.value.name
@@ -25,7 +25,7 @@ module "virtual_machine_scale_set" {
   os_profile_windows_config       = each.value.os_profile_windows_config
   network_profiles                = each.value.network_profiles
   identity                        = each.value.identity
-  boot_diagnostics                = each.value.boot_diagnostics
+  boot_diagnostics                = each.value.boot_diagnostics != null && try(each.value.boot_diagnostics.enabled, false) ? each.value.boot_diagnostics : null
   extensions                      = each.value.extensions
   tags                            = each.value.tags
 }
