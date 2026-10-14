@@ -257,13 +257,20 @@
               {
                 "id": "namespace",
                 "label": "Namespace",
-                "type": "text",
+                "type": "select",
+                "required": false,
                 "nullable": true,
-                "placeholder": "arn:aws:servicediscovery:REGION:ACCOUNT:namespace/ns-...",
-                "description": "ARN or name of a namespace from the ECS Service Connect Namespace module. Leave empty for the cluster's default.",
+                "description": "Leave empty for the cluster's default namespace.",
                 "depends_on": {
                   "field": "enabled",
                   "value": true
+                },
+                "data_source": {
+                  "resource": "servicediscovery.http_namespaces",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "id", "label_key": "name", "description_key": "description" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
                 }
               },
               {
