@@ -112,6 +112,8 @@ KNOWN_DATA_SOURCES = {
     "ec2.vpc_peering_connections",
     "ecr.repository",
     "ecr.repositories",
+    "wafv2.web_acl",
+    "wafv2.web_acls",
     "ec2.security_group",
     "ec2.security_groups",
     "ec2.key_pair",
