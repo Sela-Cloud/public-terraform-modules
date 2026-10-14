@@ -36,4 +36,5 @@ output "identity" {
 output "virtual_machine" {
   description = "The full Azure Virtual Machine resource object."
   value       = azurerm_virtual_machine.vm
+  sensitive   = true
 }
