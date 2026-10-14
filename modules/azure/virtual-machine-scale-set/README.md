@@ -70,7 +70,6 @@ Azure Virtual Machine Scale Sets let you create and manage a group of load-balan
 | caching | Caching type (`None`, `ReadOnly`, `ReadWrite`). | `string` | `"ReadWrite"` | no |
 | create_option | Creation option (`FromImage`). | `string` | `"FromImage"` | no |
 | managed_disk_type | Managed disk type (`Standard_LRS`, `StandardSSD_LRS`, `Premium_LRS`). | `string` | `"Standard_LRS"` | no |
-| disk_size_gb | Custom disk size in GB. | `number` | `null` | no |
 | os_type | Operating system type (`Linux`, `Windows`). | `string` | `null` | no |
 | image | Custom image blob URI. | `string` | `null` | no |
 | vhd_containers | List of VHD storage container URIs for unmanaged disks. | `list(string)` | `null` | no |
@@ -104,7 +103,7 @@ Azure Virtual Machine Scale Sets let you create and manage a group of load-balan
 
 ```hcl
 module "vm_scale_set" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine-scale-set?ref=azure-virtual-machine-scale-set"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine-scale-set?ref=azure-virtual-machine-scale-set-fix"
 
   name                = "vmss-web-prod"
   resource_group_name = "rg-compute-prod"
@@ -159,7 +158,7 @@ module "vm_scale_set" {
 
 ```hcl
 module "vm_scale_set_rolling" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine-scale-set?ref=azure-virtual-machine-scale-set"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine-scale-set?ref=azure-virtual-machine-scale-set-fix"
 
   name                = "vmss-api-prod"
   resource_group_name = "rg-compute-prod"

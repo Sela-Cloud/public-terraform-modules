@@ -1,6 +1,7 @@
 output "virtual_machine_scale_sets" {
   description = "Map of created Virtual Machine Scale Sets and their attributes."
   value       = module.virtual_machine_scale_set
+  sensitive   = true
 }
 
 output "virtual_machine_scale_set_ids" {

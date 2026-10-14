@@ -141,7 +141,7 @@ resource "azurerm_virtual_machine_scale_set" "vmss" {
   }
 
   dynamic "boot_diagnostics" {
-    for_each = var.boot_diagnostics != null ? [var.boot_diagnostics] : []
+    for_each = var.boot_diagnostics != null && try(var.boot_diagnostics.enabled, false) ? [var.boot_diagnostics] : []
     content {
       enabled     = boot_diagnostics.value.enabled
       storage_uri = boot_diagnostics.value.storage_uri
