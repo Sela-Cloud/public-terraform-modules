@@ -170,14 +170,37 @@ jobs:
           key: terraform-providers-${{ env.TERRAFORM_VERSION }}-${{ hashFiles('**/versions.tf') }}
           restore-keys: terraform-providers-${{ env.TERRAFORM_VERSION }}-
 
-      # Every module, against the local tree: what matters is that the code going into the tag
-      # agrees with itself.
-      - name: Validate every module
+      # Compared with the last release that completed, not merely the last tag: see the script.
+      - name: Find the previous release
+        id: previous
         shell: bash
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          previous="$(python3 .github/scripts/previous_release.py "${VERSION}" HEAD)"
+          echo "tag=${previous}" >> "${GITHUB_OUTPUT}"
+          if [[ -n "${previous}" ]]; then
+            echo "::notice::Validating modules changed since ${previous}."
+          else
+            echo "::notice::No completed release before ${VERSION}; validating every module."
+          fi
+
+      # Against the local tree: what matters is that the code going into the tag agrees with
+      # itself. Only what changed since the previous release, and every wrapper whose child module
+      # did; the rest was validated when that release was cut. The pin bump above is not committed
+      # yet and is not a change in any case — pin-only edits are ignored.
+      - name: Validate changed modules
+        shell: bash
+        env:
+          PREVIOUS: ${{ steps.previous.outputs.tag }}
         run: |
           export TF_PLUGIN_CACHE_DIR="${HOME}/.terraform.d/plugin-cache"
           mkdir -p "${TF_PLUGIN_CACHE_DIR}"
-          python3 .github/scripts/validate_terraform.py
+          if [[ -n "${PREVIOUS}" ]]; then
+            python3 .github/scripts/validate_terraform.py --changed-since "${PREVIOUS}"
+          else
+            python3 .github/scripts/validate_terraform.py
+          fi
 
       - name: Show the bump
         run: git --no-pager diff --stat

@@ -13,10 +13,16 @@ So this validates a copy of the tree in which every such source is rewritten to 
 What is checked is exactly what will merge, whatever ``?ref=`` the developer wrote. Whether that
 ref is acceptable is a separate question, answered by ``validate_metadata.py --ref-mode``.
 
+A file whose only change is the ``?ref=`` of this repository's module sources does not count as
+changed: validation points every such source at the local tree anyway, so the code checked is
+identical. That is what lets a release compare against the previous one — its own bump rewrites the
+pin in every wrapper, which would otherwise select the whole catalog.
+
 Usage:
     validate_terraform.py                      every module
     validate_terraform.py --changed-since SHA  only what differs from SHA, plus every wrapper
                                                whose child module is among it
+    ... --list                                 print the selection instead of validating it
 """
 
 from __future__ import annotations
@@ -67,16 +73,46 @@ def children_of(wrapper: str) -> set[str]:
     return found
 
 
-def changed_paths(base: str) -> list[str]:
-    result = subprocess.run(
-        ["git", "-C", ROOT, "diff", "--name-only", "%s...HEAD" % base],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+#: The pin on one of this repository's module sources, for comparing lines with it removed.
+PINNED_SOURCE = re.compile(
+    r'(source\s*=\s*"git::https://github\.com/Sela-Cloud/public-terraform-modules(?:\.git)?//'
+    r'[^"?]+\?ref=)[^"]+"'
+)
+
+
+def git(*args: str) -> str:
+    result = subprocess.run(["git", "-C", ROOT, *args], capture_output=True, text=True, check=False)
     if result.returncode != 0:
-        sys.exit("git diff against %r failed: %s" % (base, result.stderr.strip()))
-    return result.stdout.splitlines()
+        sys.exit("git %s failed: %s" % (" ".join(args), result.stderr.strip()))
+    return result.stdout
+
+
+def only_pins_changed(base: str, path: str) -> bool:
+    """Whether every changed line in `path` is a module source differing only in its `?ref=`.
+
+    Compared with the pin stripped, so a source that moves to a different module path — a real
+    change — still counts.
+    """
+    if not path.endswith(".tf"):
+        return False
+    removed, added = [], []
+    for line in git("diff", "-U0", "%s...HEAD" % base, "--", path).splitlines():
+        if line.startswith(("---", "+++")):
+            continue
+        if line.startswith("-"):
+            removed.append(line[1:])
+        elif line.startswith("+"):
+            added.append(line[1:])
+    changed = removed + added
+    if not changed or not all(PINNED_SOURCE.search(line) for line in changed):
+        return False
+    strip = lambda line: PINNED_SOURCE.sub(r'\1"', line)
+    return sorted(map(strip, removed)) == sorted(map(strip, added))
+
+
+def changed_paths(base: str) -> list[str]:
+    paths = git("diff", "--name-only", "%s...HEAD" % base).splitlines()
+    return [path for path in paths if not only_pins_changed(base, path)]
 
 
 def select(base: str | None) -> list[str]:
@@ -86,6 +122,11 @@ def select(base: str | None) -> list[str]:
         return children + wrappers
 
     paths = changed_paths(base)
+    # The workflows and these scripts decide how everything is validated — the Terraform version
+    # among them — so a change there is a change to every module.
+    if any(p.startswith(".github/") for p in paths):
+        print("Changes under .github/ affect every module; selecting all.", file=sys.stderr)
+        return children + wrappers
     touched = {
         root for root in children + wrappers if any(p == root or p.startswith(root + "/") for p in paths)
     }
@@ -132,9 +173,13 @@ def run(args: list[str], cwd: str) -> tuple[bool, str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--changed-since", metavar="SHA", help="only modules differing from SHA")
+    parser.add_argument("--list", action="store_true", help="print the selected modules and stop")
     args = parser.parse_args()
 
     targets = select(args.changed_since)
+    if args.list:
+        print("\n".join(targets))
+        return 0
     if not targets:
         print("No modules changed; nothing to validate.")
         return 0

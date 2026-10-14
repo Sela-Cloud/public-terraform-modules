@@ -66,6 +66,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.release_ref || github.ref }}
+          # History and tags, to find the previous release and what changed since it.
+          fetch-depth: 0
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -105,20 +107,53 @@ jobs:
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive frontend/modules
 
+      # Compared with the last release that completed, not merely the last tag: see the script.
+      - name: Find the previous release
+        id: previous
+        shell: bash
+        env:
+          RELEASE_REF: ${{ inputs.release_ref || github.ref_name }}
+        run: |
+          previous="$(python3 .github/scripts/previous_release.py "${RELEASE_REF}" HEAD)"
+          echo "tag=${previous}" >> "${GITHUB_OUTPUT}"
+          if [[ -n "${previous}" ]]; then
+            echo "::notice::Validating module templates changed since ${previous}."
+          else
+            echo "::notice::No completed release before ${RELEASE_REF}; validating every module template."
+          fi
+
+      # As written, against the tag's own remote refs. Only wrappers changed since the previous
+      # release, and every wrapper whose child module changed; the release bump touches every
+      # wrapper's pin, but pin-only edits do not count as changes.
       - name: Initialize and validate module templates
         shell: bash
+        env:
+          PREVIOUS: ${{ steps.previous.outputs.tag }}
         run: |
-          while IFS= read -r -d '' module_dir; do
-            terraform -chdir="${module_dir}" init -backend=false -input=false
-            terraform -chdir="${module_dir}" validate
-          done < <(
+          if [[ -n "${PREVIOUS}" ]]; then
+            # Captured first: inside `< <(...)` a failing selection would be ignored and validate
+            # nothing, where an assignment fails the step.
+            selected="$(python3 .github/scripts/validate_terraform.py --changed-since "${PREVIOUS}" --list)"
+            mapfile -t module_dirs < <(grep '^frontend/modules/' <<< "${selected}" || true)
+          else
             # Keyed off the marker file rather than a fixed depth: a catalog entry may sit at
             # frontend/modules/<id> or frontend/modules/<provider>/<id>, and a provider directory
             # is not itself a Terraform module.
-            find frontend/modules \
-              -type d -name .terraform -prune -o \
-              -type f -name ui-metadata.json -printf '%h\0' | sort -z
-          )
+            mapfile -t module_dirs < <(
+              find frontend/modules \
+                -type d -name .terraform -prune -o \
+                -type f -name ui-metadata.json -printf '%h\n' | sort
+            )
+          fi
+          if [[ ${#module_dirs[@]} -eq 0 ]]; then
+            echo "No module templates changed since ${PREVIOUS}; nothing to validate."
+          fi
+          for module_dir in "${module_dirs[@]}"; do
+            echo "::group::${module_dir}"
+            terraform -chdir="${module_dir}" init -backend=false -input=false
+            terraform -chdir="${module_dir}" validate
+            echo "::endgroup::"
+          done
 
       - name: Validate publication settings
         shell: bash
