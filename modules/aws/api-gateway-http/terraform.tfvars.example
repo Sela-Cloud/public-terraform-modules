@@ -1,0 +1,41 @@
+name = "orders-api"
+
+cors_configuration = {
+  allow_origins = ["https://example.com"]
+  allow_methods = ["GET", "POST"]
+}
+
+authorizers = [
+  {
+    key              = "jwt1"
+    name             = "cognito-jwt"
+    authorizer_type  = "JWT"
+    identity_sources = ["$request.header.Authorization"]
+    jwt_issuer       = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_abc123"
+    jwt_audience     = ["abc123client"]
+  }
+]
+
+routes = [
+  {
+    key                 = "get_orders"
+    route_key           = "GET /orders"
+    integration_type    = "AWS_PROXY"
+    lambda_function_arn = "arn:aws:lambda:us-east-1:123456789012:function:get-orders"
+  },
+  {
+    key                 = "post_orders"
+    route_key           = "POST /orders"
+    integration_type    = "AWS_PROXY"
+    lambda_function_arn = "arn:aws:lambda:us-east-1:123456789012:function:create-order"
+    authorization_type  = "JWT"
+    authorizer_key      = "jwt1"
+  }
+]
+
+access_log_destination_arn = "arn:aws:logs:us-east-1:123456789012:log-group:/apigw/orders"
+
+tags = {
+  Environment = "production"
+  ManagedBy   = "Terraform"
+}
