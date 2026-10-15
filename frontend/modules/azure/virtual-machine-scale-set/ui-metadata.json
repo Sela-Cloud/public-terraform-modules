@@ -226,13 +226,70 @@
       },
       {
         "id": "os_profile",
-        "label": "Operating System & Credentials",
-        "description": "Admin credentials, computer name prefix, and SSH keys.",
+        "label": "Operating System & Image",
+        "description": "Operating system platform image, OS version/SKU, administrator credentials, and SSH/Windows settings.",
         "collapsed": false,
         "fields": [
           {
+            "id": "storage_profile_image_reference",
+            "label": "Operating System Image Reference",
+            "description": "Specifies the marketplace platform image (OS type and version) or custom image ID for the scale set virtual machines.",
+            "type": "object",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "fields": [
+              {
+                "id": "publisher",
+                "label": "OS Publisher",
+                "description": "Marketplace image publisher. Use 'Canonical' for Ubuntu, 'MicrosoftWindowsServer' for Windows Server, 'RedHat' for RHEL, 'Debian' for Debian.",
+                "type": "text",
+                "required": false,
+                "default": "Canonical",
+                "placeholder": "Canonical"
+              },
+              {
+                "id": "offer",
+                "label": "OS Offer / Distribution",
+                "description": "Image offer / distribution. Use '0001-com-ubuntu-server-jammy' (Ubuntu 22.04), 'WindowsServer' (Windows Server), 'RHEL' (Red Hat).",
+                "type": "text",
+                "required": false,
+                "default": "0001-com-ubuntu-server-jammy",
+                "placeholder": "0001-com-ubuntu-server-jammy"
+              },
+              {
+                "id": "sku",
+                "label": "OS Version / SKU",
+                "description": "The OS version or SKU. Examples: '22_04-lts' (Ubuntu 22.04), '20_04-lts' (Ubuntu 20.04), '2022-datacenter-azure-edition' (Windows Server 2022), '2019-datacenter' (Windows Server 2019).",
+                "type": "text",
+                "required": false,
+                "default": "22_04-lts",
+                "placeholder": "22_04-lts"
+              },
+              {
+                "id": "version",
+                "label": "Image Version / Patch",
+                "description": "Image version or 'latest' to deploy the newest security patch version.",
+                "type": "text",
+                "required": false,
+                "default": "latest",
+                "placeholder": "latest"
+              },
+              {
+                "id": "id",
+                "label": "Custom Image ID",
+                "description": "Resource ID of a custom Azure Compute Gallery image. Leave empty when using marketplace image.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "/subscriptions/.../galleries/.../images/..."
+              }
+            ]
+          },
+          {
             "id": "os_profile",
-            "label": "OS Profile",
+            "label": "OS Administrator Profile",
             "description": "Operating system administrator credentials and computer name prefix.",
             "type": "object",
             "required": true,
@@ -370,8 +427,8 @@
       {
         "id": "storage",
         "label": "Storage & Disks",
-        "description": "OS disk, image reference, and optional data disks.",
-        "collapsed": true,
+        "description": "OS disk caching, managed disk type, and optional data disks.",
+        "collapsed": false,
         "fields": [
           {
             "id": "storage_profile_os_disk",
@@ -429,63 +486,6 @@
                   { "value": "Linux", "label": "Linux" },
                   { "value": "Windows", "label": "Windows" }
                 ]
-              }
-            ]
-          },
-          {
-            "id": "storage_profile_image_reference",
-            "label": "Image Reference",
-            "description": "Platform marketplace image or custom image reference.",
-            "type": "object",
-            "required": false,
-            "default": null,
-            "nullable": true,
-            "fields": [
-              {
-                "id": "publisher",
-                "label": "Publisher",
-                "description": "Image publisher (e.g. Canonical, MicrosoftWindowsServer).",
-                "type": "text",
-                "required": false,
-                "default": "Canonical",
-                "placeholder": "Canonical"
-              },
-              {
-                "id": "offer",
-                "label": "Offer",
-                "description": "Image offer (e.g. 0001-com-ubuntu-server-jammy, WindowsServer).",
-                "type": "text",
-                "required": false,
-                "default": "0001-com-ubuntu-server-jammy",
-                "placeholder": "0001-com-ubuntu-server-jammy"
-              },
-              {
-                "id": "sku",
-                "label": "Image SKU",
-                "description": "Image SKU (e.g. 22_04-lts, 2022-datacenter-azure-edition).",
-                "type": "text",
-                "required": false,
-                "default": "22_04-lts",
-                "placeholder": "22_04-lts"
-              },
-              {
-                "id": "version",
-                "label": "Image Version",
-                "description": "Image version or latest.",
-                "type": "text",
-                "required": false,
-                "default": "latest",
-                "placeholder": "latest"
-              },
-              {
-                "id": "id",
-                "label": "Custom Image ID",
-                "description": "Resource ID of a custom gallery image (mutually exclusive with publisher/offer/sku).",
-                "type": "text",
-                "required": false,
-                "default": null,
-                "nullable": true,
-                "placeholder": "/subscriptions/.../galleries/.../images/..."
               }
             ]
           },
