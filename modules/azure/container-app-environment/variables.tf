@@ -48,15 +48,15 @@ variable "infrastructure_resource_group_name" {
 }
 
 variable "internal_load_balancer_enabled" {
-  description = "Should the Container Environment operate in Internal Load Balancing Mode? Defaults to false. Can only be set when infrastructure_subnet_id is specified."
+  description = "Should the Container Environment operate in Internal Load Balancing Mode? Can only be set when infrastructure_subnet_id is specified."
   type        = bool
-  default     = false
+  default     = null
 }
 
 variable "zone_redundancy_enabled" {
-  description = "Should the Container App Environment be zone redundant? Defaults to false. Changing this forces a new resource to be created. Requires infrastructure_subnet_id."
+  description = "Should the Container App Environment be zone redundant? Changing this forces a new resource to be created. Requires infrastructure_subnet_id."
   type        = bool
-  default     = false
+  default     = null
 }
 
 variable "mutual_tls_enabled" {
