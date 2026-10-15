@@ -1,5 +1,5 @@
 module "ecs_service_connect" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ecs-service-connect?ref=v0.9.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ecs-service-connect?ref=v0.9.14"
   for_each = var.ecs_service_connect
 
   name        = each.value.name

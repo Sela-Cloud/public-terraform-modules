@@ -3,7 +3,7 @@
  *****************************************/
 
 module "sns" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/sns?ref=v0.9.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/sns?ref=v0.9.14"
   for_each = var.sns
 
   name                        = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)

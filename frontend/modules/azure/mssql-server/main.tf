@@ -1,5 +1,5 @@
 module "mssql_server" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/mssql-server?ref=v0.9.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/mssql-server?ref=v0.9.14"
   for_each = var.mssql_server
 
   name                                 = each.value.name

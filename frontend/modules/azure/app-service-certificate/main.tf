@@ -1,5 +1,5 @@
 module "app_service_certificate" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/app-service-certificate?ref=v0.9.13"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/app-service-certificate?ref=v0.9.14"
   for_each = var.app_service_certificate
 
   name                = each.value.name

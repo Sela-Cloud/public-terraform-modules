@@ -3,7 +3,7 @@
  *****************************************/
 
 module "eks" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/eks?ref=v0.9.12"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/eks?ref=v0.9.14"
   for_each = var.eks
 
   name                      = coalesce(each.value.name, each.key)
