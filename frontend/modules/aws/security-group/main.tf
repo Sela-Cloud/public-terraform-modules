@@ -3,7 +3,7 @@
  *****************************************/
 
 module "security_group" {
-  source   = "../../../../modules/aws/security-group"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/security-group?ref=v0.9.12"
   for_each = var.security_group
 
   name                   = coalesce(each.value.name, each.key)

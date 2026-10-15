@@ -3,7 +3,7 @@
  *****************************************/
 
 module "api_gateway_http" {
-  source   = "../../../../modules/aws/api-gateway-http"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/api-gateway-http?ref=v0.9.12"
   for_each = var.api_gateway_http
 
   name                         = coalesce(each.value.name, each.key)

@@ -3,7 +3,7 @@
  *****************************************/
 
 module "lambda" {
-  source   = "../../../../modules/aws/lambda"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/lambda?ref=v0.9.12"
   for_each = var.lambda
 
   function_name                  = coalesce(each.value.function_name, each.key)

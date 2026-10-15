@@ -3,7 +3,7 @@
  *****************************************/
 
 module "vpn_gateway" {
-  source   = "../../../../modules/aws/vpn-gateway"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/vpn-gateway?ref=v0.9.12"
   for_each = var.vpn_gateway
 
   name              = coalesce(each.value.name, each.key)
