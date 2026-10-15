@@ -1,5 +1,5 @@
 module "public_ip" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/public-ip?ref=v0.9.12"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/public-ip?ref=v0.9.13"
   for_each = var.public_ip
 
   name                    = each.value.name

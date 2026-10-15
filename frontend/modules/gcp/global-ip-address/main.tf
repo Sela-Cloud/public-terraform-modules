@@ -1,5 +1,5 @@
 module "global_ip_address" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/global-ip-address?ref=v0.9.12"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/global-ip-address?ref=v0.9.13"
   for_each = var.global_ip_address
 
   project_id           = var.project_id
