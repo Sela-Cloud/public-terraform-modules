@@ -1,0 +1,227 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "storage-container",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Storage Container",
+    "icon": "storage-container",
+    "description": "Azure Storage Blob Container for organizing unstructured binary, file, or document data with optional blob object provisioning",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "storage_container",
+    "key_field": "name",
+    "key_label": "Container Name",
+    "key_description": "The unique name for the Azure Storage Container. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Container name, target Storage Account, and public access level.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Container Name",
+            "description": "The name of the Storage Container. Must be 3-63 lowercase alphanumeric characters and hyphens.",
+            "type": "text",
+            "required": true,
+            "locked_after_create": true,
+            "placeholder": "my-container",
+            "validation": {
+              "min": 3,
+              "max": 63,
+              "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+              "pattern_error": "Container name must be between 3 and 63 characters, start and end with an alphanumeric character, and contain only lowercase letters, numbers, and hyphens."
+            }
+          },
+          {
+            "id": "storage_account_id",
+            "label": "Storage Account",
+            "description": "The Azure Storage Account where this Container should be created.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "storage.storageAccounts",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              },
+              "allow_custom": true
+            }
+          },
+          {
+            "id": "container_access_type",
+            "label": "Access Level",
+            "description": "The public access level configured for this Container.",
+            "type": "select",
+            "required": false,
+            "default": "private",
+            "options": [
+              { "value": "private", "label": "Private (No anonymous access)" },
+              { "value": "blob", "label": "Blob (Anonymous read access for blobs only)" },
+              { "value": "container", "label": "Container (Anonymous read access for container and blobs)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "security_and_encryption",
+        "label": "Security & Encryption",
+        "description": "Encryption scope settings and custom metadata.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "default_encryption_scope",
+            "label": "Default Encryption Scope",
+            "description": "The default encryption scope to use for blobs uploaded to this container.",
+            "type": "text",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "placeholder": "scope1"
+          },
+          {
+            "id": "encryption_scope_override_enabled",
+            "label": "Enable Encryption Scope Override",
+            "description": "Whether blob-level encryption scope overrides are enabled for blobs in this container.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "metadata",
+            "label": "Metadata",
+            "description": "Custom key-value metadata pairs for this container.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      },
+      {
+        "id": "blobs",
+        "label": "Initial Blobs (Optional)",
+        "description": "Initial storage blobs or files to provision inside this container.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "blobs",
+            "label": "Storage Blobs",
+            "description": "List of blobs to create within the container.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Blob Name",
+                "description": "The name of the storage blob (can include virtual directory prefixes, e.g. folder/file.txt).",
+                "type": "text",
+                "required": true,
+                "placeholder": "data.json"
+              },
+              {
+                "id": "type",
+                "label": "Blob Type",
+                "description": "The type of the storage blob.",
+                "type": "select",
+                "required": false,
+                "default": "Block",
+                "options": [
+                  { "value": "Block", "label": "Block Blob" },
+                  { "value": "Append", "label": "Append Blob" },
+                  { "value": "Page", "label": "Page Blob" }
+                ]
+              },
+              {
+                "id": "content_type",
+                "label": "Content Type",
+                "description": "The MIME content type of the storage blob.",
+                "type": "text",
+                "required": false,
+                "default": "application/octet-stream",
+                "placeholder": "application/json"
+              },
+              {
+                "id": "source_content",
+                "label": "Source Content (Inline)",
+                "description": "Inline text or data content for Block blobs.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "multiline": true
+              },
+              {
+                "id": "source_file",
+                "label": "Source File Path",
+                "description": "Path to a local file to upload into this blob.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "path/to/local/file.json"
+              },
+              {
+                "id": "source_uri",
+                "label": "Source URI",
+                "description": "The URI of an existing blob or file to copy content from.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "https://..."
+              },
+              {
+                "id": "access_tier",
+                "label": "Access Tier",
+                "description": "The access tier of the blob.",
+                "type": "select",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "options": [
+                  { "value": "Hot", "label": "Hot" },
+                  { "value": "Cool", "label": "Cool" },
+                  { "value": "Cold", "label": "Cold" },
+                  { "value": "Archive", "label": "Archive" }
+                ]
+              },
+              {
+                "id": "cache_control",
+                "label": "Cache Control",
+                "description": "Cache-Control HTTP header value.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "placeholder": "max-age=3600"
+              },
+              {
+                "id": "content_md5",
+                "label": "Content MD5",
+                "description": "MD5 hash of the blob content.",
+                "type": "text",
+                "required": false,
+                "default": null,
+                "nullable": true
+              },
+              {
+                "id": "metadata",
+                "label": "Blob Metadata",
+                "description": "Key-value metadata pairs for this blob.",
+                "type": "map",
+                "required": false,
+                "default": {}
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

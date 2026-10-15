@@ -3,7 +3,7 @@
  *****************************************/
 
 module "dynamodb" {
-  source   = "../../../../modules/aws/dynamodb"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/dynamodb?ref=v0.9.12"
   for_each = var.dynamodb
 
   name                         = coalesce(each.value.name, each.key)

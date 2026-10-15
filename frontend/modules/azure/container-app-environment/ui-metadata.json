@@ -161,7 +161,12 @@
             "description": "Enable to restrict ingress traffic to the virtual network. Requires an infrastructure subnet.",
             "type": "boolean",
             "required": false,
-            "default": false
+            "default": false,
+            "depends_on": {
+              "field": "infrastructure_subnet_id",
+              "operator": "neq",
+              "value": null
+            }
           },
           {
             "id": "public_network_access",
@@ -207,7 +212,12 @@
             "description": "Spreads instances across Azure Availability Zones. Requires an infrastructure subnet.",
             "type": "boolean",
             "required": false,
-            "default": false
+            "default": false,
+            "depends_on": {
+              "field": "infrastructure_subnet_id",
+              "operator": "neq",
+              "value": null
+            }
           },
           {
             "id": "workload_profiles",

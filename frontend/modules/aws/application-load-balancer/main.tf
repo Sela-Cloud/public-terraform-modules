@@ -3,7 +3,7 @@
  *****************************************/
 
 module "application_load_balancer" {
-  source   = "../../../../modules/aws/application-load-balancer"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/application-load-balancer?ref=v0.9.12"
   for_each = var.application_load_balancer
 
   name            = each.value.name_prefix == null ? coalesce(each.value.name, each.key) : null
