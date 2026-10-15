@@ -1,6 +1,7 @@
 output "container_app_environments" {
   description = "Map of created Container App Environments and their attributes."
   value       = module.container_app_environment
+  sensitive   = true
 }
 
 output "container_app_environment_ids" {

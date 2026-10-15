@@ -56,4 +56,5 @@ output "identity" {
 output "container_app_environment" {
   description = "The full Azure Container App Environment resource object."
   value       = azurerm_container_app_environment.environment
+  sensitive   = true
 }
