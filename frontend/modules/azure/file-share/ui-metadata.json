@@ -1,0 +1,181 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "file-share",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Storage File Share",
+    "icon": "azure-file-share",
+    "description": "Azure Storage File Share for SMB and NFS enterprise cloud file shares",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "file_share",
+    "key_field": "name",
+    "key_label": "Share Name",
+    "key_description": "The unique name for the Azure Storage File Share. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "File share name, target Storage Account, and storage quota.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Share Name",
+            "description": "The name of the File Share. Must be 3-63 lowercase alphanumeric characters and hyphens.",
+            "type": "text",
+            "required": true,
+            "locked_after_create": true,
+            "placeholder": "my-file-share",
+            "validation": {
+              "min": 3,
+              "max": 63,
+              "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+              "pattern_error": "Share name must be between 3 and 63 characters, start and end with an alphanumeric character, and contain only lowercase letters, numbers, and hyphens."
+            }
+          },
+          {
+            "id": "storage_account_id",
+            "label": "Storage Account",
+            "description": "The Azure Storage Account where this File Share should be created.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "storage.storageAccounts",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              },
+              "allow_custom": true
+            }
+          },
+          {
+            "id": "quota",
+            "label": "Quota (GB)",
+            "description": "The maximum storage capacity allocated to this File Share in gigabytes.",
+            "type": "number",
+            "required": true,
+            "default": 50,
+            "placeholder": "50",
+            "validation": {
+              "min": 1,
+              "max": 102400
+            }
+          }
+        ]
+      },
+      {
+        "id": "settings",
+        "label": "Share Settings & Protocol",
+        "description": "Access tier, protocol (SMB/NFS), and custom metadata.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "access_tier",
+            "label": "Access Tier",
+            "description": "The performance and cost tier for this File Share.",
+            "type": "select",
+            "required": false,
+            "default": null,
+            "nullable": true,
+            "options": [
+              { "value": "TransactionOptimized", "label": "Transaction Optimized" },
+              { "value": "Hot", "label": "Hot" },
+              { "value": "Cool", "label": "Cool" },
+              { "value": "Premium", "label": "Premium" }
+            ]
+          },
+          {
+            "id": "enabled_protocol",
+            "label": "Enabled Protocol",
+            "description": "Protocol used for file sharing. NFS is only supported on Premium storage accounts.",
+            "type": "select",
+            "required": false,
+            "default": "SMB",
+            "options": [
+              { "value": "SMB", "label": "Server Message Block (SMB)" },
+              { "value": "NFS", "label": "Network File System (NFS)" }
+            ]
+          },
+          {
+            "id": "metadata",
+            "label": "Metadata",
+            "description": "Custom key-value metadata pairs for this file share.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      },
+      {
+        "id": "access_control",
+        "label": "Access Control & Stored Policies",
+        "description": "ACL blocks and stored access policies for granular share permissions.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "acl",
+            "label": "Access Control List (ACL)",
+            "description": "List of stored access policies for the share.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "id",
+                "label": "Policy Identifier",
+                "description": "Unique identifier for this stored access policy.",
+                "type": "text",
+                "required": true,
+                "placeholder": "policy1"
+              },
+              {
+                "id": "access_policy",
+                "label": "Access Policy",
+                "description": "Permissions and validity window for this policy.",
+                "type": "object",
+                "required": false,
+                "default": null,
+                "nullable": true,
+                "fields": [
+                  {
+                    "id": "permissions",
+                    "label": "Permissions",
+                    "description": "Permissions string (combinations of 'r' (read), 'w' (write), 'd' (delete), 'l' (list)).",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "rwdl"
+                  },
+                  {
+                    "id": "start",
+                    "label": "Start Time",
+                    "description": "Start time in ISO 8601 UTC format (e.g. 2026-01-01T00:00:00.0000000Z).",
+                    "type": "text",
+                    "required": false,
+                    "default": null,
+                    "nullable": true,
+                    "placeholder": "2026-01-01T00:00:00.0000000Z"
+                  },
+                  {
+                    "id": "expiry",
+                    "label": "Expiry Time",
+                    "description": "Expiry time in ISO 8601 UTC format (e.g. 2027-01-01T00:00:00.0000000Z).",
+                    "type": "text",
+                    "required": false,
+                    "default": null,
+                    "nullable": true,
+                    "placeholder": "2027-01-01T00:00:00.0000000Z"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
