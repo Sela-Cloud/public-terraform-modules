@@ -1,0 +1,33 @@
+module "function_app" {
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/function-app?ref=azure-function-app"
+  for_each = var.function_app
+
+  name                             = each.value.name
+  resource_group_name              = each.value.resource_group_name
+  location                         = each.value.location
+  os_type                          = each.value.os_type
+  create_service_plan              = each.value.create_service_plan
+  service_plan_name                = each.value.service_plan_name
+  service_plan_sku                 = each.value.service_plan_sku
+  service_plan_id                  = each.value.service_plan_id
+  zone_balancing_enabled           = each.value.zone_balancing_enabled
+  create_storage_account           = each.value.create_storage_account
+  storage_account_name             = each.value.storage_account_name
+  storage_account_access_key       = each.value.storage_account_access_key
+  storage_uses_managed_identity    = each.value.storage_uses_managed_identity
+  storage_account_tier             = each.value.storage_account_tier
+  storage_account_replication_type = each.value.storage_account_replication_type
+  https_only                       = each.value.https_only
+  client_certificate_enabled       = each.value.client_certificate_enabled
+  client_certificate_mode          = each.value.client_certificate_mode
+  public_network_access_enabled    = each.value.public_network_access_enabled
+  virtual_network_subnet_id        = each.value.virtual_network_subnet_id
+  builtin_logging_enabled          = each.value.builtin_logging_enabled
+  functions_extension_version      = each.value.functions_extension_version
+  identity_type                    = each.value.identity_type
+  identity_ids                     = each.value.identity_ids
+  app_settings                     = each.value.app_settings
+  site_config                      = each.value.site_config
+  connection_strings               = each.value.connection_strings
+  tags                             = each.value.tags
+}
