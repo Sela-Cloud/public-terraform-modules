@@ -1,18 +1,18 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "cloudfront",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "display": {
     "label": "CloudFront Distribution",
     "icon": "cloudfront",
-    "description": "Create a CloudFront content delivery network distribution in front of an S3 bucket, load balancer, or other web origin.",
+    "description": "A CloudFront content delivery network distribution in front of S3 buckets (with Origin Access Control), load balancers, or other web origins.",
     "category": "global"
   },
   "globals": [
     {
       "id": "region",
       "label": "AWS Region",
-      "description": "CloudFront is a global service; this only affects the provider used to create it.",
+      "description": "CloudFront is global, so this only sets where the AWS provider connects. Certificates must still be in us-east-1.",
       "type": "select",
       "required": true,
       "data_source": {
@@ -40,20 +40,23 @@
             "id": "enabled",
             "label": "Enabled",
             "type": "boolean",
-            "default": true
+            "default": true,
+            "description": "Whether the distribution accepts viewer requests. Turn off to stop serving without deleting the distribution."
           },
           {
             "id": "comment",
             "label": "Description",
             "type": "text",
-            "required": false
+            "required": false,
+            "description": "A note to tell this distribution apart in the AWS console. Up to 128 characters."
           },
           {
             "id": "aliases",
             "label": "Alternate Domain Names (CNAMEs)",
             "type": "list",
             "required": false,
-            "default": []
+            "default": [],
+            "description": "Your own domain names for this distribution, such as cdn.example.com. Each needs a matching ACM certificate (see Custom SSL Certificate) and a DNS record pointing at the distribution."
           },
           {
             "id": "default_root_object",
@@ -69,16 +72,27 @@
             "type": "select",
             "default": "PriceClass_All",
             "options": [
-              { "value": "PriceClass_All", "label": "Use all edge locations (best performance)" },
-              { "value": "PriceClass_200", "label": "Use North America, Europe, Asia, Middle East, and Africa" },
-              { "value": "PriceClass_100", "label": "Use only North America and Europe" }
-            ]
+              {
+                "value": "PriceClass_All",
+                "label": "Use all edge locations (best performance)"
+              },
+              {
+                "value": "PriceClass_200",
+                "label": "Use North America, Europe, Asia, Middle East, and Africa"
+              },
+              {
+                "value": "PriceClass_100",
+                "label": "Use only North America and Europe"
+              }
+            ],
+            "description": "Which edge locations serve your content. Fewer regions cost less; viewers elsewhere are served from the nearest included location, with more latency."
           },
           {
             "id": "is_ipv6_enabled",
             "label": "IPv6",
             "type": "boolean",
-            "default": true
+            "default": true,
+            "description": "Answer viewers over IPv6 as well as IPv4. If you alias a Route 53 record to the distribution, add an AAAA record too."
           },
           {
             "id": "http_version",
@@ -86,20 +100,35 @@
             "type": "select",
             "default": "http2",
             "options": [
-              { "value": "http1.1", "label": "HTTP/1.1" },
-              { "value": "http2", "label": "HTTP/2, HTTP/1.1" },
-              { "value": "http2and3", "label": "HTTP/2, HTTP/1.1, HTTP/3" },
-              { "value": "http3", "label": "HTTP/3, HTTP/2, HTTP/1.1" }
-            ]
+              {
+                "value": "http1.1",
+                "label": "HTTP/1.1"
+              },
+              {
+                "value": "http2",
+                "label": "HTTP/2, HTTP/1.1"
+              },
+              {
+                "value": "http2and3",
+                "label": "HTTP/2, HTTP/1.1, HTTP/3"
+              },
+              {
+                "value": "http3",
+                "label": "HTTP/3, HTTP/2, HTTP/1.1"
+              }
+            ],
+            "description": "The newest HTTP version viewers may use. HTTP/2 and HTTP/3 are faster for most browsers; older clients fall back automatically."
           },
           {
             "id": "web_acl_id",
             "label": "AWS WAF Web ACL",
             "type": "text",
             "required": false,
-            "nullable": true
+            "nullable": true,
+            "description": "ARN of an AWS WAF web ACL to filter requests. It must be a global (CLOUDFRONT-scope) web ACL, created in us-east-1. Leave empty for none."
           }
-        ]
+        ],
+        "description": "Identity and delivery settings for the distribution."
       },
       {
         "id": "origins",
@@ -116,26 +145,30 @@
                 "label": "Origin Name",
                 "type": "text",
                 "required": true,
-                "placeholder": "my-origin"
+                "placeholder": "my-origin",
+                "description": "A name for this origin, unique within the distribution. Cache behaviors and origin groups use it to point here."
               },
               {
                 "id": "is_s3_origin",
                 "label": "This is an Amazon S3 bucket origin",
-                "description": "Off for a custom origin (load balancer, web server, or an S3 static website endpoint — website endpoints don't support the S3 REST API OAC/OAI use).",
+                "description": "On for an S3 bucket accessed through its REST endpoint. Off for anything else — a load balancer, a web server, or an S3 static website endpoint, which CloudFront treats as a custom origin.",
                 "type": "boolean",
                 "default": false
               },
               {
                 "id": "domain_name",
                 "label": "Origin Domain",
-                "description": "For an S3 origin, pick a bucket (its REST endpoint is used) or type one directly. For a custom origin, type its domain name.",
+                "description": "For an S3 origin, the bucket's REST endpoint (pick a bucket, or type <bucket>.s3.<region>.amazonaws.com). For a custom origin, the server's domain name.",
                 "type": "select",
                 "required": true,
                 "placeholder": "my-bucket.s3.amazonaws.com",
                 "data_source": {
                   "resource": "s3.buckets",
                   "params": {},
-                  "display": { "value_key": "domain", "label_key": "name" },
+                  "display": {
+                    "value_key": "domain",
+                    "label_key": "name"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
                 }
@@ -144,101 +177,231 @@
                 "id": "origin_path",
                 "label": "Origin Path",
                 "type": "text",
-                "required": false
+                "required": false,
+                "description": "A directory in the origin to serve from, starting with / and without a trailing slash, such as /production. Leave empty to serve from the root."
+              },
+              {
+                "id": "origin_access",
+                "label": "Origin Access",
+                "type": "select",
+                "nullable": true,
+                "depends_on": {
+                  "field": "is_s3_origin",
+                  "value": true
+                },
+                "options": [
+                  {
+                    "value": "create_oac",
+                    "label": "Create an Origin Access Control (recommended)"
+                  },
+                  {
+                    "value": "existing_oac",
+                    "label": "Use an existing Origin Access Control"
+                  },
+                  {
+                    "value": "oai",
+                    "label": "Use an existing Origin Access Identity (legacy)"
+                  }
+                ],
+                "description": "How CloudFront authenticates to the bucket so it can stay private. Leave empty or choose 'Create' to have an Origin Access Control made for this origin (recommended)."
               },
               {
                 "id": "origin_access_control_id",
-                "label": "Origin Access Control",
-                "description": "Recommended for S3 origins.",
+                "label": "Origin Access Control ID",
+                "description": "ID of an existing Origin Access Control, such as E2QWRUHAPOMQZL.",
                 "type": "text",
                 "required": false,
-                "depends_on": { "field": "is_s3_origin", "value": true }
+                "depends_on": {
+                  "field": "origin_access",
+                  "value": "existing_oac"
+                },
+                "placeholder": "E2QWRUHAPOMQZL"
               },
               {
                 "id": "s3_origin_access_identity",
-                "label": "Origin Access Identity (legacy)",
-                "description": "Legacy alternative to Origin Access Control.",
+                "label": "Origin Access Identity",
+                "description": "Path of an existing Origin Access Identity: origin-access-identity/cloudfront/E1ABCDEF2GHIJ. Legacy; AWS recommends Origin Access Control instead.",
                 "type": "text",
                 "required": false,
-                "depends_on": { "field": "is_s3_origin", "value": true }
+                "depends_on": {
+                  "field": "origin_access",
+                  "value": "oai"
+                },
+                "placeholder": "origin-access-identity/cloudfront/E1ABCDEF2GHIJ"
+              },
+              {
+                "id": "oac_signing_behavior",
+                "label": "OAC Request Signing",
+                "type": "select",
+                "default": "always",
+                "depends_on": {
+                  "field": "is_s3_origin",
+                  "value": true
+                },
+                "options": [
+                  {
+                    "value": "always",
+                    "label": "Sign every request (recommended)"
+                  },
+                  {
+                    "value": "never",
+                    "label": "Do not sign requests"
+                  },
+                  {
+                    "value": "no-override",
+                    "label": "Do not override a viewer's Authorization header"
+                  }
+                ],
+                "description": "Used when an Origin Access Control is created. 'Always' signs every request (recommended). 'Never' does not sign. 'Do not override' keeps a viewer's own Authorization header when one is sent."
+              },
+              {
+                "id": "oac_name",
+                "label": "OAC Name",
+                "type": "text",
+                "nullable": true,
+                "depends_on": {
+                  "field": "is_s3_origin",
+                  "value": true
+                },
+                "validation": {
+                  "max": 64
+                },
+                "description": "Used when an Origin Access Control is created. Must be unique in the account, up to 64 characters. Leave empty for <distribution name>-<origin name>."
+              },
+              {
+                "id": "grant_s3_read_access",
+                "label": "Grant this distribution read access to the bucket",
+                "type": "boolean",
+                "default": false,
+                "depends_on": {
+                  "field": "is_s3_origin",
+                  "value": true
+                },
+                "description": "Replace the bucket's policy with one letting only this distribution read objects through Origin Access Control. Turn on only if nothing else sets this bucket's policy, including the S3 module's Bucket Policy field — a bucket has one policy and this overwrites it. Otherwise copy the policy from this deployment's s3_bucket_policies output into the bucket's own policy. KMS-encrypted buckets also need the key policy to allow CloudFront."
               },
               {
                 "id": "origin_protocol_policy",
                 "label": "Protocol",
                 "type": "select",
                 "default": "https-only",
-                "depends_on": { "field": "is_s3_origin", "value": false },
+                "depends_on": {
+                  "field": "is_s3_origin",
+                  "value": false
+                },
                 "options": [
-                  { "value": "https-only", "label": "HTTPS Only" },
-                  { "value": "http-only", "label": "HTTP Only" },
-                  { "value": "match-viewer", "label": "Match Viewer" }
-                ]
+                  {
+                    "value": "https-only",
+                    "label": "HTTPS Only"
+                  },
+                  {
+                    "value": "http-only",
+                    "label": "HTTP Only"
+                  },
+                  {
+                    "value": "match-viewer",
+                    "label": "Match Viewer"
+                  }
+                ],
+                "description": "How CloudFront connects to the origin. HTTPS Only is recommended; Match Viewer uses the protocol the viewer used."
               },
               {
                 "id": "http_port",
                 "label": "HTTP Port",
                 "type": "number",
                 "default": 80,
-                "depends_on": { "field": "is_s3_origin", "value": false }
+                "depends_on": {
+                  "field": "is_s3_origin",
+                  "value": false
+                },
+                "description": "Port the origin listens on for HTTP. Used by HTTP Only and Match Viewer."
               },
               {
                 "id": "https_port",
                 "label": "HTTPS Port",
                 "type": "number",
                 "default": 443,
-                "depends_on": { "field": "is_s3_origin", "value": false }
+                "depends_on": {
+                  "field": "is_s3_origin",
+                  "value": false
+                },
+                "description": "Port the origin listens on for HTTPS."
               },
               {
                 "id": "origin_ssl_protocols",
                 "label": "Minimum Origin SSL Protocols",
                 "type": "list",
-                "default": ["TLSv1.2"],
-                "depends_on": { "field": "is_s3_origin", "value": false }
+                "default": [
+                  "TLSv1.2"
+                ],
+                "depends_on": {
+                  "field": "is_s3_origin",
+                  "value": false
+                },
+                "description": "TLS versions CloudFront may use with the origin over HTTPS, such as TLSv1.2. Older versions only for origins that cannot do better."
               },
               {
                 "id": "custom_headers",
                 "label": "Custom Headers",
                 "type": "map",
                 "required": false,
-                "default": {}
+                "default": {},
+                "description": "Headers CloudFront adds to every request it sends to this origin — for example a secret header the origin checks to accept only CloudFront traffic."
               },
               {
                 "id": "connection_attempts",
                 "label": "Connection Attempts",
                 "type": "number",
                 "default": 3,
-                "validation": { "min": 1, "max": 3 }
+                "validation": {
+                  "min": 1,
+                  "max": 3
+                },
+                "description": "How many times CloudFront tries to connect to the origin before failing over or returning an error (1-3)."
               },
               {
                 "id": "connection_timeout",
                 "label": "Connection Timeout (seconds)",
                 "type": "number",
                 "default": 10,
-                "validation": { "min": 1, "max": 10 }
+                "validation": {
+                  "min": 1,
+                  "max": 10
+                },
+                "description": "Seconds CloudFront waits to establish a connection to the origin (1-10)."
               },
               {
                 "id": "origin_shield_enabled",
                 "label": "Enable Origin Shield",
                 "type": "boolean",
-                "default": false
+                "default": false,
+                "description": "Adds a regional caching layer in front of the origin, reducing load on it at extra cost."
               },
               {
                 "id": "origin_shield_region",
                 "label": "Origin Shield Region",
                 "type": "select",
                 "required": false,
-                "depends_on": { "field": "origin_shield_enabled", "value": true },
+                "depends_on": {
+                  "field": "origin_shield_enabled",
+                  "value": true
+                },
                 "data_source": {
                   "resource": "ec2.regions",
                   "params": {},
-                  "display": { "value_key": "name", "label_key": "description" },
+                  "display": {
+                    "value_key": "name",
+                    "label_key": "description"
+                  },
                   "allow_custom": true,
                   "cache_ttl": 300
-                }
+                },
+                "description": "The Origin Shield region; choose the one closest to the origin."
               }
-            ]
+            ],
+            "description": "Where CloudFront fetches content from. Add one per bucket or server; cache behaviors and origin groups refer to them by name."
           }
-        ]
+        ],
+        "description": "The S3 buckets and servers CloudFront fetches content from."
       },
       {
         "id": "origin_groups",
@@ -248,7 +411,7 @@
           {
             "id": "origin_groups",
             "label": "Origin Group",
-            "description": "Pairs a primary and a secondary origin so CloudFront fails over automatically on the configured status codes.",
+            "description": "Pairs a primary and a secondary origin so CloudFront fails over automatically when the primary returns one of the chosen status codes.",
             "type": "repeatable",
             "required": false,
             "default": [],
@@ -258,26 +421,32 @@
                 "label": "Origin Group Name",
                 "type": "text",
                 "required": true,
-                "placeholder": "my-origin-group"
+                "placeholder": "my-origin-group",
+                "description": "A name for this group, unique among origins and groups. Cache behaviors can point at it instead of a single origin."
               },
               {
                 "id": "failover_status_codes",
                 "label": "Failover Status Codes",
-                "description": "Response status codes from the primary origin that trigger failover to the secondary.",
+                "description": "Status codes from the primary origin that send the request to the secondary, such as 500, 502, 503 and 504.",
                 "type": "list",
-                "default": [500, 502, 503, 504]
+                "default": [
+                  500,
+                  502,
+                  503,
+                  504
+                ]
               },
               {
                 "id": "primary_origin_id",
                 "label": "Primary Origin",
-                "description": "Must match one of the origin names above.",
+                "description": "The origin tried first. Must match an origin name above.",
                 "type": "text",
                 "required": true
               },
               {
                 "id": "secondary_origin_id",
                 "label": "Secondary Origin",
-                "description": "Must match one of the origin names above.",
+                "description": "The origin used when the primary fails. Must match an origin name above.",
                 "type": "text",
                 "required": true
               }
@@ -292,7 +461,7 @@
           {
             "id": "target_origin_id",
             "label": "Origin",
-            "description": "Must match one of the origin names above.",
+            "description": "The origin or origin group that requests go to when no path-based behavior matches. Must match a name above; it also identifies this distribution in the deployment.",
             "type": "text",
             "required": true
           },
@@ -302,40 +471,59 @@
             "type": "select",
             "default": "redirect-to-https",
             "options": [
-              { "value": "redirect-to-https", "label": "Redirect HTTP to HTTPS" },
-              { "value": "https-only", "label": "HTTPS Only" },
-              { "value": "allow-all", "label": "HTTP and HTTPS" }
-            ]
+              {
+                "value": "redirect-to-https",
+                "label": "Redirect HTTP to HTTPS"
+              },
+              {
+                "value": "https-only",
+                "label": "HTTPS Only"
+              },
+              {
+                "value": "allow-all",
+                "label": "HTTP and HTTPS"
+              }
+            ],
+            "description": "What CloudFront does with plain HTTP requests from viewers. Redirect to HTTPS is recommended."
           },
           {
             "id": "allowed_methods",
             "label": "Allowed HTTP Methods",
             "type": "list",
-            "default": ["GET", "HEAD"]
+            "default": [
+              "GET",
+              "HEAD"
+            ],
+            "description": "HTTP methods CloudFront accepts and forwards: GET and HEAD for static content; add OPTIONS for CORS; all seven (GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE) for an API."
           },
           {
             "id": "cached_methods",
             "label": "Cached HTTP Methods",
             "type": "list",
-            "default": ["GET", "HEAD"]
+            "default": [
+              "GET",
+              "HEAD"
+            ],
+            "description": "Methods whose responses are cached: GET and HEAD, optionally OPTIONS."
           },
           {
             "id": "compress",
             "label": "Compress objects automatically",
             "type": "boolean",
-            "default": true
+            "default": true,
+            "description": "Compress text responses (HTML, CSS, JavaScript, JSON) with gzip or Brotli when the viewer supports it."
           },
           {
             "id": "cache_policy_id",
             "label": "Cache Policy",
-            "description": "Defaults to AWS's managed 'CachingOptimized' policy. Other common managed IDs: CachingDisabled = 4135ea2d-6df8-44a3-9df3-4b5a84be39ad. Or paste a custom cache policy's ID.",
+            "description": "Controls what is cached and for how long. Defaults to the AWS-managed 'CachingOptimized' policy; use CachingDisabled (4135ea2d-6df8-44a3-9df3-4b5a84be39ad) for dynamic content, or the ID of your own policy.",
             "type": "text",
             "default": "658327ea-f89d-4fab-a63d-7e88639e58f6"
           },
           {
             "id": "origin_request_policy_id",
             "label": "Origin Request Policy",
-            "description": "AWS managed 'AllViewer' = 216adef6-5c7f-47e4-b989-5492eafa07d3. Or paste a custom origin request policy's ID.",
+            "description": "Which headers, cookies and query strings are sent to the origin beyond those in the cache key. For example AllViewer (216adef6-5c7f-47e4-b989-5492eafa07d3); not for S3 origins with Origin Access Control, which must not receive the viewer's Host header. Leave empty for none.",
             "type": "text",
             "required": false,
             "nullable": true
@@ -343,7 +531,7 @@
           {
             "id": "response_headers_policy_id",
             "label": "Response Headers Policy",
-            "description": "AWS managed 'SimpleCORS' = 60669652-455b-4ae9-85a4-c4c02393f86c. Or paste a custom response headers policy's ID.",
+            "description": "Headers CloudFront adds to responses, such as CORS or security headers. For example SimpleCORS (60669652-455b-4ae9-85a4-c4c02393f86c). Leave empty for none.",
             "type": "text",
             "required": false,
             "nullable": true
@@ -353,16 +541,19 @@
             "label": "Field-Level Encryption Config",
             "type": "text",
             "required": false,
-            "nullable": true
+            "nullable": true,
+            "description": "ID of a field-level encryption configuration, to encrypt specific form fields at the edge. Requires HTTPS viewers. Leave empty for none."
           },
           {
             "id": "realtime_log_config_arn",
             "label": "Real-time Log Configuration",
             "type": "text",
             "required": false,
-            "nullable": true
+            "nullable": true,
+            "description": "ARN of a real-time log configuration that streams request logs to Kinesis Data Streams. Leave empty for none."
           }
-        ]
+        ],
+        "description": "How requests are handled when no path-based behavior matches."
       },
       {
         "id": "ordered_cache_behaviors",
@@ -372,7 +563,7 @@
           {
             "id": "ordered_cache_behaviors",
             "label": "Cache Behavior",
-            "description": "Evaluated in order, before falling back to the default cache behavior, for requests matching the path pattern.",
+            "description": "Different settings for requests whose path matches a pattern, such as /api/*. Checked in this order; the first match wins, and anything unmatched uses the default behavior.",
             "type": "repeatable",
             "required": false,
             "default": [],
@@ -382,12 +573,13 @@
                 "label": "Path Pattern",
                 "type": "text",
                 "required": true,
-                "placeholder": "/api/*"
+                "placeholder": "/api/*",
+                "description": "The paths this behavior applies to, such as /api/* or *.jpg. Case-sensitive."
               },
               {
                 "id": "target_origin_id",
                 "label": "Origin",
-                "description": "Must match one of the origin names, or an origin group name, above.",
+                "description": "The origin or origin group requests matching this path go to. Must match a name above.",
                 "type": "text",
                 "required": true
               },
@@ -397,40 +589,59 @@
                 "type": "select",
                 "default": "redirect-to-https",
                 "options": [
-                  { "value": "redirect-to-https", "label": "Redirect HTTP to HTTPS" },
-                  { "value": "https-only", "label": "HTTPS Only" },
-                  { "value": "allow-all", "label": "HTTP and HTTPS" }
-                ]
+                  {
+                    "value": "redirect-to-https",
+                    "label": "Redirect HTTP to HTTPS"
+                  },
+                  {
+                    "value": "https-only",
+                    "label": "HTTPS Only"
+                  },
+                  {
+                    "value": "allow-all",
+                    "label": "HTTP and HTTPS"
+                  }
+                ],
+                "description": "What CloudFront does with plain HTTP requests from viewers. Redirect to HTTPS is recommended."
               },
               {
                 "id": "allowed_methods",
                 "label": "Allowed HTTP Methods",
                 "type": "list",
-                "default": ["GET", "HEAD"]
+                "default": [
+                  "GET",
+                  "HEAD"
+                ],
+                "description": "HTTP methods CloudFront accepts and forwards: GET and HEAD for static content; add OPTIONS for CORS; all seven (GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE) for an API."
               },
               {
                 "id": "cached_methods",
                 "label": "Cached HTTP Methods",
                 "type": "list",
-                "default": ["GET", "HEAD"]
+                "default": [
+                  "GET",
+                  "HEAD"
+                ],
+                "description": "Methods whose responses are cached: GET and HEAD, optionally OPTIONS."
               },
               {
                 "id": "compress",
                 "label": "Compress objects automatically",
                 "type": "boolean",
-                "default": true
+                "default": true,
+                "description": "Compress text responses (HTML, CSS, JavaScript, JSON) with gzip or Brotli when the viewer supports it."
               },
               {
                 "id": "cache_policy_id",
                 "label": "Cache Policy",
-                "description": "Defaults to AWS's managed 'CachingOptimized' policy. Other common managed IDs: CachingDisabled = 4135ea2d-6df8-44a3-9df3-4b5a84be39ad. Or paste a custom cache policy's ID.",
+                "description": "Controls what is cached and for how long. Defaults to the AWS-managed 'CachingOptimized' policy; use CachingDisabled (4135ea2d-6df8-44a3-9df3-4b5a84be39ad) for dynamic content, or the ID of your own policy.",
                 "type": "text",
                 "default": "658327ea-f89d-4fab-a63d-7e88639e58f6"
               },
               {
                 "id": "origin_request_policy_id",
                 "label": "Origin Request Policy",
-                "description": "AWS managed 'AllViewer' = 216adef6-5c7f-47e4-b989-5492eafa07d3. Or paste a custom origin request policy's ID.",
+                "description": "Which headers, cookies and query strings are sent to the origin beyond those in the cache key. For example AllViewer (216adef6-5c7f-47e4-b989-5492eafa07d3); not for S3 origins with Origin Access Control, which must not receive the viewer's Host header. Leave empty for none.",
                 "type": "text",
                 "required": false,
                 "nullable": true
@@ -438,7 +649,7 @@
               {
                 "id": "response_headers_policy_id",
                 "label": "Response Headers Policy",
-                "description": "AWS managed 'SimpleCORS' = 60669652-455b-4ae9-85a4-c4c02393f86c. Or paste a custom response headers policy's ID.",
+                "description": "Headers CloudFront adds to responses, such as CORS or security headers. For example SimpleCORS (60669652-455b-4ae9-85a4-c4c02393f86c). Leave empty for none.",
                 "type": "text",
                 "required": false,
                 "nullable": true
@@ -448,14 +659,16 @@
                 "label": "Field-Level Encryption Config",
                 "type": "text",
                 "required": false,
-                "nullable": true
+                "nullable": true,
+                "description": "ID of a field-level encryption configuration, to encrypt specific form fields at the edge. Requires HTTPS viewers. Leave empty for none."
               },
               {
                 "id": "realtime_log_config_arn",
                 "label": "Real-time Log Configuration",
                 "type": "text",
                 "required": false,
-                "nullable": true
+                "nullable": true,
+                "description": "ARN of a real-time log configuration that streams request logs to Kinesis Data Streams. Leave empty for none."
               }
             ]
           }
@@ -468,21 +681,31 @@
           {
             "id": "use_default_certificate",
             "label": "Use the default CloudFront certificate",
-            "description": "Off to use a custom SSL certificate from ACM for the alternate domain names set above.",
+            "description": "Serve HTTPS on the distribution's *.cloudfront.net name only. Turn off to use your own certificate for the alternate domain names.",
             "type": "boolean",
             "default": true
           },
           {
             "id": "acm_certificate_arn",
             "label": "ACM Certificate",
-            "description": "Must be a certificate in us-east-1 — CloudFront only accepts certificates from that region, regardless of the region selected above.",
+            "description": "An ACM certificate covering every alternate domain name. It must be in us-east-1 — CloudFront only accepts certificates from that region, whatever region is selected above.",
             "type": "select",
             "required": false,
-            "depends_on": { "field": "use_default_certificate", "value": false },
+            "depends_on": {
+              "field": "use_default_certificate",
+              "value": false
+            },
             "data_source": {
               "resource": "acm.certificates",
-              "params": { "region": { "static": "us-east-1" } },
-              "display": { "value_key": "id", "label_key": "name" },
+              "params": {
+                "region": {
+                  "static": "us-east-1"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name"
+              },
               "allow_custom": true,
               "cache_ttl": 300
             }
@@ -492,30 +715,69 @@
             "label": "Security Policy Support",
             "type": "select",
             "default": "sni-only",
-            "depends_on": { "field": "use_default_certificate", "value": false },
+            "depends_on": {
+              "field": "use_default_certificate",
+              "value": false
+            },
             "options": [
-              { "value": "sni-only", "label": "SNI Only" },
-              { "value": "vip", "label": "Legacy Clients Support (dedicated IP)" },
-              { "value": "static-ip", "label": "Static IP" }
-            ]
+              {
+                "value": "sni-only",
+                "label": "SNI Only"
+              },
+              {
+                "value": "vip",
+                "label": "Legacy Clients Support (dedicated IP)"
+              },
+              {
+                "value": "static-ip",
+                "label": "Static IP"
+              }
+            ],
+            "description": "SNI Only works for all modern clients at no cost. A dedicated IP supports very old clients and costs extra each month."
           },
           {
             "id": "minimum_protocol_version",
             "label": "Security Policy",
             "type": "select",
             "default": "TLSv1.2_2021",
-            "depends_on": { "field": "use_default_certificate", "value": false },
+            "depends_on": {
+              "field": "use_default_certificate",
+              "value": false
+            },
             "options": [
-              { "value": "TLSv1.2_2021", "label": "TLSv1.2_2021" },
-              { "value": "TLSv1.2_2019", "label": "TLSv1.2_2019" },
-              { "value": "TLSv1.2_2018", "label": "TLSv1.2_2018" },
-              { "value": "TLSv1.1_2016", "label": "TLSv1.1_2016" },
-              { "value": "TLSv1_2016", "label": "TLSv1_2016" },
-              { "value": "TLSv1", "label": "TLSv1" },
-              { "value": "SSLv3", "label": "SSLv3" }
-            ]
+              {
+                "value": "TLSv1.2_2021",
+                "label": "TLSv1.2_2021"
+              },
+              {
+                "value": "TLSv1.2_2019",
+                "label": "TLSv1.2_2019"
+              },
+              {
+                "value": "TLSv1.2_2018",
+                "label": "TLSv1.2_2018"
+              },
+              {
+                "value": "TLSv1.1_2016",
+                "label": "TLSv1.1_2016"
+              },
+              {
+                "value": "TLSv1_2016",
+                "label": "TLSv1_2016"
+              },
+              {
+                "value": "TLSv1",
+                "label": "TLSv1"
+              },
+              {
+                "value": "SSLv3",
+                "label": "SSLv3"
+              }
+            ],
+            "description": "The oldest TLS version viewers may use. TLSv1.2_2021 is recommended; choose older only for clients that need it."
           }
-        ]
+        ],
+        "description": "HTTPS certificate for the alternate domain names."
       },
       {
         "id": "restrictions",
@@ -527,10 +789,20 @@
             "type": "select",
             "default": "none",
             "options": [
-              { "value": "none", "label": "None" },
-              { "value": "whitelist", "label": "Allow list" },
-              { "value": "blacklist", "label": "Block list" }
-            ]
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "whitelist",
+                "label": "Allow list"
+              },
+              {
+                "value": "blacklist",
+                "label": "Block list"
+              }
+            ],
+            "description": "Limit access by the viewer's country: allow only the listed countries, or block them."
           },
           {
             "id": "geo_restriction_locations",
@@ -538,9 +810,15 @@
             "type": "list",
             "required": false,
             "default": [],
-            "depends_on": { "field": "geo_restriction_type", "operator": "neq", "value": "none" }
+            "depends_on": {
+              "field": "geo_restriction_type",
+              "operator": "neq",
+              "value": "none"
+            },
+            "description": "Two-letter country codes (ISO 3166-1 alpha-2), such as US, GB or IN."
           }
-        ]
+        ],
+        "description": "Allow or block viewers by country."
       },
       {
         "id": "logging",
@@ -550,7 +828,8 @@
             "id": "enable_logging",
             "label": "Enable standard logging",
             "type": "boolean",
-            "default": false
+            "default": false,
+            "description": "Write a log of every viewer request to an S3 bucket."
           },
           {
             "id": "logging_bucket",
@@ -558,30 +837,46 @@
             "type": "select",
             "required": false,
             "placeholder": "my-logs-bucket.s3.amazonaws.com",
-            "depends_on": { "field": "enable_logging", "value": true },
+            "depends_on": {
+              "field": "enable_logging",
+              "value": true
+            },
             "data_source": {
               "resource": "s3.buckets",
               "params": {},
-              "display": { "value_key": "domain", "label_key": "name" },
+              "display": {
+                "value_key": "domain",
+                "label_key": "name"
+              },
               "allow_custom": true,
               "cache_ttl": 300
-            }
+            },
+            "description": "The bucket receiving logs, as <bucket>.s3.amazonaws.com. It needs ACLs enabled (Object Ownership not set to 'Bucket owner enforced')."
           },
           {
             "id": "logging_prefix",
             "label": "Log Prefix",
             "type": "text",
             "required": false,
-            "depends_on": { "field": "enable_logging", "value": true }
+            "depends_on": {
+              "field": "enable_logging",
+              "value": true
+            },
+            "description": "A folder for the log files within the bucket, such as cloudfront/. Leave empty for the bucket root."
           },
           {
             "id": "logging_include_cookies",
             "label": "Include cookies in logs",
             "type": "boolean",
             "default": false,
-            "depends_on": { "field": "enable_logging", "value": true }
+            "depends_on": {
+              "field": "enable_logging",
+              "value": true
+            },
+            "description": "Include viewer cookies in the logs."
           }
-        ]
+        ],
+        "description": "Request logs written to an S3 bucket."
       },
       {
         "id": "custom_errors",
@@ -598,29 +893,35 @@
                 "id": "error_code",
                 "label": "HTTP Error Code",
                 "type": "number",
-                "required": true
+                "required": true,
+                "description": "The origin's HTTP status to replace, such as 403 or 404."
               },
               {
                 "id": "response_code",
                 "label": "Response HTTP Code",
                 "type": "number",
-                "required": false
+                "required": false,
+                "description": "The status returned to the viewer instead, such as 200. Leave empty to keep the original."
               },
               {
                 "id": "response_page_path",
                 "label": "Response Page Path",
                 "type": "text",
-                "required": false
+                "required": false,
+                "description": "Path of the page to return, such as /errors/404.html or /index.html. It must be reachable through a cache behavior."
               },
               {
                 "id": "error_caching_min_ttl",
                 "label": "Error Caching Minimum TTL",
                 "type": "number",
-                "required": false
+                "required": false,
+                "description": "Seconds CloudFront caches this error before asking the origin again. Leave empty for the default, 10 seconds."
               }
-            ]
+            ],
+            "description": "Replace error responses from the origin with your own page or status — for example serve /index.html with 200 for 404s in a single-page app."
           }
-        ]
+        ],
+        "description": "Your own pages or status codes in place of origin errors."
       },
       {
         "id": "tags",
@@ -631,10 +932,23 @@
             "label": "Tags",
             "type": "map",
             "required": false,
-            "default": {}
+            "default": {},
+            "description": "Key-value tags for cost allocation and organization."
           }
         ]
       }
     ]
-  }
+  },
+  "satellites": [
+    {
+      "address": "aws_cloudfront_origin_access_control.this",
+      "driven_by": "origins",
+      "note": "An Origin Access Control is created for each S3 origin set to create one, and deleted with the distribution."
+    },
+    {
+      "address": "aws_s3_bucket_policy.oac",
+      "driven_by": "origins",
+      "note": "With 'Grant this distribution read access' on, the bucket's whole policy is replaced; deleting the distribution removes it."
+    }
+  ]
 }

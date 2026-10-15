@@ -1,3 +1,9 @@
+variable "name" {
+  description = "Identifier for this distribution within the deployment. Prefixes the names of the Origin Access Controls this module creates, which must be unique in the account."
+  type        = string
+  default     = "cloudfront"
+}
+
 variable "enabled" {
   description = "Whether the distribution is enabled to accept end user requests."
   type        = bool
@@ -63,11 +69,24 @@ variable "origins" {
     domain_name = string
     origin_path = optional(string)
 
-    # S3 origin (is_s3_origin = true): pick one of origin_access_control_id (recommended, OAC) or
-    # s3_origin_access_identity (legacy OAI, still real and still issued, kept for existing setups).
+    # S3 origin (is_s3_origin = true). origin_access picks how CloudFront authenticates to the bucket:
+    #   create_oac   — this module creates an Origin Access Control (recommended)
+    #   existing_oac — an Origin Access Control created elsewhere, by origin_access_control_id
+    #   oai          — a legacy Origin Access Identity, by s3_origin_access_identity
+    # Left null, it follows whichever of origin_access_control_id or s3_origin_access_identity is
+    # set, and creates an OAC when neither is — so entries written before origin_access existed keep
+    # their meaning. Ignored for a custom origin, which takes no origin access.
     is_s3_origin              = optional(bool, false)
+    origin_access             = optional(string)
     origin_access_control_id  = optional(string)
     s3_origin_access_identity = optional(string)
+    # For a created OAC: whether CloudFront signs requests to the origin, and the OAC's name
+    # (defaults to "<name>-<origin_id>", cut to 64 characters).
+    oac_signing_behavior = optional(string, "always")
+    oac_name             = optional(string)
+    # Replace the bucket's policy with one letting this distribution read it through OAC. Off by
+    # default: a bucket has one policy, and this would overwrite anything else in it.
+    grant_s3_read_access = optional(bool, false)
 
     # Custom origin (is_s3_origin = false) -- an ALB, another web server, or an S3 static-website
     # endpoint (which is a custom origin, not an S3 origin, because website endpoints don't support
@@ -93,6 +112,25 @@ variable "origins" {
   validation {
     condition     = length(distinct([for o in var.origins : o.origin_id])) == length(var.origins)
     error_message = "Each origin's origin_id must be unique."
+  }
+
+  validation {
+    condition = alltrue([
+      for o in var.origins : o.origin_access == null || try(contains(["create_oac", "existing_oac", "oai"], o.origin_access), false)
+    ])
+    error_message = "origin_access must be 'create_oac', 'existing_oac' or 'oai'."
+  }
+
+  validation {
+    condition = alltrue([
+      for o in var.origins : try(contains(["always", "never", "no-override"], o.oac_signing_behavior), false)
+    ])
+    error_message = "oac_signing_behavior must be 'always', 'never' or 'no-override'."
+  }
+
+  validation {
+    condition     = alltrue([for o in var.origins : o.oac_name == null || try(length(o.oac_name) <= 64, false)])
+    error_message = "oac_name can be at most 64 characters."
   }
 }
 

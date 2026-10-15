@@ -6,6 +6,7 @@ module "cloudfront" {
   source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/cloudfront?ref=v0.9.14"
   for_each = var.cloudfront
 
+  name                = each.key
   enabled             = each.value.enabled
   comment             = each.value.comment
   aliases             = each.value.aliases
@@ -15,7 +16,15 @@ module "cloudfront" {
   http_version        = each.value.http_version
   web_acl_id          = each.value.web_acl_id
 
-  origins       = each.value.origins
+  # The form sends unset text as "", which the module would read as a value.
+  origins = [
+    for o in each.value.origins : merge(o, {
+      origin_access             = try(trimspace(o.origin_access), "") != "" ? o.origin_access : null
+      origin_access_control_id  = try(trimspace(o.origin_access_control_id), "") != "" ? o.origin_access_control_id : null
+      s3_origin_access_identity = try(trimspace(o.s3_origin_access_identity), "") != "" ? o.s3_origin_access_identity : null
+      oac_name                  = try(trimspace(o.oac_name), "") != "" ? o.oac_name : null
+    })
+  ]
   origin_groups = each.value.origin_groups
 
   target_origin_id           = each.value.target_origin_id

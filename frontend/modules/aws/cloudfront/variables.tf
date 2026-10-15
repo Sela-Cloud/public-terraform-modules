@@ -20,8 +20,12 @@ variable "cloudfront" {
       domain_name               = string
       origin_path               = optional(string)
       is_s3_origin              = optional(bool, false)
+      origin_access             = optional(string)
       origin_access_control_id  = optional(string)
       s3_origin_access_identity = optional(string)
+      oac_signing_behavior      = optional(string, "always")
+      oac_name                  = optional(string)
+      grant_s3_read_access      = optional(bool, false)
       http_port                 = optional(number, 80)
       https_port                = optional(number, 443)
       origin_protocol_policy    = optional(string, "https-only")
@@ -152,9 +156,10 @@ variable "cloudfront" {
   validation {
     condition = alltrue(flatten([
       for c in values(var.cloudfront) : [
-        for o in c.origins : !o.is_s3_origin || (o.origin_access_control_id != null || o.s3_origin_access_identity != null)
+        for o in c.origins : try(trimspace(o.origin_access), "") == "" || try(contains(["create_oac", "existing_oac", "oai"], o.origin_access), false)
       ]
     ]))
-    error_message = "Every S3 origin needs either origin_access_control_id (recommended) or s3_origin_access_identity (legacy)."
+    error_message = "origin_access must be 'create_oac', 'existing_oac' or 'oai'."
   }
+
 }

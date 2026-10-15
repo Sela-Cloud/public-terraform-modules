@@ -8,16 +8,21 @@ behaviors, custom SSL certificates, geo-restriction, access logging, and custom 
 
 ### S3 origin with the default CloudFront certificate
 
+The module creates an Origin Access Control for the bucket. Its read access is either granted here
+(`grant_s3_read_access`, which replaces the bucket's whole policy) or added to the bucket's existing
+policy from the `s3_bucket_policies` output.
+
 ```hcl
 module "cdn" {
   source = "../../modules/aws/cloudfront"
 
+  name = "site"
   origins = [
     {
-      origin_id                = "s3-site"
-      domain_name               = "my-site.s3.amazonaws.com"
-      is_s3_origin              = true
-      origin_access_control_id  = aws_cloudfront_origin_access_control.this.id
+      origin_id            = "s3-site"
+      domain_name          = "my-site.s3.us-east-1.amazonaws.com"
+      is_s3_origin         = true
+      grant_s3_read_access = true
     }
   ]
   target_origin_id = "s3-site"
@@ -27,6 +32,10 @@ module "cdn" {
   }
 }
 ```
+
+An Origin Access Control created elsewhere is used with `origin_access = "existing_oac"` and
+`origin_access_control_id`; a legacy Origin Access Identity with `origin_access = "oai"` and
+`s3_origin_access_identity`.
 
 ### Custom origin with a custom certificate and aliases
 
