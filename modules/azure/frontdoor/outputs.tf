@@ -1,29 +1,40 @@
 output "id" {
-  description = "The ID of the Front Door."
-  value       = azurerm_frontdoor.frontdoor.id
+  description = "The ID of the Front Door Profile."
+  value       = azurerm_cdn_frontdoor_profile.profile.id
 }
 
 output "name" {
-  description = "The Name of the Front Door."
-  value       = azurerm_frontdoor.frontdoor.name
+  description = "The name of the Front Door Profile."
+  value       = azurerm_cdn_frontdoor_profile.profile.name
 }
 
-output "cname" {
-  description = "The host that each frontendEndpoint must CNAME to."
-  value       = azurerm_frontdoor.frontdoor.cname
+output "resource_guid" {
+  description = "The UUID of the Front Door Profile."
+  value       = azurerm_cdn_frontdoor_profile.profile.resource_guid
 }
 
-output "header_frontdoor_id" {
-  description = "The unique ID of the Front Door which is sent as the X-Azure-FDID header, once the domain is resolved."
-  value       = azurerm_frontdoor.frontdoor.header_frontdoor_id
+output "endpoints" {
+  description = "A map of created endpoints, including their hostnames."
+  value = {
+    for k, v in azurerm_cdn_frontdoor_endpoint.endpoint : k => {
+      id        = v.id
+      name      = v.name
+      host_name = v.host_name
+    }
+  }
 }
 
-output "frontend_endpoints" {
-  description = "The frontend endpoints mapping of the Front Door."
-  value       = azurerm_frontdoor.frontdoor.frontend_endpoints
+output "origin_groups" {
+  description = "A map of created origin groups and their IDs."
+  value = {
+    for k, v in azurerm_cdn_frontdoor_origin_group.origin_group : k => {
+      id   = v.id
+      name = v.name
+    }
+  }
 }
 
-output "frontdoor" {
-  description = "The full Azure Front Door resource object."
-  value       = azurerm_frontdoor.frontdoor
+output "profile" {
+  description = "The full Azure Front Door Profile resource object."
+  value       = azurerm_cdn_frontdoor_profile.profile
 }

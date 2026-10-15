@@ -1,140 +1,102 @@
 variable "name" {
-  description = "(Required) Specifies the name of the Front Door service. Changing this forces a new resource to be created. Must be globally unique, between 5 and 64 characters."
+  description = "(Required) Specifies the name of the Front Door profile. Changing this forces a new resource to be created."
   type        = string
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9-]{3,62}[a-zA-Z0-9]$", var.name))
-    error_message = "The Front Door name must be between 5 and 64 characters, begin and end with an alphanumeric character, and contain only alphanumerics and hyphens."
+    condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9-]{1,62}[a-zA-Z0-9]$", var.name))
+    error_message = "The Front Door name must be between 3 and 64 characters, begin and end with an alphanumeric character, and contain only alphanumerics and hyphens."
   }
 }
 
 variable "resource_group_name" {
-  description = "(Required) Specifies the name of the Resource Group in which the Front Door service should exist. Changing this forces a new resource to be created."
+  description = "(Required) Specifies the name of the Resource Group in which the Front Door profile should exist. Changing this forces a new resource to be created."
   type        = string
 }
 
-variable "frontend_endpoints" {
-  description = "(Required) A list of frontend_endpoint blocks configuring the hostnames used to access the Front Door."
+variable "sku_name" {
+  description = "(Optional) Specifies the SKU for the Front Door profile. Possible values are 'Standard_AzureFrontDoor' and 'Premium_AzureFrontDoor'. Defaults to 'Standard_AzureFrontDoor'."
+  type        = string
+  default     = "Standard_AzureFrontDoor"
+
+  validation {
+    condition     = contains(["Standard_AzureFrontDoor", "Premium_AzureFrontDoor"], var.sku_name)
+    error_message = "sku_name must be either 'Standard_AzureFrontDoor' or 'Premium_AzureFrontDoor'."
+  }
+}
+
+variable "response_timeout_seconds" {
+  description = "(Optional) Specifies the maximum response timeout in seconds. Possible values are between 16 and 240 seconds. Defaults to 120."
+  type        = number
+  default     = 120
+
+  validation {
+    condition     = var.response_timeout_seconds >= 16 && var.response_timeout_seconds <= 240
+    error_message = "response_timeout_seconds must be between 16 and 240 seconds."
+  }
+}
+
+variable "endpoints" {
+  description = "(Required) A list of endpoint configurations for the Front Door profile."
   type = list(object({
-    name                                    = string
-    host_name                               = string
-    session_affinity_enabled                = optional(bool, false)
-    session_affinity_ttl_seconds            = optional(number, 0)
-    web_application_firewall_policy_link_id = optional(string, null)
+    name    = string
+    enabled = optional(bool, true)
+    tags    = optional(map(string), {})
   }))
 }
 
-variable "backend_pools" {
-  description = "(Required) A list of backend_pool blocks configuring the backends that receive traffic from the Front Door."
+variable "origin_groups" {
+  description = "(Required) A list of origin group configurations, each containing one or more backend origins."
   type = list(object({
-    name                = string
-    load_balancing_name = string
-    health_probe_name   = string
-    backends = list(object({
-      enabled     = optional(bool, true)
-      address     = string
-      host_header = string
-      http_port   = optional(number, 80)
-      https_port  = optional(number, 443)
-      priority    = optional(number, 1)
-      weight      = optional(number, 50)
+    name                                                      = string
+    session_affinity_enabled                                  = optional(bool, false)
+    restore_traffic_time_to_healed_or_new_endpoint_in_minutes = optional(number, null)
+    load_balancing = optional(object({
+      sample_size                        = optional(number, 4)
+      successful_samples_required        = optional(number, 3)
+      additional_latency_in_milliseconds = optional(number, 50)
+    }), {})
+    health_probe = optional(object({
+      protocol            = optional(string, "Https")
+      interval_in_seconds = optional(number, 100)
+      path                = optional(string, "/")
+      request_type        = optional(string, "HEAD")
+    }), {})
+    origins = list(object({
+      name                           = string
+      host_name                      = string
+      origin_host_header             = optional(string, null)
+      http_port                      = optional(number, 80)
+      https_port                     = optional(number, 443)
+      priority                       = optional(number, 1)
+      weight                         = optional(number, 1000)
+      certificate_name_check_enabled = optional(bool, true)
+      enabled                        = optional(bool, true)
     }))
   }))
 }
 
-variable "routing_rules" {
-  description = "(Required) A list of routing_rule blocks connecting frontend endpoints to backend pools or redirecting traffic."
+variable "routes" {
+  description = "(Required) A list of route configurations connecting endpoints to origin groups."
   type = list(object({
-    name               = string
-    accepted_protocols = optional(list(string), ["Http", "Https"])
-    patterns_to_match  = optional(list(string), ["/*"])
-    frontend_endpoints = list(string)
-    forwarding_configuration = optional(object({
-      backend_pool_name                     = string
-      forwarding_protocol                   = optional(string, "MatchRequest")
-      cache_enabled                         = optional(bool, false)
-      cache_use_dynamic_compression         = optional(bool, false)
-      cache_query_parameter_strip_directive = optional(string, "StripAll")
-      cache_query_parameters                = optional(list(string), [])
-      cache_duration                        = optional(string, null)
-      custom_forwarding_path                = optional(string, null)
-    }), null)
-    redirect_configuration = optional(object({
-      custom_host         = optional(string, null)
-      redirect_type       = string
-      redirect_protocol   = string
-      custom_path         = optional(string, null)
-      custom_fragment     = optional(string, null)
-      custom_query_string = optional(string, null)
+    name                   = string
+    endpoint_name          = string
+    origin_group_name      = string
+    forwarding_protocol    = optional(string, "HttpsOnly")
+    patterns_to_match      = optional(list(string), ["/*"])
+    supported_protocols    = optional(list(string), ["Http", "Https"])
+    https_redirect_enabled = optional(bool, true)
+    link_to_default_domain = optional(bool, true)
+    cache = optional(object({
+      query_string_caching_behavior = optional(string, "IgnoreQueryString")
+      query_strings                 = optional(list(string), null)
+      compression_enabled           = optional(bool, false)
+      content_types_to_compress     = optional(list(string), null)
     }), null)
   }))
-}
-
-variable "friendly_name" {
-  description = "(Optional) A friendly name for the Front Door service. Defaults to null."
-  type        = string
-  default     = null
-}
-
-variable "load_balancer_enabled" {
-  description = "(Optional) Should the Front Door Load Balancer be enabled? Defaults to true."
-  type        = bool
-  default     = true
-}
-
-variable "backend_pool_load_balancing" {
-  description = "(Optional) A list of backend_pool_load_balancing blocks. Defaults to standard load balancing settings."
-  type = list(object({
-    name                            = string
-    sample_size                     = optional(number, 4)
-    successful_samples_required     = optional(number, 2)
-    additional_latency_milliseconds = optional(number, 0)
-  }))
-  default = [
-    {
-      name                            = "defaultLoadBalancingSettings"
-      sample_size                     = 4
-      successful_samples_required     = 2
-      additional_latency_milliseconds = 0
-    }
-  ]
-}
-
-variable "backend_pool_health_probes" {
-  description = "(Optional) A list of backend_pool_health_probe blocks. Defaults to standard health probe settings."
-  type = list(object({
-    name                = string
-    enabled             = optional(bool, true)
-    path                = optional(string, "/")
-    protocol            = optional(string, "Http")
-    probe_method        = optional(string, "HEAD")
-    interval_in_seconds = optional(number, 120)
-  }))
-  default = [
-    {
-      name                = "defaultHealthProbeSettings"
-      enabled             = true
-      path                = "/"
-      protocol            = "Http"
-      probe_method        = "HEAD"
-      interval_in_seconds = 120
-    }
-  ]
 }
 
 variable "tags" {
-  description = "(Optional) A mapping of tags to assign to the Front Door resource. Defaults to {}."
+  description = "(Optional) A mapping of tags to assign to the Front Door profile. Defaults to {}."
   type        = map(string)
   default     = {}
-}
-
-variable "timeouts" {
-  description = "(Optional) Custom timeout durations for resource operations."
-  type = object({
-    create = optional(string, null)
-    read   = optional(string, null)
-    update = optional(string, null)
-    delete = optional(string, null)
-  })
-  default = {}
 }

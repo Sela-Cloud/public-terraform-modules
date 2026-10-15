@@ -1,91 +1,58 @@
 variable "frontdoor" {
-  description = "Map of Azure Front Door (Classic) configurations."
+  description = "Map of Azure Front Door profiles to provision."
   type = map(object({
-    name                  = string
-    resource_group_name   = string
-    friendly_name         = optional(string, null)
-    load_balancer_enabled = optional(bool, true)
-
-    frontend_endpoints = list(object({
-      name                                    = string
-      host_name                               = string
-      session_affinity_enabled                = optional(bool, false)
-      session_affinity_ttl_seconds            = optional(number, 0)
-      web_application_firewall_policy_link_id = optional(string, null)
+    name                     = string
+    resource_group_name      = string
+    sku_name                 = optional(string, "Standard_AzureFrontDoor")
+    response_timeout_seconds = optional(number, 120)
+    endpoints = list(object({
+      name    = string
+      enabled = optional(bool, true)
+      tags    = optional(map(string), {})
     }))
-
-    backend_pools = list(object({
-      name                = string
-      load_balancing_name = string
-      health_probe_name   = string
-      backends = list(object({
-        enabled     = optional(bool, true)
-        address     = string
-        host_header = string
-        http_port   = optional(number, 80)
-        https_port  = optional(number, 443)
-        priority    = optional(number, 1)
-        weight      = optional(number, 50)
+    origin_groups = list(object({
+      name                                                      = string
+      session_affinity_enabled                                  = optional(bool, false)
+      restore_traffic_time_to_healed_or_new_endpoint_in_minutes = optional(number, null)
+      load_balancing = optional(object({
+        sample_size                        = optional(number, 4)
+        successful_samples_required        = optional(number, 3)
+        additional_latency_in_milliseconds = optional(number, 50)
+      }), {})
+      health_probe = optional(object({
+        protocol            = optional(string, "Https")
+        interval_in_seconds = optional(number, 100)
+        path                = optional(string, "/")
+        request_type        = optional(string, "HEAD")
+      }), {})
+      origins = list(object({
+        name                           = string
+        host_name                      = string
+        origin_host_header             = optional(string, null)
+        http_port                      = optional(number, 80)
+        https_port                     = optional(number, 443)
+        priority                       = optional(number, 1)
+        weight                         = optional(number, 1000)
+        certificate_name_check_enabled = optional(bool, true)
+        enabled                        = optional(bool, true)
       }))
     }))
-
-    backend_pool_load_balancing = optional(list(object({
-      name                            = string
-      sample_size                     = optional(number, 4)
-      successful_samples_required     = optional(number, 2)
-      additional_latency_milliseconds = optional(number, 0)
-      })), [
-      {
-        name                            = "defaultLoadBalancingSettings"
-        sample_size                     = 4
-        successful_samples_required     = 2
-        additional_latency_milliseconds = 0
-      }
-    ])
-
-    backend_pool_health_probes = optional(list(object({
-      name                = string
-      enabled             = optional(bool, true)
-      path                = optional(string, "/")
-      protocol            = optional(string, "Http")
-      probe_method        = optional(string, "HEAD")
-      interval_in_seconds = optional(number, 120)
-      })), [
-      {
-        name                = "defaultHealthProbeSettings"
-        enabled             = true
-        path                = "/"
-        protocol            = "Http"
-        probe_method        = "HEAD"
-        interval_in_seconds = 120
-      }
-    ])
-
-    routing_rules = list(object({
-      name               = string
-      accepted_protocols = optional(list(string), ["Http", "Https"])
-      patterns_to_match  = optional(list(string), ["/*"])
-      frontend_endpoints = list(string)
-      forwarding_configuration = optional(object({
-        backend_pool_name                     = string
-        forwarding_protocol                   = optional(string, "MatchRequest")
-        cache_enabled                         = optional(bool, false)
-        cache_use_dynamic_compression         = optional(bool, false)
-        cache_query_parameter_strip_directive = optional(string, "StripAll")
-        cache_query_parameters                = optional(list(string), [])
-        cache_duration                        = optional(string, null)
-        custom_forwarding_path                = optional(string, null)
-      }), null)
-      redirect_configuration = optional(object({
-        custom_host         = optional(string, null)
-        redirect_type       = string
-        redirect_protocol   = string
-        custom_path         = optional(string, null)
-        custom_fragment     = optional(string, null)
-        custom_query_string = optional(string, null)
+    routes = list(object({
+      name                   = string
+      endpoint_name          = string
+      origin_group_name      = string
+      forwarding_protocol    = optional(string, "HttpsOnly")
+      patterns_to_match      = optional(list(string), ["/*"])
+      supported_protocols    = optional(list(string), ["Http", "Https"])
+      https_redirect_enabled = optional(bool, true)
+      link_to_default_domain = optional(bool, true)
+      cache = optional(object({
+        query_string_caching_behavior = optional(string, "IgnoreQueryString")
+        query_strings                 = optional(list(string), null)
+        compression_enabled           = optional(bool, false)
+        content_types_to_compress     = optional(list(string), null)
       }), null)
     }))
-
     tags = optional(map(string), {})
   }))
   default = {}

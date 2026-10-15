@@ -1,108 +1,95 @@
-resource "azurerm_frontdoor" "frontdoor" {
-  name                  = var.name
-  resource_group_name   = var.resource_group_name
-  friendly_name         = var.friendly_name
-  load_balancer_enabled = var.load_balancer_enabled
-  tags                  = var.tags
+resource "azurerm_cdn_frontdoor_profile" "profile" {
+  name                     = var.name
+  resource_group_name      = var.resource_group_name
+  sku_name                 = var.sku_name
+  response_timeout_seconds = var.response_timeout_seconds
+  tags                     = var.tags
+}
 
-  dynamic "frontend_endpoint" {
-    for_each = var.frontend_endpoints
-    content {
-      name                                    = frontend_endpoint.value.name
-      host_name                               = frontend_endpoint.value.host_name
-      session_affinity_enabled                = frontend_endpoint.value.session_affinity_enabled
-      session_affinity_ttl_seconds            = frontend_endpoint.value.session_affinity_ttl_seconds
-      web_application_firewall_policy_link_id = frontend_endpoint.value.web_application_firewall_policy_link_id
-    }
+resource "azurerm_cdn_frontdoor_endpoint" "endpoint" {
+  for_each = { for ep in var.endpoints : ep.name => ep }
+
+  name                     = each.value.name
+  cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.profile.id
+  enabled                  = try(each.value.enabled, true)
+  tags                     = try(each.value.tags, var.tags)
+}
+
+resource "azurerm_cdn_frontdoor_origin_group" "origin_group" {
+  for_each = { for og in var.origin_groups : og.name => og }
+
+  name                                                      = each.value.name
+  cdn_frontdoor_profile_id                                  = azurerm_cdn_frontdoor_profile.profile.id
+  session_affinity_enabled                                  = try(each.value.session_affinity_enabled, false)
+  restore_traffic_time_to_healed_or_new_endpoint_in_minutes = try(each.value.restore_traffic_time_to_healed_or_new_endpoint_in_minutes, null)
+
+  load_balancing {
+    sample_size                        = try(each.value.load_balancing.sample_size, 4)
+    successful_samples_required        = try(each.value.load_balancing.successful_samples_required, 3)
+    additional_latency_in_milliseconds = try(each.value.load_balancing.additional_latency_in_milliseconds, 50)
   }
 
-  dynamic "backend_pool_load_balancing" {
-    for_each = var.backend_pool_load_balancing
+  dynamic "health_probe" {
+    for_each = try(each.value.health_probe, null) != null ? [each.value.health_probe] : []
     content {
-      name                            = backend_pool_load_balancing.value.name
-      sample_size                     = backend_pool_load_balancing.value.sample_size
-      successful_samples_required     = backend_pool_load_balancing.value.successful_samples_required
-      additional_latency_milliseconds = backend_pool_load_balancing.value.additional_latency_milliseconds
+      protocol            = try(health_probe.value.protocol, "Https")
+      interval_in_seconds = try(health_probe.value.interval_in_seconds, 100)
+      path                = try(health_probe.value.path, "/")
+      request_type        = try(health_probe.value.request_type, "HEAD")
     }
   }
+}
 
-  dynamic "backend_pool_health_probe" {
-    for_each = var.backend_pool_health_probes
+locals {
+  origins = flatten([
+    for og in var.origin_groups : [
+      for orig in og.origins : merge(orig, {
+        origin_group_name = og.name
+        key               = "${og.name}-${orig.name}"
+      })
+    ]
+  ])
+}
+
+resource "azurerm_cdn_frontdoor_origin" "origin" {
+  for_each = { for orig in local.origins : orig.key => orig }
+
+  name                           = each.value.name
+  cdn_frontdoor_origin_group_id  = azurerm_cdn_frontdoor_origin_group.origin_group[each.value.origin_group_name].id
+  enabled                        = try(each.value.enabled, true)
+  host_name                      = each.value.host_name
+  http_port                      = try(each.value.http_port, 80)
+  https_port                     = try(each.value.https_port, 443)
+  origin_host_header             = coalesce(try(each.value.origin_host_header, null), each.value.host_name)
+  priority                       = try(each.value.priority, 1)
+  weight                         = try(each.value.weight, 1000)
+  certificate_name_check_enabled = try(each.value.certificate_name_check_enabled, true)
+}
+
+resource "azurerm_cdn_frontdoor_route" "route" {
+  for_each = { for r in var.routes : r.name => r }
+
+  name                          = each.value.name
+  cdn_frontdoor_endpoint_id     = azurerm_cdn_frontdoor_endpoint.endpoint[each.value.endpoint_name].id
+  cdn_frontdoor_origin_group_id = azurerm_cdn_frontdoor_origin_group.origin_group[each.value.origin_group_name].id
+  cdn_frontdoor_origin_ids = [
+    for orig in local.origins : azurerm_cdn_frontdoor_origin.origin[orig.key].id
+    if orig.origin_group_name == each.value.origin_group_name
+  ]
+
+  forwarding_protocol    = try(each.value.forwarding_protocol, "HttpsOnly")
+  patterns_to_match      = try(each.value.patterns_to_match, ["/*"])
+  supported_protocols    = try(each.value.supported_protocols, ["Http", "Https"])
+  https_redirect_enabled = try(each.value.https_redirect_enabled, true)
+  link_to_default_domain = try(each.value.link_to_default_domain, true)
+
+  dynamic "cache" {
+    for_each = try(each.value.cache, null) != null ? [each.value.cache] : []
     content {
-      name                = backend_pool_health_probe.value.name
-      enabled             = backend_pool_health_probe.value.enabled
-      path                = backend_pool_health_probe.value.path
-      protocol            = backend_pool_health_probe.value.protocol
-      probe_method        = backend_pool_health_probe.value.probe_method
-      interval_in_seconds = backend_pool_health_probe.value.interval_in_seconds
-    }
-  }
-
-  dynamic "backend_pool" {
-    for_each = var.backend_pools
-    content {
-      name                = backend_pool.value.name
-      load_balancing_name = backend_pool.value.load_balancing_name
-      health_probe_name   = backend_pool.value.health_probe_name
-
-      dynamic "backend" {
-        for_each = backend_pool.value.backends
-        content {
-          enabled     = backend.value.enabled
-          address     = backend.value.address
-          host_header = backend.value.host_header
-          http_port   = backend.value.http_port
-          https_port  = backend.value.https_port
-          priority    = backend.value.priority
-          weight      = backend.value.weight
-        }
-      }
-    }
-  }
-
-  dynamic "routing_rule" {
-    for_each = var.routing_rules
-    content {
-      name               = routing_rule.value.name
-      accepted_protocols = routing_rule.value.accepted_protocols
-      patterns_to_match  = routing_rule.value.patterns_to_match
-      frontend_endpoints = routing_rule.value.frontend_endpoints
-
-      dynamic "forwarding_configuration" {
-        for_each = routing_rule.value.forwarding_configuration != null ? [routing_rule.value.forwarding_configuration] : []
-        content {
-          backend_pool_name                     = forwarding_configuration.value.backend_pool_name
-          forwarding_protocol                   = forwarding_configuration.value.forwarding_protocol
-          cache_enabled                         = forwarding_configuration.value.cache_enabled
-          cache_use_dynamic_compression         = forwarding_configuration.value.cache_use_dynamic_compression
-          cache_query_parameter_strip_directive = forwarding_configuration.value.cache_query_parameter_strip_directive
-          cache_query_parameters                = forwarding_configuration.value.cache_query_parameters
-          cache_duration                        = forwarding_configuration.value.cache_duration
-          custom_forwarding_path                = forwarding_configuration.value.custom_forwarding_path
-        }
-      }
-
-      dynamic "redirect_configuration" {
-        for_each = routing_rule.value.redirect_configuration != null ? [routing_rule.value.redirect_configuration] : []
-        content {
-          custom_host         = redirect_configuration.value.custom_host
-          redirect_type       = redirect_configuration.value.redirect_type
-          redirect_protocol   = redirect_configuration.value.redirect_protocol
-          custom_path         = redirect_configuration.value.custom_path
-          custom_fragment     = redirect_configuration.value.custom_fragment
-          custom_query_string = redirect_configuration.value.custom_query_string
-        }
-      }
-    }
-  }
-
-  dynamic "timeouts" {
-    for_each = length(keys(var.timeouts)) > 0 ? [var.timeouts] : []
-    content {
-      create = timeouts.value.create
-      read   = timeouts.value.read
-      update = timeouts.value.update
-      delete = timeouts.value.delete
+      query_string_caching_behavior = try(cache.value.query_string_caching_behavior, "IgnoreQueryString")
+      query_strings                 = try(cache.value.query_strings, null)
+      compression_enabled           = try(cache.value.compression_enabled, false)
+      content_types_to_compress     = try(cache.value.content_types_to_compress, null)
     }
   }
 }
