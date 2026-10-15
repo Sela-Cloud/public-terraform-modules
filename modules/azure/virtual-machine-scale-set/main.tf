@@ -1,3 +1,20 @@
+locals {
+  is_windows_image = (
+    can(regex("(?i)windows", coalesce(try(var.storage_profile_image_reference.publisher, null), "")))
+    || can(regex("(?i)windows", coalesce(try(var.storage_profile_image_reference.offer, null), "")))
+  )
+  is_linux_image = (
+    can(regex("(?i)ubuntu|canonical|debian|redhat|rhel|centos|suse|linux", coalesce(try(var.storage_profile_image_reference.publisher, null), "")))
+    || can(regex("(?i)ubuntu|canonical|debian|redhat|rhel|centos|suse|linux", coalesce(try(var.storage_profile_image_reference.offer, null), "")))
+  )
+  is_windows = (
+    local.is_windows_image
+    || contains(["windows_client", "windows_server"], lower(coalesce(var.license_type, "")))
+    || (var.os_profile_windows_config != null && var.os_profile_linux_config == null)
+    || (!local.is_linux_image && lower(coalesce(try(var.storage_profile_os_disk.os_type, null), "")) == "windows")
+  )
+}
+
 resource "azurerm_virtual_machine_scale_set" "vmss" {
   name                         = var.name
   resource_group_name          = var.resource_group_name
@@ -35,7 +52,7 @@ resource "azurerm_virtual_machine_scale_set" "vmss" {
     caching           = var.storage_profile_os_disk.caching
     create_option     = var.storage_profile_os_disk.create_option
     managed_disk_type = var.storage_profile_os_disk.managed_disk_type
-    os_type           = var.storage_profile_os_disk.os_type
+    os_type           = var.storage_profile_image_reference != null ? null : coalesce(var.storage_profile_os_disk.os_type, local.is_windows ? "Windows" : "Linux")
     image             = var.storage_profile_os_disk.image
     vhd_containers    = var.storage_profile_os_disk.vhd_containers
   }
@@ -70,12 +87,12 @@ resource "azurerm_virtual_machine_scale_set" "vmss" {
   }
 
   dynamic "os_profile_linux_config" {
-    for_each = var.os_profile_linux_config != null ? [var.os_profile_linux_config] : []
+    for_each = !local.is_windows ? [coalesce(var.os_profile_linux_config, { disable_password_authentication = false, ssh_keys = [] })] : []
     content {
-      disable_password_authentication = os_profile_linux_config.value.disable_password_authentication
+      disable_password_authentication = coalesce(os_profile_linux_config.value.disable_password_authentication, false)
 
       dynamic "ssh_keys" {
-        for_each = os_profile_linux_config.value.ssh_keys != null ? os_profile_linux_config.value.ssh_keys : []
+        for_each = coalesce(os_profile_linux_config.value.ssh_keys, [])
         content {
           path     = ssh_keys.value.path
           key_data = ssh_keys.value.key_data
@@ -85,10 +102,10 @@ resource "azurerm_virtual_machine_scale_set" "vmss" {
   }
 
   dynamic "os_profile_windows_config" {
-    for_each = var.os_profile_windows_config != null ? [var.os_profile_windows_config] : []
+    for_each = local.is_windows ? [coalesce(var.os_profile_windows_config, { provision_vm_agent = true, enable_automatic_upgrades = false })] : []
     content {
-      provision_vm_agent        = os_profile_windows_config.value.provision_vm_agent
-      enable_automatic_upgrades = os_profile_windows_config.value.enable_automatic_upgrades
+      provision_vm_agent        = coalesce(os_profile_windows_config.value.provision_vm_agent, true)
+      enable_automatic_upgrades = coalesce(os_profile_windows_config.value.enable_automatic_upgrades, false)
     }
   }
 
