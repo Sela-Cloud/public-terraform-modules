@@ -1,8 +1,10 @@
-# Azure Front Door (Classic) Terraform Child Module
+# Azure Front Door (Standard / Premium) Module
 
-Terraform module to provision an [Azure Front Door (Classic)](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/frontdoor).
+Terraform module to provision and manage an [Azure Front Door Profile (Standard or Premium)](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cdn_frontdoor_profile) with endpoints, origin groups, backend origins, and routing rules.
 
-Azure Front Door provides a scalable and secure entry point for fast delivery of global web applications, combining global traffic routing (layer 7 load balancing), SSL offloading, dynamic acceleration, and path-based routing.
+Azure Front Door is a global, scalable entry point that uses the Microsoft global edge network to create fast, secure, and widely scalable web applications.
+
+> **Note:** This module replaces the legacy **Azure Front Door (Classic)**, which was deprecated by Microsoft on April 1, 2025.
 
 ## Requirements
 
@@ -17,155 +19,97 @@ Azure Front Door provides a scalable and secure entry point for fast delivery of
 |------|---------|
 | azurerm | >= 3.0.0, < 5.0.0 |
 
-## Resources
-
-| Name | Type |
-|------|------|
-| [azurerm_frontdoor.frontdoor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/frontdoor) | resource |
-
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| name | Specifies the name of the Front Door service. Changing this forces a new resource to be created. | `string` | n/a | yes |
-| resource_group_name | Specifies the name of the Resource Group in which the Front Door service should exist. | `string` | n/a | yes |
-| frontend_endpoints | A list of frontend_endpoint blocks configuring the hostnames used to access the Front Door. | `list(object)` | n/a | yes |
-| backend_pools | A list of backend_pool blocks configuring the backends that receive traffic from the Front Door. | `list(object)` | n/a | yes |
-| routing_rules | A list of routing_rule blocks connecting frontend endpoints to backend pools or redirecting traffic. | `list(object)` | n/a | yes |
-| friendly_name | A friendly name for the Front Door service. | `string` | `null` | no |
-| load_balancer_enabled | Should the Front Door Load Balancer be enabled? | `bool` | `true` | no |
-| backend_pool_load_balancing | A list of backend_pool_load_balancing blocks. | `list(object)` | `[...]` | no |
-| backend_pool_health_probes | A list of backend_pool_health_probe blocks. | `list(object)` | `[...]` | no |
-| tags | A mapping of tags to assign to the Front Door resource. | `map(string)` | `{}` | no |
-| timeouts | Custom timeout durations for resource operations. | `object` | `{}` | no |
-
-### Frontend Endpoint Object
-
-| Attribute | Description | Type | Default | Required |
-|-----------|-------------|------|---------|:--------:|
-| name | The name of the frontend endpoint. | `string` | n/a | yes |
-| host_name | The host name of the frontend endpoint (e.g. `example-frontdoor.azurefd.net` or custom domain). | `string` | n/a | yes |
-| session_affinity_enabled | Whether session affinity is enabled on this endpoint. | `bool` | `false` | no |
-| session_affinity_ttl_seconds | Session affinity TTL in seconds. | `number` | `0` | no |
-| web_application_firewall_policy_link_id | WAF policy ID to associate with this endpoint. | `string` | `null` | no |
-
-### Backend Pool Object
-
-| Attribute | Description | Type | Default | Required |
-|-----------|-------------|------|---------|:--------:|
-| name | The name of the backend pool. | `string` | n/a | yes |
-| load_balancing_name | The name of the `backend_pool_load_balancing` settings to use. | `string` | n/a | yes |
-| health_probe_name | The name of the `backend_pool_health_probe` settings to use. | `string` | n/a | yes |
-| backends | A list of backend targets within this backend pool. | `list(object)` | n/a | yes |
-
-#### Backend Target Attributes
-
-| Attribute | Description | Type | Default | Required |
-|-----------|-------------|------|---------|:--------:|
-| address | The address of the backend (IPv4 or FQDN). | `string` | n/a | yes |
-| host_header | The value to use as the host header sent to the backend. | `string` | n/a | yes |
-| enabled | Location to enable or disable traffic to this backend. | `bool` | `true` | no |
-| http_port | HTTP TCP port used to access backend. | `number` | `80` | no |
-| https_port | HTTPS TCP port used to access backend. | `number` | `443` | no |
-| priority | Priority to use for load balancing. | `number` | `1` | no |
-| weight | Weight to use for load balancing. | `number` | `50` | no |
-
-### Routing Rule Object
-
-| Attribute | Description | Type | Default | Required |
-|-----------|-------------|------|---------|:--------:|
-| name | The name of the routing rule. | `string` | n/a | yes |
-| frontend_endpoints | The names of the frontend endpoints to associate with this rule. | `list(string)` | n/a | yes |
-| accepted_protocols | Protocol schemes to accept (`Http`, `Https`). | `list(string)` | `["Http", "Https"]` | no |
-| patterns_to_match | Route matching path patterns (e.g. `["/*"]`). | `list(string)` | `["/*"]` | no |
-| forwarding_configuration | Forwarding configuration block to route to a backend pool. | `object` | `null` | no |
-| redirect_configuration | Redirection configuration block. | `object` | `null` | no |
-
-### Backend Pool Load Balancing Object
-
-| Attribute | Description | Type | Default | Required |
-|-----------|-------------|------|---------|:--------:|
-| name | The name of the load balancing settings block. | `string` | n/a | yes |
-| sample_size | The number of samples to consider for load balancing decisions. | `number` | `4` | no |
-| successful_samples_required | The number of samples within the sample size that must succeed. | `number` | `2` | no |
-| additional_latency_milliseconds | The additional latency tolerance in milliseconds for routing to acceptable backends. | `number` | `0` | no |
-
-### Backend Pool Health Probe Object
-
-| Attribute | Description | Type | Default | Required |
-|-----------|-------------|------|---------|:--------:|
-| name | The name of the health probe settings block. | `string` | n/a | yes |
-| enabled | Is this health probe enabled? | `bool` | `true` | no |
-| path | The path to use for the probe. | `string` | `"/"` | no |
-| protocol | The protocol of the probe (`Http` or `Https`). | `string` | `"Http"` | no |
-| probe_method | The HTTP method to use for the probe (`GET` or `HEAD`). | `string` | `"HEAD"` | no |
-| interval_in_seconds | The number of seconds between each probe. | `number` | `120` | no |
+| name | Specifies the name of the Front Door profile. | `string` | n/a | yes |
+| resource_group_name | Specifies the name of the Resource Group in which the Front Door profile should exist. | `string` | n/a | yes |
+| sku_name | Specifies the SKU for the Front Door profile (`Standard_AzureFrontDoor` or `Premium_AzureFrontDoor`). | `string` | `"Standard_AzureFrontDoor"` | no |
+| response_timeout_seconds | Specifies the maximum response timeout in seconds (16 to 240). | `number` | `120` | no |
+| endpoints | A list of endpoint configurations for the Front Door profile. | `list(object)` | n/a | yes |
+| origin_groups | A list of origin group configurations with backend origins, health probes, and load balancing. | `list(object)` | n/a | yes |
+| routes | A list of route configurations connecting endpoints to origin groups. | `list(object)` | n/a | yes |
+| tags | A mapping of tags to assign to the Front Door profile. | `map(string)` | `{}` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| id | The ID of the Front Door. |
-| name | The Name of the Front Door. |
-| cname | The host that each frontendEndpoint must CNAME to. |
-| header_frontdoor_id | The unique ID of the Front Door sent as the X-Azure-FDID header. |
-| frontend_endpoints | The frontend endpoints mapping of the Front Door. |
-| frontdoor | The full Azure Front Door resource object. |
+| id | The ID of the Front Door Profile. |
+| name | The name of the Front Door Profile. |
+| resource_guid | The UUID of the Front Door Profile. |
+| endpoints | A map of created endpoints, including their hostnames. |
+| origin_groups | A map of created origin groups and their IDs. |
+| profile | The full Azure Front Door Profile resource object. |
 
-## Usage Examples
-
-### Basic Global Front Door with Forwarding
+## Usage Example
 
 ```hcl
 module "frontdoor" {
-  source = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/frontdoor?ref=azure-wip"
+  source = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/frontdoor?ref=v0.9.14"
 
-  name                = "contoso-web-fd"
-  resource_group_name = "rg-prod-networking"
-  friendly_name       = "Contoso Global Web Front Door"
+  name                = "afd-my-workload-prod"
+  resource_group_name = "rg-production"
+  sku_name            = "Standard_AzureFrontDoor"
 
-  frontend_endpoints = [
+  endpoints = [
     {
-      name      = "default-endpoint"
-      host_name = "contoso-web-fd.azurefd.net"
+      name    = "ep-my-workload"
+      enabled = true
     }
   ]
 
-  backend_pools = [
+  origin_groups = [
     {
-      name                = "appServiceBackendPool"
-      load_balancing_name = "defaultLoadBalancingSettings"
-      health_probe_name   = "defaultHealthProbeSettings"
-      backends = [
+      name                     = "og-default"
+      session_affinity_enabled = false
+
+      load_balancing = {
+        sample_size                        = 4
+        successful_samples_required        = 3
+        additional_latency_in_milliseconds = 50
+      }
+
+      health_probe = {
+        protocol            = "Https"
+        interval_in_seconds = 100
+        path                = "/"
+        request_type        = "HEAD"
+      }
+
+      origins = [
         {
-          enabled     = true
-          address     = "contoso-app.azurewebsites.net"
-          host_header = "contoso-app.azurewebsites.net"
-          http_port   = 80
-          https_port  = 443
-          priority    = 1
-          weight      = 100
+          name                           = "primary-app-service"
+          host_name                      = "app-my-workload.azurewebsites.net"
+          origin_host_header             = "app-my-workload.azurewebsites.net"
+          http_port                      = 80
+          https_port                     = 443
+          priority                       = 1
+          weight                         = 1000
+          certificate_name_check_enabled = true
+          enabled                        = true
         }
       ]
     }
   ]
 
-  routing_rules = [
+  routes = [
     {
-      name               = "defaultRoutingRule"
-      accepted_protocols = ["Http", "Https"]
-      patterns_to_match  = ["/*"]
-      frontend_endpoints = ["default-endpoint"]
-      forwarding_configuration = {
-        backend_pool_name   = "appServiceBackendPool"
-        forwarding_protocol = "HttpsOnly"
-      }
+      name                   = "route-all"
+      endpoint_name          = "ep-my-workload"
+      origin_group_name      = "og-default"
+      forwarding_protocol    = "HttpsOnly"
+      patterns_to_match      = ["/*"]
+      supported_protocols    = ["Http", "Https"]
+      https_redirect_enabled = true
+      link_to_default_domain = true
     }
   ]
 
   tags = {
     Environment = "production"
-    ManagedBy   = "Terraform"
+    ManagedBy   = "terraform"
   }
 }
 ```
