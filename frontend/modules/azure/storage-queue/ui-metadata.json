@@ -1,0 +1,76 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "storage-queue",
+  "version": "1.0.0",
+  "display": {
+    "label": "Azure Storage Queue",
+    "icon": "azure-storage-queue",
+    "description": "Azure Storage Queue for reliable asynchronous message queuing between distributed applications",
+    "category": "global"
+  },
+  "resource": {
+    "variable": "storage_queue",
+    "key_field": "name",
+    "key_label": "Queue Name",
+    "key_description": "The unique name for the Azure Storage Queue within the storage account. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Queue name and storage account association.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Queue Name",
+            "description": "Name of the Storage Queue. Must be between 3 and 63 lowercase alphanumeric characters and hyphens, starting and ending with alphanumeric.",
+            "type": "text",
+            "required": true,
+            "placeholder": "orders-queue",
+            "locked_after_create": true,
+            "validation": {
+              "min": 3,
+              "max": 63,
+              "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+              "pattern_error": "Queue name must be between 3 and 63 characters, start and end with an alphanumeric character, and contain only lowercase letters, numbers, and hyphens."
+            }
+          },
+          {
+            "id": "storage_account_id",
+            "label": "Storage Account",
+            "description": "The Azure Storage Account where the queue should reside.",
+            "type": "select",
+            "required": true,
+            "locked_after_create": true,
+            "data_source": {
+              "resource": "storage.storageAccounts",
+              "params": {},
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "resourceGroup"
+              },
+              "allow_custom": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "settings",
+        "label": "Queue Settings & Metadata",
+        "description": "Optional metadata key-value pairs for the Storage Queue.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "metadata",
+            "label": "Metadata",
+            "description": "A mapping of metadata key-value pairs assigned to this Storage Queue.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
