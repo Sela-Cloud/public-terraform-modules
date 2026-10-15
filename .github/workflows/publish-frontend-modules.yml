@@ -11,6 +11,11 @@ on:
         description: "An EXISTING tag to re-publish, e.g. v0.7.9. To cut a new release, run the Release workflow instead."
         required: true
         type: string
+      full_upload:
+        description: "Upload every module's metadata, not only what changed since the release the bucket holds. Use to repair the bucket."
+        required: false
+        type: boolean
+        default: false
   # Called by release.yml after it pushes the tag. That push is made with GITHUB_TOKEN, which
   # GitHub deliberately does not let trigger `push: tags` above — so without this, a release cut
   # by the workflow would never be published.
@@ -20,6 +25,11 @@ on:
         description: "Release tag to validate and publish"
         required: true
         type: string
+      full_upload:
+        description: "Upload every module's metadata, not only what changed since the release the bucket holds."
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -170,20 +180,65 @@ jobs:
       - name: Set up Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2
 
+      # Only the metadata that changed since the release the bucket already holds — recorded in the
+      # bucket itself by the last successful publish, not taken from git. The previous tag is not
+      # the same thing: a release whose publish failed never reached the bucket, and diffing from
+      # its tag would skip its changes for good. Everything is uploaded when that record is missing
+      # (the first publish), unusable, or not an ancestor of this release (re-publishing an older
+      # tag, a rollback), or when full_upload is set. Nothing is ever deleted from the bucket.
       - name: Publish frontend module catalog metadata
         shell: bash
+        env:
+          RELEASE_REF: ${{ inputs.release_ref || github.ref_name }}
+          FULL_UPLOAD: ${{ inputs.full_upload }}
         run: |
-          gcloud storage cp \
-            frontend/ui-metadata.schema.json \
-            "gs://${GCS_BUCKET}/${GCS_PREFIX}/ui-metadata.schema.json"
+          base_url="gs://${GCS_BUCKET}/${GCS_PREFIX}"
+          marker="${base_url}/published-release.txt"
+          published="$(gcloud storage cat "${marker}" 2>/dev/null | tr -d '[:space:]' || true)"
 
-          while IFS= read -r metadata_file; do
+          full=true
+          if [[ "${FULL_UPLOAD}" == "true" ]]; then
+            reason="a full upload was requested"
+          elif [[ -z "${published}" ]]; then
+            reason="the bucket has no record of a published release"
+          elif [[ ! "${published}" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] \
+            || ! git rev-parse --quiet --verify "refs/tags/${published}" >/dev/null; then
+            reason="the bucket records '${published}', which is not a release tag of this repository"
+          elif ! git merge-base --is-ancestor "refs/tags/${published}" HEAD; then
+            reason="the bucket holds ${published}, which ${RELEASE_REF} does not build on"
+          else
+            full=false
+          fi
+
+          if [[ "${full}" == "true" ]]; then
+            echo "::notice::Uploading every module's metadata: ${reason}."
+            mapfile -t files < <(
+              find frontend/modules \
+                -type d -name .terraform -prune -o \
+                -type f -name ui-metadata.json -print | sort
+            )
+            files=("frontend/ui-metadata.schema.json" "${files[@]}")
+          else
+            echo "::notice::Uploading metadata changed since ${published}, the release the bucket holds."
+            # Added, modified, or renamed; a deleted module's metadata stays in the bucket, as it
+            # always has.
+            mapfile -t files < <(
+              git diff --name-only --diff-filter=AMR "refs/tags/${published}" HEAD -- \
+                frontend/ui-metadata.schema.json \
+                ':(glob)frontend/modules/**/ui-metadata.json'
+            )
+          fi
+
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "No metadata changed since ${published}; nothing to upload."
+          fi
+          for metadata_file in "${files[@]}"; do
             relative_path="${metadata_file#frontend/}"
-            gcloud storage cp \
-              "${metadata_file}" \
-              "gs://${GCS_BUCKET}/${GCS_PREFIX}/${relative_path}"
-          done < <(
-            find frontend/modules \
-              -type d -name .terraform -prune -o \
-              -type f -name ui-metadata.json -print | sort
-          )
+            gcloud storage cp "${metadata_file}" "${base_url}/${relative_path}"
+            echo "- \`${relative_path}\`" >> "${GITHUB_STEP_SUMMARY}"
+          done
+
+          # Last, so a publish that failed part-way leaves the old record and the next one retries
+          # everything since then.
+          printf '%s\n' "${RELEASE_REF}" | gcloud storage cp - "${marker}"
+          echo "Uploaded ${#files[@]} file(s); the bucket now holds ${RELEASE_REF}."
