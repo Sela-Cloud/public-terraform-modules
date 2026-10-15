@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "virtual-machine-scale-set",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "display": {
     "label": "Virtual Machine Scale Set",
     "icon": "virtual-machine-scale-set",
@@ -420,10 +420,11 @@
               {
                 "id": "os_type",
                 "label": "Operating System Type",
-                "description": "Specifies the operating system type of the OS disk. Possible values are Linux and Windows.",
+                "description": "Specifies the operating system type of the OS disk. Optional when using a marketplace image reference as Azure automatically detects the OS. Required when using a custom unmanaged VHD image.",
                 "type": "select",
                 "required": false,
-                "default": "Linux",
+                "default": null,
+                "nullable": true,
                 "options": [
                   { "value": "Linux", "label": "Linux" },
                   { "value": "Windows", "label": "Windows" }
