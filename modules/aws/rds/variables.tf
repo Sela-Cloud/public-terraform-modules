@@ -180,7 +180,7 @@ variable "create_db_subnet_group" {
 }
 
 variable "db_subnet_group_name" {
-  description = "Name of DB subnet group. Required if create_db_subnet_group is false and not using the default subnet group."
+  description = "Name of DB subnet group: the name for a created one, or an existing group's name when create_db_subnet_group is false, which then requires it."
   type        = string
   default     = null
 }

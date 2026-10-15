@@ -51,6 +51,44 @@ locals {
 }
 
 ################################################################################
+# Network consistency
+################################################################################
+
+# The VPC of everything the instance is attached to, read from AWS, so a mismatch fails at plan with
+# the offending IDs named. Left to AWS it fails mid-apply with only "the DB instance and EC2
+# security group are in different VPCs" — and when no subnet group is given, the instance silently
+# lands in the account's default subnet group, in the default VPC, which reads exactly the same.
+data "aws_subnet" "selected" {
+  for_each = var.create_db_subnet_group ? toset(var.subnet_ids) : toset([])
+  id       = each.value
+}
+
+data "aws_db_subnet_group" "existing" {
+  count = !var.create_db_subnet_group && var.db_subnet_group_name != null ? 1 : 0
+  name  = var.db_subnet_group_name
+}
+
+data "aws_security_group" "selected" {
+  for_each = toset(var.vpc_security_group_ids)
+  id       = each.value
+}
+
+locals {
+  subnet_vpc_ids = distinct([for s in data.aws_subnet.selected : s.vpc_id])
+
+  # The VPC the instance will be in: its subnets' VPC, or the existing subnet group's.
+  db_vpc_id = (
+    var.create_db_subnet_group ? (length(local.subnet_vpc_ids) == 1 ? local.subnet_vpc_ids[0] : null) :
+    try(data.aws_db_subnet_group.existing[0].vpc_id, null)
+  )
+
+  foreign_security_groups = [
+    for id, g in data.aws_security_group.selected : "${id} (${g.name}) is in ${g.vpc_id}"
+    if local.db_vpc_id != null && g.vpc_id != local.db_vpc_id
+  ]
+}
+
+################################################################################
 # DB Subnet Group
 ################################################################################
 
@@ -381,6 +419,22 @@ resource "aws_db_instance" "this" {
     precondition {
       condition     = !var.create_db_subnet_group || length(var.subnet_ids) >= 2
       error_message = "subnet_ids must include at least 2 subnets (in different AZs) when create_db_subnet_group is true."
+    }
+    precondition {
+      condition     = var.create_db_subnet_group || var.db_subnet_group_name != null
+      error_message = "With create_db_subnet_group off, db_subnet_group_name must name an existing DB subnet group. Without one, RDS uses the account's default subnet group, in the default VPC."
+    }
+    precondition {
+      condition     = length(local.subnet_vpc_ids) <= 1
+      error_message = "subnet_ids span several VPCs (${join(", ", local.subnet_vpc_ids)}). All of a DB subnet group's subnets must be in one VPC."
+    }
+    precondition {
+      condition     = length(local.foreign_security_groups) == 0
+      error_message = "These security groups are not in the database's VPC, ${coalesce(local.db_vpc_id, "unknown")}: ${join("; ", local.foreign_security_groups)}. Choose security groups from that VPC."
+    }
+    precondition {
+      condition     = !var.create_security_group || var.vpc_id == null || local.db_vpc_id == null || var.vpc_id == local.db_vpc_id
+      error_message = "vpc_id is ${coalesce(var.vpc_id, "unset")}, but the database's subnets are in ${coalesce(local.db_vpc_id, "unknown")}. The security group created here must be in the database's VPC."
     }
     precondition {
       condition     = length(distinct([for r in var.role_associations : r.key])) == length(var.role_associations)
