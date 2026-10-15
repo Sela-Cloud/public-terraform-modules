@@ -5,7 +5,8 @@ module "vpn_gateway" {
   name                = each.value.name
   resource_group_name = each.value.resource_group_name
   location            = each.value.location
-  virtual_hub_id      = each.value.virtual_hub_id
+  virtual_hub         = each.value.virtual_hub
+  virtual_wan         = each.value.virtual_wan
   scale_unit          = each.value.scale_unit
   bgp_settings        = each.value.bgp_settings
   tags                = each.value.tags

@@ -1,11 +1,11 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "vpn-gateway",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "display": {
     "label": "VPN Gateway",
     "icon": "azure-vpn-gateway",
-    "description": "Azure Virtual WAN VPN Gateway for scalable site-to-site VPN connections into an Azure Virtual Hub",
+    "description": "Azure Virtual WAN VPN Gateway for scalable site-to-site VPN, created with its own Virtual WAN and virtual hub",
     "category": "regional"
   },
   "resource": {
@@ -83,15 +83,6 @@
             ]
           },
           {
-            "id": "virtual_hub_id",
-            "label": "Virtual Hub ID",
-            "description": "The resource ID of the Azure Virtual WAN Virtual Hub in which the VPN Gateway should be created.",
-            "type": "text",
-            "required": true,
-            "locked_after_create": true,
-            "placeholder": "/subscriptions/.../virtualHubs/vwan-hub-01"
-          },
-          {
             "id": "scale_unit",
             "label": "Scale Unit",
             "description": "The Scale Unit for this VPN Gateway (between 1 and 100). Each scale unit provides roughly 500 Mbps aggregate throughput.",
@@ -102,6 +93,159 @@
               "min": 1,
               "max": 100
             }
+          }
+        ]
+      },
+      {
+        "id": "virtual_hub",
+        "label": "Virtual hub and Virtual WAN",
+        "description": "A new Virtual WAN and virtual hub are created for the gateway, in its resource group and region. The hub's router takes around 30 minutes to provision. Destroying the gateway deletes both, and Azure refuses that while other gateways or network connections still use the hub.",
+        "fields": [
+          {
+            "id": "virtual_hub",
+            "label": "Virtual hub",
+            "type": "object",
+            "fields": [
+              {
+                "id": "name",
+                "label": "Hub name",
+                "type": "text",
+                "required": true,
+                "placeholder": "vwan-hub-eastus",
+                "validation": {
+                  "min": 1,
+                  "max": 80,
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,78}[a-zA-Z0-9_]$",
+                  "pattern_error": "1-80 characters: letters, numbers, underscores, hyphens and periods; start with a letter or number."
+                }
+              },
+              {
+                "id": "address_prefix",
+                "label": "Hub address prefix",
+                "type": "text",
+                "required": true,
+                "placeholder": "10.100.0.0/23",
+                "description": "The hub's own address space: /24 or larger (Microsoft recommends /23). It must not overlap any network the hub connects to.",
+                "validation": {
+                  "pattern": "^(\\d{1,3}\\.){3}\\d{1,3}/(1\\d|2[0-4]|[0-9])$",
+                  "pattern_error": "Use an IPv4 CIDR block of /24 or larger, such as 10.100.0.0/23."
+                }
+              },
+              {
+                "id": "sku",
+                "label": "Hub SKU",
+                "type": "select",
+                "default": "Standard",
+                "description": "Basic supports site-to-site VPN only. A Basic Virtual WAN can hold only Basic hubs.",
+                "options": [
+                  {
+                    "value": "Standard",
+                    "label": "Standard"
+                  },
+                  {
+                    "value": "Basic",
+                    "label": "Basic"
+                  }
+                ]
+              },
+              {
+                "id": "hub_routing_preference",
+                "label": "Hub routing preference",
+                "type": "select",
+                "default": "ExpressRoute",
+                "description": "Which path the hub prefers when the same prefix is learned from several sources.",
+                "options": [
+                  {
+                    "value": "ExpressRoute",
+                    "label": "ExpressRoute"
+                  },
+                  {
+                    "value": "VpnGateway",
+                    "label": "VPN gateway"
+                  },
+                  {
+                    "value": "ASPath",
+                    "label": "AS path"
+                  }
+                ]
+              }
+            ],
+            "required": true
+          },
+          {
+            "id": "virtual_wan",
+            "label": "Virtual WAN",
+            "type": "object",
+            "fields": [
+              {
+                "id": "name",
+                "label": "WAN name",
+                "type": "text",
+                "required": true,
+                "placeholder": "core-wan",
+                "validation": {
+                  "min": 1,
+                  "max": 80,
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,78}[a-zA-Z0-9_]$",
+                  "pattern_error": "1-80 characters: letters, numbers, underscores, hyphens and periods; start with a letter or number."
+                }
+              },
+              {
+                "id": "type",
+                "label": "WAN type",
+                "type": "select",
+                "default": "Standard",
+                "description": "Basic supports site-to-site VPN only and Basic hubs only. Standard adds point-to-site VPN, ExpressRoute and hub-to-hub transit.",
+                "options": [
+                  {
+                    "value": "Standard",
+                    "label": "Standard"
+                  },
+                  {
+                    "value": "Basic",
+                    "label": "Basic"
+                  }
+                ]
+              },
+              {
+                "id": "allow_branch_to_branch_traffic",
+                "label": "Allow branch-to-branch traffic",
+                "type": "boolean",
+                "default": true,
+                "description": "Lets sites connected to the WAN reach each other through it."
+              },
+              {
+                "id": "disable_vpn_encryption",
+                "label": "Disable VPN encryption",
+                "type": "boolean",
+                "default": false
+              },
+              {
+                "id": "office365_local_breakout_category",
+                "label": "Office 365 local breakout",
+                "type": "select",
+                "default": "None",
+                "options": [
+                  {
+                    "value": "None",
+                    "label": "None"
+                  },
+                  {
+                    "value": "Optimize",
+                    "label": "Optimize"
+                  },
+                  {
+                    "value": "OptimizeAndAllow",
+                    "label": "Optimize and allow"
+                  },
+                  {
+                    "value": "All",
+                    "label": "All"
+                  }
+                ]
+              }
+            ],
+            "required": true
           }
         ]
       },
@@ -175,5 +319,9 @@
         ]
       }
     ]
-  }
+  },
+  "satellites": [
+    { "address": "azurerm_virtual_hub.this", "note": "The virtual hub is created and deleted with the gateway." },
+    { "address": "azurerm_virtual_wan.this", "note": "The Virtual WAN is created and deleted with the gateway." }
+  ]
 }

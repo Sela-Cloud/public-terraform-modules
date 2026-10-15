@@ -17,3 +17,13 @@ output "vpn_gateway" {
   description = "The full Azure VPN Gateway resource object."
   value       = azurerm_vpn_gateway.gateway
 }
+
+output "virtual_hub_id" {
+  description = "The ID of the Virtual Hub created for the VPN Gateway."
+  value       = azurerm_virtual_hub.this.id
+}
+
+output "virtual_wan_id" {
+  description = "The ID of the Virtual WAN created for the hub."
+  value       = azurerm_virtual_wan.this.id
+}

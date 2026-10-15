@@ -4,8 +4,20 @@ variable "vpn_gateway" {
     name                = string
     resource_group_name = string
     location            = string
-    virtual_hub_id      = string
-    scale_unit          = optional(number, 1)
+    virtual_hub = object({
+      name                   = string
+      address_prefix         = string
+      sku                    = optional(string, "Standard")
+      hub_routing_preference = optional(string, "ExpressRoute")
+    })
+    virtual_wan = object({
+      name                              = string
+      type                              = optional(string, "Standard")
+      allow_branch_to_branch_traffic    = optional(bool, true)
+      disable_vpn_encryption            = optional(bool, false)
+      office365_local_breakout_category = optional(string, "None")
+    })
+    scale_unit = optional(number, 1)
     bgp_settings = optional(object({
       asn                   = optional(number, 65515)
       peer_weight           = optional(number, 0)

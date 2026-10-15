@@ -18,9 +18,55 @@ variable "location" {
   type        = string
 }
 
-variable "virtual_hub_id" {
-  description = "(Required) The ID of the Virtual Hub in which the VPN Gateway should be created. Changing this forces a new resource to be created."
-  type        = string
+variable "virtual_hub" {
+  description = "(Required) The Virtual Hub created for the VPN Gateway, in the gateway's resource group and location."
+  type = object({
+    name = string
+    # The hub's own address space, at least a /24. It must not overlap any network the hub
+    # connects to.
+    address_prefix         = string
+    sku                    = optional(string, "Standard")
+    hub_routing_preference = optional(string, "ExpressRoute")
+  })
+
+  validation {
+    condition = try(
+      can(cidrnetmask(var.virtual_hub.address_prefix)) && tonumber(split("/", var.virtual_hub.address_prefix)[1]) <= 24,
+      false
+    )
+    error_message = "virtual_hub address_prefix must be an IPv4 CIDR block of /24 or larger, such as 10.100.0.0/23."
+  }
+
+  validation {
+    condition     = try(contains(["Basic", "Standard"], var.virtual_hub.sku), false)
+    error_message = "virtual_hub sku must be Basic or Standard."
+  }
+
+  validation {
+    condition     = try(contains(["ExpressRoute", "VpnGateway", "ASPath"], var.virtual_hub.hub_routing_preference), false)
+    error_message = "virtual_hub hub_routing_preference must be ExpressRoute, VpnGateway or ASPath."
+  }
+}
+
+variable "virtual_wan" {
+  description = "(Required) The Virtual WAN created for the hub, in the gateway's resource group and location."
+  type = object({
+    name                              = string
+    type                              = optional(string, "Standard")
+    allow_branch_to_branch_traffic    = optional(bool, true)
+    disable_vpn_encryption            = optional(bool, false)
+    office365_local_breakout_category = optional(string, "None")
+  })
+
+  validation {
+    condition     = try(contains(["Basic", "Standard"], var.virtual_wan.type), false)
+    error_message = "virtual_wan type must be Basic or Standard."
+  }
+
+  validation {
+    condition     = try(contains(["Optimize", "OptimizeAndAllow", "All", "None"], var.virtual_wan.office365_local_breakout_category), false)
+    error_message = "virtual_wan office365_local_breakout_category must be Optimize, OptimizeAndAllow, All or None."
+  }
 }
 
 variable "scale_unit" {
