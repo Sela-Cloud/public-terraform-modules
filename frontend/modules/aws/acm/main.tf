@@ -3,7 +3,7 @@
  *****************************************/
 
 module "acm" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/acm?ref=v0.9.14"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/acm?ref=v0.9.15"
   for_each = var.acm
 
   name                      = coalesce(each.value.name, each.key)

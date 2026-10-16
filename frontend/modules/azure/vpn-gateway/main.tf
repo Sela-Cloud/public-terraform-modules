@@ -1,5 +1,5 @@
 module "vpn_gateway" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/vpn-gateway?ref=v0.9.14"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/vpn-gateway?ref=v0.9.15"
   for_each = var.vpn_gateway
 
   name                = each.value.name
