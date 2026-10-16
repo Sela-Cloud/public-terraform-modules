@@ -187,6 +187,7 @@ KNOWN_DATA_SOURCES = {
     "resources.resourceGroups",
     "storage.storageAccounts",
     "web.servicePlans",
+    "web.functionApps",
     "gke.clusters",
     "iam.customRoles",
     "iam.custom_roles",
