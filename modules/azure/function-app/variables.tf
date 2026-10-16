@@ -4,8 +4,14 @@ variable "name" {
 }
 
 variable "resource_group_name" {
-  description = "The name of the Resource Group in which the Function App should exist."
+  description = "With Create Resource Group off (default): the name of an existing Resource Group to use. With it on: the name of a brand-new Resource Group to create in the Region below."
   type        = string
+}
+
+variable "create_resource_group" {
+  description = "Whether to create a new Resource Group with the name given above, instead of using an existing one. Turn this on after hitting Azure's 'Requested features ... not available in resource group' error -- that resource group's infrastructure is permanently locked to an incompatible plan type, and the only fix is a fresh resource group."
+  type        = bool
+  default     = false
 }
 
 variable "location" {

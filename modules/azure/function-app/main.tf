@@ -1,4 +1,6 @@
 locals {
+  resource_group_name = var.create_resource_group ? azurerm_resource_group.rg[0].name : var.resource_group_name
+
   service_plan_id = var.service_plan_id != null ? var.service_plan_id : (
     var.create_service_plan ? azurerm_service_plan.plan[0].id : null
   )
@@ -20,11 +22,19 @@ locals {
   )
 }
 
+resource "azurerm_resource_group" "rg" {
+  count = var.create_resource_group ? 1 : 0
+
+  name     = var.resource_group_name
+  location = var.location
+  tags     = var.tags
+}
+
 resource "azurerm_storage_account" "storage" {
   count = var.create_storage_account && var.storage_account_access_key == null ? 1 : 0
 
   name                     = var.storage_account_name != null ? var.storage_account_name : local.default_storage_account_name
-  resource_group_name      = var.resource_group_name
+  resource_group_name      = local.resource_group_name
   location                 = var.location
   account_tier             = var.storage_account_tier
   account_replication_type = var.storage_account_replication_type
@@ -36,7 +46,7 @@ resource "azurerm_service_plan" "plan" {
   count = var.service_plan_id == null && var.create_service_plan ? 1 : 0
 
   name                   = local.service_plan_name
-  resource_group_name    = var.resource_group_name
+  resource_group_name    = local.resource_group_name
   location               = var.location
   os_type                = var.os_type
   sku_name               = var.service_plan_sku
@@ -55,7 +65,7 @@ resource "azurerm_linux_function_app" "linux_function_app" {
   count = var.os_type == "Linux" ? 1 : 0
 
   name                          = var.name
-  resource_group_name           = var.resource_group_name
+  resource_group_name           = local.resource_group_name
   location                      = var.location
   service_plan_id               = local.service_plan_id
   storage_account_name          = local.storage_account_name
@@ -171,7 +181,7 @@ resource "azurerm_windows_function_app" "windows_function_app" {
   count = var.os_type == "Windows" ? 1 : 0
 
   name                          = var.name
-  resource_group_name           = var.resource_group_name
+  resource_group_name           = local.resource_group_name
   location                      = var.location
   service_plan_id               = local.service_plan_id
   storage_account_name          = local.storage_account_name
