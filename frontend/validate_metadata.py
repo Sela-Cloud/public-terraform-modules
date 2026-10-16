@@ -128,6 +128,8 @@ KNOWN_DATA_SOURCES = {
     "ec2.vpn_gateways",
     "ec2.customer_gateway",
     "ec2.customer_gateways",
+    "rds.engine_version",
+    "rds.engine_versions",
     "ec2.security_group",
     "ec2.security_groups",
     "ec2.key_pair",

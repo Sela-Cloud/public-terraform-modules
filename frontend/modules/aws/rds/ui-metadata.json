@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "rds",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "display": {
     "label": "AWS RDS Database",
     "icon": "database",
@@ -78,10 +78,20 @@
           {
             "id": "engine_version",
             "label": "Engine Version",
-            "description": "Database engine version (e.g., 8.0.35 for MySQL or 16.1 for PostgreSQL).",
-            "type": "text",
+            "description": "Specific version to deploy. Leave empty to use the engine's current default version.",
+            "type": "select",
             "required": false,
-            "placeholder": "8.0.35"
+            "nullable": true,
+            "data_source": {
+              "resource": "rds.engine_versions",
+              "params": {
+                "region": { "from_field": "region" },
+                "engine": { "from_field": "engine" }
+              },
+              "display": { "value_key": "id", "label_key": "name" },
+              "allow_custom": true,
+              "cache_ttl": 300
+            }
           },
           {
             "id": "instance_class",
