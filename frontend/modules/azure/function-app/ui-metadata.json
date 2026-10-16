@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "function-app",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "display": {
     "label": "Function App",
     "icon": "azure-function",
@@ -35,28 +35,39 @@
             }
           },
           {
+            "id": "create_resource_group",
+            "label": "Create Resource Group",
+            "description": "Create a new Resource Group instead of using an existing one. Turn this on if you hit Azure's 'Requested features ... not available in resource group' error -- that resource group is permanently locked to an incompatible plan type, and a fresh one is the only fix.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          },
+          {
             "id": "resource_group_name",
             "label": "Resource Group Name",
-            "description": "With Create Resource Group off (default): select an existing Resource Group. With it on: type the name of a brand-new one to create.",
+            "description": "The existing Resource Group to create the Function App in.",
             "type": "select",
-            "required": true,
+            "required": false,
+            "depends_on": { "field": "create_resource_group", "value": false },
+            "required_if": { "field": "create_resource_group", "value": false },
             "data_source": {
               "resource": "resources.resourceGroups",
               "params": {},
               "display": {
                 "value_key": "name",
                 "label_key": "name"
-              },
-              "allow_custom": true
+              }
             }
           },
           {
-            "id": "create_resource_group",
-            "label": "Create Resource Group",
-            "description": "Create a new Resource Group with the name above instead of using an existing one. Turn this on if you hit Azure's 'Requested features ... not available in resource group' error -- that resource group is permanently locked to an incompatible plan type, and a fresh one is the only fix.",
-            "type": "boolean",
+            "id": "new_resource_group_name",
+            "label": "New Resource Group Name",
+            "description": "Name for the new Resource Group to create.",
+            "type": "text",
             "required": false,
-            "default": false
+            "depends_on": { "field": "create_resource_group", "value": true },
+            "required_if": { "field": "create_resource_group", "value": true },
+            "placeholder": "rg-my-workload-prod"
           },
           {
             "id": "location",

@@ -5,6 +5,7 @@ module "function_app" {
   name                             = each.value.name
   resource_group_name              = each.value.resource_group_name
   create_resource_group            = each.value.create_resource_group
+  new_resource_group_name          = each.value.new_resource_group_name
   location                         = each.value.location
   os_type                          = each.value.os_type
   create_service_plan              = each.value.create_service_plan

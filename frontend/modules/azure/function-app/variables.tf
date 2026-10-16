@@ -3,12 +3,14 @@ variable "function_app" {
 
   type = map(object({
     # Mandatory attributes (No default values)
-    name                = string
-    resource_group_name = string
-    location            = string
+    name     = string
+    location = string
 
-    # Optional Resource Group attributes
-    create_resource_group = optional(bool, false)
+    # Optional Resource Group attributes -- exactly one of resource_group_name or
+    # new_resource_group_name is required, depending on create_resource_group.
+    resource_group_name     = optional(string)
+    create_resource_group   = optional(bool, false)
+    new_resource_group_name = optional(string)
 
     # Optional Hosting & Service Plan attributes (With default values)
     os_type                = optional(string, "Linux")
