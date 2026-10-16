@@ -7,6 +7,9 @@ variable "function_app" {
     resource_group_name = string
     location            = string
 
+    # Optional Resource Group attributes
+    create_resource_group = optional(bool, false)
+
     # Optional Hosting & Service Plan attributes (With default values)
     os_type                = optional(string, "Linux")
     create_service_plan    = optional(bool, true)
