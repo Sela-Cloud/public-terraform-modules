@@ -36,4 +36,5 @@ output "identity" {
 output "container_app" {
   description = "The full Azure Container App resource object."
   value       = azurerm_container_app.container_app
+  sensitive   = true
 }
