@@ -1,7 +1,7 @@
 {
   "$schema": "../../../ui-metadata.schema.json",
   "module": "ecs-task-definition",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "display": {
     "label": "ECS Task Definition",
     "icon": "ecs",
@@ -249,9 +249,16 @@
               {
                 "id": "image",
                 "label": "Image",
-                "type": "text",
+                "description": "Pick an ECR repository, then add :tag or @digest -- or type any image reference directly (Docker Hub, GHCR, another account's ECR, etc.).",
+                "type": "select",
                 "required": true,
-                "placeholder": "ACCOUNT.dkr.ecr.REGION.amazonaws.com/app:1.0.0"
+                "data_source": {
+                  "resource": "ecr.repositories",
+                  "params": { "region": { "from_field": "region" } },
+                  "display": { "value_key": "uri", "label_key": "name" },
+                  "allow_custom": true,
+                  "cache_ttl": 300
+                }
               },
               {
                 "id": "essential",
