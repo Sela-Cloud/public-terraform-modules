@@ -3,7 +3,7 @@
  *****************************************/
 
 module "sqs" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/sqs?ref=v0.9.20"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/sqs?ref=v0.9.21"
   for_each = var.sqs
 
   name                              = each.value.name_prefix != null ? null : coalesce(each.value.name, each.key)

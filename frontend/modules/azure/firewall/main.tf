@@ -1,5 +1,5 @@
 module "firewall" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/firewall?ref=v0.9.20"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/firewall?ref=v0.9.21"
   for_each = var.firewall
 
   name                        = each.value.name

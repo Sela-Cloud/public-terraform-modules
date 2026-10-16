@@ -3,7 +3,7 @@
  *****************************************/
 
 module "s3" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/s3?ref=v0.9.20"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/s3?ref=v0.9.21"
   for_each = var.s3
 
   bucket_name         = coalesce(each.value.bucket_name, each.key)

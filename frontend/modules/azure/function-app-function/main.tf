@@ -1,5 +1,5 @@
 module "function_app_function" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/function-app-function?ref=v0.9.20"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/function-app-function?ref=v0.9.21"
   for_each = var.function_app_function
 
   name            = each.value.name
