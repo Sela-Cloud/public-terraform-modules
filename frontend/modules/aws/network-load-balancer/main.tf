@@ -3,7 +3,7 @@
  *****************************************/
 
 module "network_load_balancer" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/network-load-balancer?ref=v0.9.15"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/network-load-balancer?ref=v0.9.16"
   for_each = var.network_load_balancer
 
   name            = each.value.name_prefix == null ? coalesce(each.value.name, each.key) : null
