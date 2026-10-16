@@ -1,0 +1,413 @@
+{
+  "$schema": "../../../ui-metadata.schema.json",
+  "module": "function-app",
+  "version": "1.0.0",
+  "display": {
+    "label": "Function App",
+    "icon": "azure-function",
+    "description": "Azure Function App for building, deploying, and scaling event-driven serverless background tasks and microservices",
+    "category": "regional"
+  },
+  "resource": {
+    "variable": "function_app",
+    "key_field": "name",
+    "key_label": "Function App Name",
+    "key_description": "The unique name for the Azure Function App. Serves as the map key.",
+    "sections": [
+      {
+        "id": "basic",
+        "label": "Basic Configuration",
+        "description": "Core Function App identity and region settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "name",
+            "label": "Function App Name",
+            "description": "Name of the Azure Function App. Must be globally unique across Azure, 2-60 characters using alphanumerics and hyphens.",
+            "type": "text",
+            "required": true,
+            "placeholder": "func-my-workload-prod",
+            "validation": {
+              "min": 2,
+              "max": 60,
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,58}[a-zA-Z0-9]$",
+              "pattern_error": "Function App name must be 2-60 characters, begin and end with an alphanumeric character, and contain only alphanumerics and hyphens."
+            }
+          },
+          {
+            "id": "resource_group_name",
+            "label": "Resource Group Name",
+            "description": "The name of the Resource Group in which to create the Function App.",
+            "type": "select",
+            "required": true,
+            "data_source": {
+              "resource": "resources.resourceGroups",
+              "params": {},
+              "display": {
+                "value_key": "name",
+                "label_key": "name"
+              }
+            }
+          },
+          {
+            "id": "location",
+            "label": "Region",
+            "description": "The Azure Region where the Function App should be hosted.",
+            "type": "select",
+            "required": true,
+            "options": [
+              { "value": "eastus", "label": "East US (Virginia)" },
+              { "value": "eastus2", "label": "East US 2 (Virginia)" },
+              { "value": "westus", "label": "West US (California)" },
+              { "value": "westus2", "label": "West US 2 (Washington)" },
+              { "value": "westus3", "label": "West US 3 (Phoenix)" },
+              { "value": "centralus", "label": "Central US (Iowa)" },
+              { "value": "northcentralus", "label": "North Central US (Illinois)" },
+              { "value": "southcentralus", "label": "South Central US (Texas)" },
+              { "value": "westeurope", "label": "West Europe (Netherlands)" },
+              { "value": "northeurope", "label": "North Europe (Ireland)" },
+              { "value": "uksouth", "label": "UK South (London)" },
+              { "value": "ukwest", "label": "UK West (Cardiff)" },
+              { "value": "southeastasia", "label": "Southeast Asia (Singapore)" },
+              { "value": "eastasia", "label": "East Asia (Hong Kong)" },
+              { "value": "australiaeast", "label": "Australia East (New South Wales)" },
+              { "value": "centralindia", "label": "Central India (Pune)" },
+              { "value": "canadacentral", "label": "Canada Central (Toronto)" },
+              { "value": "germanywestcentral", "label": "Germany West Central (Frankfurt)" },
+              { "value": "francecentral", "label": "France Central (Paris)" },
+              { "value": "japaneast", "label": "Japan East (Tokyo, Saitama)" },
+              { "value": "brazilsouth", "label": "Brazil South (Sao Paulo State)" },
+              { "value": "uaenorth", "label": "UAE North (Dubai)" },
+              { "value": "southafricanorth", "label": "South Africa North (Johannesburg)" },
+              { "value": "switzerlandnorth", "label": "Switzerland North (Zurich)" },
+              { "value": "swedencentral", "label": "Sweden Central (Gavle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hosting_plan",
+        "label": "Hosting Plan & Sizing",
+        "description": "Operating system and hosting tier settings.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "os_type",
+            "label": "Operating System",
+            "description": "The operating system to run the Function App on.",
+            "type": "select",
+            "required": false,
+            "default": "Linux",
+            "options": [
+              { "value": "Linux", "label": "Linux (Recommended)" },
+              { "value": "Windows", "label": "Windows" }
+            ]
+          },
+          {
+            "id": "create_service_plan",
+            "label": "Create Service Plan",
+            "description": "Automatically provision a new Service Plan. Disable if referencing an existing plan.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "service_plan_sku",
+            "label": "Service Plan SKU",
+            "description": "Pricing tier and compute capacity for the Service Plan (Y1 is Serverless Consumption).",
+            "type": "select",
+            "required": false,
+            "default": "Y1",
+            "options": [
+              { "value": "Y1", "label": "Y1 (Consumption - Serverless Pay-per-Execution)" },
+              { "value": "EP1", "label": "EP1 (Elastic Premium 1 Core, 3.5 GB RAM)" },
+              { "value": "EP2", "label": "EP2 (Elastic Premium 2 Cores, 7 GB RAM)" },
+              { "value": "EP3", "label": "EP3 (Elastic Premium 4 Cores, 14 GB RAM)" },
+              { "value": "B1", "label": "B1 (Basic 1 Core, 1.75 GB RAM)" },
+              { "value": "B2", "label": "B2 (Basic 2 Cores, 3.5 GB RAM)" },
+              { "value": "B3", "label": "B3 (Basic 4 Cores, 7 GB RAM)" },
+              { "value": "S1", "label": "S1 (Standard 1 Core, 1.75 GB RAM)" },
+              { "value": "S2", "label": "S2 (Standard 2 Cores, 3.5 GB RAM)" },
+              { "value": "S3", "label": "S3 (Standard 4 Cores, 7 GB RAM)" }
+            ]
+          },
+          {
+            "id": "service_plan_name",
+            "label": "Service Plan Name",
+            "description": "Custom name for the new Service Plan. If left empty, defaults to 'asp-<app_name>'.",
+            "type": "text",
+            "required": false,
+            "placeholder": "asp-my-workload-func"
+          },
+          {
+            "id": "service_plan_id",
+            "label": "Existing Service Plan",
+            "description": "Select an existing App Service Plan to attach to (bypasses plan creation).",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "web.servicePlans",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "sku"
+              }
+            }
+          },
+          {
+            "id": "zone_balancing_enabled",
+            "label": "Zone Balancing",
+            "description": "Distribute Service Plan instances across Availability Zones (requires Premium SKU).",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "label": "Backend Storage Account",
+        "description": "Azure Storage Account used by the Function App for triggers, state, and execution metadata.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "create_storage_account",
+            "label": "Create Backend Storage Account",
+            "description": "Automatically provision a backend Azure Storage Account for the Function App.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "storage_account_name",
+            "label": "Storage Account Name",
+            "description": "Custom name for the storage account (3-24 lowercase alphanumerics). Auto-generated if left empty.",
+            "type": "text",
+            "required": false,
+            "placeholder": "stfnworkloadprod"
+          },
+          {
+            "id": "storage_account_tier",
+            "label": "Storage Account Tier",
+            "description": "Performance tier for the created storage account.",
+            "type": "select",
+            "required": false,
+            "default": "Standard",
+            "options": [
+              { "value": "Standard", "label": "Standard (Recommended)" },
+              { "value": "Premium", "label": "Premium" }
+            ]
+          },
+          {
+            "id": "storage_account_replication_type",
+            "label": "Storage Replication Type",
+            "description": "Data redundancy strategy for the backend storage account.",
+            "type": "select",
+            "required": false,
+            "default": "LRS",
+            "options": [
+              { "value": "LRS", "label": "LRS (Locally-Redundant Storage)" },
+              { "value": "ZRS", "label": "ZRS (Zone-Redundant Storage)" },
+              { "value": "GRS", "label": "GRS (Geo-Redundant Storage)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "networking_security",
+        "label": "Networking & Access Security",
+        "description": "Network integration, HTTPS enforcement, and ingress security.",
+        "collapsed": false,
+        "fields": [
+          {
+            "id": "https_only",
+            "label": "Enforce HTTPS Only",
+            "description": "Redirect all unencrypted HTTP traffic to HTTPS.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "public_network_access_enabled",
+            "label": "Public Network Access",
+            "description": "Allow ingress traffic from the public internet.",
+            "type": "boolean",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "virtual_network_name",
+            "label": "Virtual Network",
+            "description": "Virtual Network containing the delegated integration subnet.",
+            "type": "select",
+            "ui_only": true,
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "network.virtualNetworks",
+              "params": {
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                }
+              },
+              "display": {
+                "value_key": "name",
+                "label_key": "name",
+                "description_key": "addressSpace"
+              }
+            }
+          },
+          {
+            "id": "virtual_network_subnet_id",
+            "label": "VNet Integration Subnet",
+            "description": "Delegated subnet for outbound regional VNet integration.",
+            "type": "select",
+            "required": false,
+            "nullable": true,
+            "data_source": {
+              "resource": "network.subnets",
+              "params": {
+                "vnet": {
+                  "from_field": "virtual_network_name"
+                },
+                "resource_group": {
+                  "from_field": "resource_group_name"
+                }
+              },
+              "display": {
+                "value_key": "id",
+                "label_key": "name",
+                "description_key": "addressPrefix"
+              },
+              "allow_custom": true
+            }
+          },
+          {
+            "id": "client_certificate_enabled",
+            "label": "Client Certificate (Mutual TLS)",
+            "description": "Enable client certificate authentication for incoming requests.",
+            "type": "boolean",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "identity",
+        "label": "Managed Identity",
+        "description": "Azure Managed Identity for passwordless access to Azure resources (Key Vault, SQL, Storage).",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "identity_type",
+            "label": "Identity Type",
+            "description": "Managed identity assignment for the Function App.",
+            "type": "select",
+            "required": false,
+            "default": "SystemAssigned",
+            "options": [
+              { "value": "SystemAssigned", "label": "System-Assigned (Automatic lifecycle tied to app)" },
+              { "value": "UserAssigned", "label": "User-Assigned (Pre-created identity)" },
+              { "value": "SystemAssigned, UserAssigned", "label": "Both System & User-Assigned" }
+            ]
+          },
+          {
+            "id": "identity_ids",
+            "label": "User-Assigned Identity IDs",
+            "description": "List of User-Assigned Identity resource IDs (required if UserAssigned is selected).",
+            "type": "list",
+            "required": false,
+            "placeholder": "/subscriptions/.../resourceGroups/.../providers/Microsoft.ManagedIdentity/userAssignedIdentities/..."
+          }
+        ]
+      },
+      {
+        "id": "environment",
+        "label": "Application Settings",
+        "description": "Environment variables and configuration values available to function code at runtime.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "app_settings",
+            "label": "App Settings (Key-Value)",
+            "description": "Application settings exposed as environment variables (e.g. FUNCTIONS_WORKER_RUNTIME = node).",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      },
+      {
+        "id": "connections",
+        "label": "Connection Strings",
+        "description": "Database and external service connection strings.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "connection_strings",
+            "label": "Connection Strings",
+            "description": "List of database connection strings.",
+            "type": "repeatable",
+            "required": false,
+            "default": [],
+            "fields": [
+              {
+                "id": "name",
+                "label": "Connection Name",
+                "description": "The name of the connection string.",
+                "type": "text",
+                "required": true,
+                "placeholder": "DefaultDatabase"
+              },
+              {
+                "id": "type",
+                "label": "Connection Type",
+                "description": "The database provider type.",
+                "type": "select",
+                "required": true,
+                "options": [
+                  { "value": "SQLAzure", "label": "SQL Azure" },
+                  { "value": "SQLServer", "label": "SQL Server" },
+                  { "value": "PostgreSQL", "label": "PostgreSQL" },
+                  { "value": "MySQL", "label": "MySQL" },
+                  { "value": "Custom", "label": "Custom" }
+                ]
+              },
+              {
+                "id": "value",
+                "label": "Connection String Value",
+                "description": "The connection string value.",
+                "type": "text",
+                "required": true,
+                "sensitive": true,
+                "placeholder": "Server=tcp:...;Database=...;"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tags",
+        "label": "Resource Tags",
+        "description": "Key-value pairs to categorize and track this Function App.",
+        "collapsed": true,
+        "fields": [
+          {
+            "id": "tags",
+            "label": "Tags",
+            "description": "Tags assigned to the Function App.",
+            "type": "map",
+            "required": false,
+            "default": {}
+          }
+        ]
+      }
+    ]
+  }
+}
