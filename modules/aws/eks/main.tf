@@ -200,7 +200,7 @@ resource "aws_eks_cluster" "this" {
     bootstrap_cluster_creator_admin_permissions = var.bootstrap_cluster_creator_admin_permissions
   }
 
-  bootstrap_self_managed_addons = var.bootstrap_self_managed_addons
+  bootstrap_self_managed_addons = var.compute_config != null && var.compute_config.enabled ? false : var.bootstrap_self_managed_addons
 
   dynamic "compute_config" {
     for_each = var.compute_config != null ? [var.compute_config] : []
@@ -281,10 +281,6 @@ resource "aws_eks_cluster" "this" {
     precondition {
       condition     = var.create_iam_role || var.iam_role_arn != null
       error_message = "iam_role_arn is required when create_iam_role is false."
-    }
-    precondition {
-      condition     = var.compute_config == null || !var.compute_config.enabled || !var.bootstrap_self_managed_addons
-      error_message = "bootstrap_self_managed_addons must be false when compute_config.enabled is true (EKS Auto Mode)."
     }
     precondition {
       condition     = var.compute_config == null || !var.compute_config.enabled || var.authentication_mode != "CONFIG_MAP"
