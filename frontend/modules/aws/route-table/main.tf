@@ -3,7 +3,7 @@
  *****************************************/
 
 module "route_table" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/route-table?ref=v0.9.18"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/route-table?ref=v0.9.19"
   for_each = var.route_table
 
   vpc_id = each.value.vpc_id

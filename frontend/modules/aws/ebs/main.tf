@@ -3,7 +3,7 @@
  *****************************************/
 
 module "ebs" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ebs?ref=v0.9.18"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/ebs?ref=v0.9.19"
   for_each = var.ebs
 
   name                 = coalesce(each.value.name, each.key)
