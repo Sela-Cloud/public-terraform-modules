@@ -17,8 +17,15 @@ locals {
   storage_account_name = var.storage_account_name != null ? var.storage_account_name : (
     length(azurerm_storage_account.storage) > 0 ? azurerm_storage_account.storage[0].name : null
   )
-  storage_account_access_key = var.storage_account_access_key != null ? var.storage_account_access_key : (
-    length(azurerm_storage_account.storage) > 0 ? azurerm_storage_account.storage[0].primary_access_key : null
+  # azurerm rejects storage_account_access_key and storage_uses_managed_identity being configured
+  # together, even when the latter is explicitly false -- the provider's ConflictsWith checks
+  # whether an argument is present in the config at all, not its runtime value. So when managed
+  # identity is requested, suppress the access key outright rather than let it resolve to a real
+  # value alongside it.
+  storage_account_access_key = var.storage_uses_managed_identity ? null : (
+    var.storage_account_access_key != null ? var.storage_account_access_key : (
+      length(azurerm_storage_account.storage) > 0 ? azurerm_storage_account.storage[0].primary_access_key : null
+    )
   )
 }
 
@@ -77,7 +84,7 @@ resource "azurerm_linux_function_app" "linux_function_app" {
   service_plan_id               = local.service_plan_id
   storage_account_name          = local.storage_account_name
   storage_account_access_key    = local.storage_account_access_key
-  storage_uses_managed_identity = var.storage_uses_managed_identity
+  storage_uses_managed_identity = var.storage_uses_managed_identity ? true : null
   https_only                    = var.https_only
   client_certificate_enabled    = var.client_certificate_enabled
   client_certificate_mode       = var.client_certificate_mode
@@ -197,7 +204,7 @@ resource "azurerm_windows_function_app" "windows_function_app" {
   service_plan_id               = local.service_plan_id
   storage_account_name          = local.storage_account_name
   storage_account_access_key    = local.storage_account_access_key
-  storage_uses_managed_identity = var.storage_uses_managed_identity
+  storage_uses_managed_identity = var.storage_uses_managed_identity ? true : null
   https_only                    = var.https_only
   client_certificate_enabled    = var.client_certificate_enabled
   client_certificate_mode       = var.client_certificate_mode
