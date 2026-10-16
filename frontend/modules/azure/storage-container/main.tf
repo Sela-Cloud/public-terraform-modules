@@ -1,5 +1,5 @@
 module "storage_container" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/storage-container?ref=v0.9.17"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/storage-container?ref=v0.9.18"
   for_each = var.storage_container
 
   name                              = each.value.name

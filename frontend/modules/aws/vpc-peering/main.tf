@@ -3,7 +3,7 @@
  *****************************************/
 
 module "vpc_peering" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/vpc-peering?ref=v0.9.17"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/vpc-peering?ref=v0.9.18"
   for_each = var.vpc_peering
 
   name                            = coalesce(each.value.name, each.key)

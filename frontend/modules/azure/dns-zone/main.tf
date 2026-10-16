@@ -1,5 +1,5 @@
 module "dns_zone" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/dns-zone?ref=v0.9.17"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/dns-zone?ref=v0.9.18"
   for_each = var.dns_zone
 
   name                = each.value.name
