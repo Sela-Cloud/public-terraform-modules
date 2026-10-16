@@ -78,7 +78,7 @@ Azure Container Apps enables you to run microservices and containerized applicat
 | latest_revision_name | The name of the latest Container revision. |
 | outbound_ip_addresses | The public IP addresses used for outbound traffic. |
 | identity | The Managed Identity configuration block for the Container App. |
-| container_app | The full Azure Container App resource object. |
+| container_app | The full Azure Container App resource object (Sensitive). |
 
 ## Usage Examples
 

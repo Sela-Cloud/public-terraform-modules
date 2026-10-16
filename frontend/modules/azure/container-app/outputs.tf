@@ -1,6 +1,7 @@
 output "container_apps" {
   description = "A map of all created Azure Container App module instances."
   value       = module.container_app
+  sensitive   = true
 }
 
 output "container_app_ids" {
