@@ -97,7 +97,7 @@ variable "enable_zonal_shift" {
 }
 
 variable "bootstrap_self_managed_addons" {
-  description = "Indicates whether default self-managed addons (kube-proxy, coredns, vpc-cni) are installed during cluster creation. Must be false when compute_config.enabled is true (EKS Auto Mode)."
+  description = "Indicates whether default self-managed addons (kube-proxy, coredns, vpc-cni) are installed during cluster creation. Automatically forced to false when compute_config.enabled is true (EKS Auto Mode) -- no need to set this yourself."
   type        = bool
   default     = true
 }
