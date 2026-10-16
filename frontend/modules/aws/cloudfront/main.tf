@@ -3,7 +3,7 @@
  *****************************************/
 
 module "cloudfront" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/cloudfront?ref=v0.9.16"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/cloudfront?ref=v0.9.17"
   for_each = var.cloudfront
 
   name                = each.key

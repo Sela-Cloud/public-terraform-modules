@@ -1,5 +1,5 @@
 module "service_connection_policy" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/service-connection-policy?ref=v0.9.16"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/gcp/service-connection-policy?ref=v0.9.17"
   for_each = var.service_connection_policy
 
   project_id           = var.project_id

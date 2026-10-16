@@ -3,7 +3,7 @@
  *****************************************/
 
 module "datasync" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/datasync?ref=v0.9.16"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/datasync?ref=v0.9.17"
   for_each = var.datasync
 
   agents        = each.value.agents

@@ -3,7 +3,7 @@
  *****************************************/
 
 module "route53_zone" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/route53-zone?ref=v0.9.16"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/route53-zone?ref=v0.9.17"
   for_each = var.route53_zone
 
   name              = coalesce(each.value.name != "" ? each.value.name : null, each.key)

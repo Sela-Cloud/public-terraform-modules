@@ -1,5 +1,5 @@
 module "network_interface" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/network-interface?ref=v0.9.16"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/azure/network-interface?ref=v0.9.17"
   for_each = var.network_interface
 
   name                           = each.value.name

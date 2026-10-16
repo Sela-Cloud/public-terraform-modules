@@ -1,5 +1,5 @@
 module "storage_account" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/storage-account?ref=v0.9.16"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/storage-account?ref=v0.9.17"
   for_each = var.storage_account
 
   name                              = each.value.name
