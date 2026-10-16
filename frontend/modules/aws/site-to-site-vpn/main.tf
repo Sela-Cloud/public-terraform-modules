@@ -3,7 +3,7 @@
  *****************************************/
 
 module "site_to_site_vpn" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/site-to-site-vpn?ref=v0.9.19"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules//modules/aws/site-to-site-vpn?ref=v0.9.20"
   for_each = var.site_to_site_vpn
 
   name = coalesce(each.value.name, each.key)

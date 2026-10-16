@@ -1,6 +1,6 @@
 module "virtual_machine_scale_set" {
 
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine-scale-set?ref=v0.9.19"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/virtual-machine-scale-set?ref=v0.9.20"
   for_each = var.virtual_machine_scale_set
 
   name                            = each.value.name

@@ -1,5 +1,5 @@
 module "role_assignment" {
-  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/role-assignment?ref=v0.9.19"
+  source   = "git::https://github.com/Sela-Cloud/public-terraform-modules.git//modules/azure/role-assignment?ref=v0.9.20"
   for_each = var.role_assignment
 
   name                                   = each.value.name
