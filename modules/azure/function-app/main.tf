@@ -42,6 +42,13 @@ resource "azurerm_service_plan" "plan" {
   sku_name               = var.service_plan_sku
   zone_balancing_enabled = var.zone_balancing_enabled
   tags                   = var.tags
+
+  lifecycle {
+    precondition {
+      condition     = !var.zone_balancing_enabled || contains(["EP1", "EP2", "EP3"], var.service_plan_sku)
+      error_message = "zone_balancing_enabled requires an Elastic Premium SKU (EP1, EP2, or EP3) -- Consumption (Y1), Basic, and Standard plans do not support zone redundancy."
+    }
+  }
 }
 
 resource "azurerm_linux_function_app" "linux_function_app" {
@@ -147,6 +154,17 @@ resource "azurerm_linux_function_app" "linux_function_app" {
       value = connection_string.value.value
     }
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.create_service_plan || var.service_plan_id != null
+      error_message = "service_plan_id is required when create_service_plan is false."
+    }
+    precondition {
+      condition     = local.storage_account_name != null
+      error_message = "storage_account_name is required when create_storage_account is false, or when create_storage_account is true together with a non-null storage_account_access_key (which skips auto-creation) -- either let the module create a storage account, or provide storage_account_name explicitly."
+    }
+  }
 }
 
 resource "azurerm_windows_function_app" "windows_function_app" {
@@ -238,6 +256,17 @@ resource "azurerm_windows_function_app" "windows_function_app" {
       name  = connection_string.value.name
       type  = connection_string.value.type
       value = connection_string.value.value
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = var.create_service_plan || var.service_plan_id != null
+      error_message = "service_plan_id is required when create_service_plan is false."
+    }
+    precondition {
+      condition     = local.storage_account_name != null
+      error_message = "storage_account_name is required when create_storage_account is false, or when create_storage_account is true together with a non-null storage_account_access_key (which skips auto-creation) -- either let the module create a storage account, or provide storage_account_name explicitly."
     }
   }
 }
